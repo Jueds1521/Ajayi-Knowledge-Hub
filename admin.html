@@ -143,18 +143,24 @@
             const [isPublishing, setIsPublishing] = useState(false);
             const [isLoadingPosts, setIsLoadingPosts] = useState(true);
             const [statusMsg, setStatusMsg] = useState({ type: '', text: '' });
-            const [editingId, setEditingId] = useState(null); // Tracks if we are editing an existing post
-            const [deletingId, setDeletingId] = useState(null); // Tracks which post is asking for delete confirmation
+            const [editingId, setEditingId] = useState(null); 
+            const [deletingId, setDeletingId] = useState(null); 
 
             const fetchPublications = async () => {
                 setIsLoadingPosts(true);
-                const { data, error } = await supabase
-                    .from('publications')
-                    .select('*')
-                    .order('id', { ascending: false });
-                
-                if (data) setPublications(data);
-                setIsLoadingPosts(false);
+                try {
+                    const { data, error } = await supabase
+                        .from('publications')
+                        .select('*')
+                        .order('id', { ascending: false });
+                    
+                    if (error) throw error;
+                    if (data) setPublications(data);
+                } catch (err) {
+                    console.error("Error fetching data:", err);
+                } finally {
+                    setIsLoadingPosts(false);
+                }
             };
 
             useEffect(() => {
@@ -168,60 +174,62 @@
 
                 const tagsArray = tags.split(',').map(tag => tag.trim()).filter(tag => tag !== '');
                 
-                if (editingId) {
-                    // WE ARE UPDATING AN EXISTING POST
-                    const { error } = await supabase.from('publications').update({
-                        title: title,
-                        type: type,
-                        category: category,
-                        summary: summary,
-                        content: content,
-                        tags: tagsArray
-                    }).eq('id', editingId);
+                try {
+                    if (editingId) {
+                        // WE ARE UPDATING AN EXISTING POST
+                        const { error } = await supabase.from('publications').update({
+                            title: title,
+                            type: type,
+                            category: category,
+                            summary: summary,
+                            content: content,
+                            tags: tagsArray
+                        }).eq('id', editingId);
 
-                    if (error) {
-                        setStatusMsg({ type: 'error', text: error.message });
-                    } else {
+                        if (error) throw error;
+                        
                         setStatusMsg({ type: 'success', text: 'Successfully updated your publication!' });
                         clearForm();
                         fetchPublications();
-                    }
-                } else {
-                    // WE ARE CREATING A NEW POST
-                    const dateOptions = { year: 'numeric', month: 'short', day: 'numeric' };
-                    const publishedDate = new Date().toLocaleDateString('en-US', dateOptions);
-
-                    const { error } = await supabase.from('publications').insert([{
-                        title: title,
-                        type: type,
-                        category: category,
-                        summary: summary,
-                        content: content,
-                        tags: tagsArray,
-                        published_date: publishedDate
-                    }]);
-
-                    if (error) {
-                        setStatusMsg({ type: 'error', text: error.message });
                     } else {
+                        // WE ARE CREATING A NEW POST
+                        const dateOptions = { year: 'numeric', month: 'short', day: 'numeric' };
+                        const publishedDate = new Date().toLocaleDateString('en-US', dateOptions);
+
+                        const { error } = await supabase.from('publications').insert([{
+                            title: title,
+                            type: type,
+                            category: category,
+                            summary: summary,
+                            content: content,
+                            tags: tagsArray,
+                            published_date: publishedDate
+                        }]);
+
+                        if (error) throw error;
+
                         setStatusMsg({ type: 'success', text: 'Successfully published to your Knowledge Hub!' });
                         clearForm();
                         fetchPublications();
                     }
+                } catch (error) {
+                    setStatusMsg({ type: 'error', text: error.message });
+                } finally {
+                    setIsPublishing(false);
+                    setTimeout(() => setStatusMsg({ type: '', text: '' }), 5000);
                 }
-                
-                setIsPublishing(false);
-                setTimeout(() => setStatusMsg({ type: '', text: '' }), 5000);
             };
 
             const handleEditClick = (pub) => {
                 setEditingId(pub.id);
-                setTitle(pub.title);
-                setType(pub.type);
+                setTitle(pub.title || '');
+                setType(pub.type || 'blog');
                 setCategory(pub.category || '');
                 setSummary(pub.summary || '');
                 setContent(pub.content || '');
-                setTags(pub.tags ? pub.tags.join(', ') : '');
+                // Safely handle tags to prevent crashing
+                const safeTags = Array.isArray(pub.tags) ? pub.tags.join(', ') : (pub.tags || '');
+                setTags(safeTags);
                 
                 // Scroll to top of the page smoothly
                 window.scrollTo({ top: 0, behavior: 'smooth' });
@@ -229,13 +237,15 @@
             };
 
             const confirmDelete = async (id) => {
-                const { error } = await supabase.from('publications').delete().eq('id', id);
-                if (!error) {
+                try {
+                    const { error } = await supabase.from('publications').delete().eq('id', id);
+                    if (error) throw error;
+                    
                     setDeletingId(null);
                     fetchPublications(); // Refresh the list
                     setStatusMsg({ type: 'success', text: 'Publication deleted successfully.' });
                     setTimeout(() => setStatusMsg({ type: '', text: '' }), 4000);
-                } else {
+                } catch (error) {
                     setStatusMsg({ type: 'error', text: error.message });
                 }
             };
@@ -260,11 +270,12 @@
                         <div className="p-4 flex-1">
                             <h3 className="text-xs font-bold text-gray-500 uppercase tracking-wider mb-4 px-2">Menu</h3>
                             <nav className="space-y-1">
-                                {[{name: 'Dashboard', icon: 'fa-chart-line'}, {name: 'Settings', icon: 'fa-cog'}].map((item, i) => (
-                                    <button key={i} className={`w-full flex items-center px-4 py-3 text-sm font-medium rounded-xl transition-colors ${i === 0 ? 'bg-emerald-900/20 text-emerald-400' : 'text-gray-400 hover:bg-gray-800'}`}>
-                                        <i className={`fas ${item.icon} mr-3`}></i> {item.name}
-                                    </button>
-                                ))}
+                                <button className="w-full flex items-center px-4 py-3 text-sm font-medium rounded-xl transition-colors bg-emerald-900/20 text-emerald-400">
+                                    <i className="fas fa-chart-line mr-3"></i> Dashboard
+                                </button>
+                                <button className="w-full flex items-center px-4 py-3 text-sm font-medium rounded-xl transition-colors text-gray-400 hover:bg-gray-800">
+                                    <i className="fas fa-cog mr-3"></i> Settings
+                                </button>
                             </nav>
                         </div>
                         <div className="p-4 border-t border-gray-800">
@@ -274,14 +285,14 @@
                         </div>
                     </div>
 
-                    {/* Main Content */}
+                    {/* Main Content Area */}
                     <div className="flex-1 p-8 overflow-y-auto">
                         <div className="max-w-5xl mx-auto">
                             <div className="flex justify-between items-center mb-8">
                                 <h1 className="text-2xl font-bold font-serif text-white">Command Center</h1>
                             </div>
                             
-                            {/* CMS Form */}
+                            {/* CMS Publishing Form */}
                             <div className="bg-gray-900 rounded-2xl border border-gray-800 shadow-xl overflow-hidden mb-12">
                                 <div className="p-6 border-b border-gray-800 bg-gray-900/50 flex justify-between items-center">
                                     <h3 className="text-lg font-bold text-white flex items-center">
@@ -289,7 +300,7 @@
                                         {editingId ? 'Edit Publication' : 'Create New Post'}
                                     </h3>
                                     {editingId && (
-                                        <button onClick={clearForm} className="text-sm bg-gray-800 hover:bg-gray-700 px-3 py-1.5 rounded-lg text-gray-300 transition-colors">
+                                        <button onClick={clearForm} type="button" className="text-sm bg-gray-800 hover:bg-gray-700 px-3 py-1.5 rounded-lg text-gray-300 transition-colors">
                                             Cancel Edit
                                         </button>
                                     )}
@@ -316,6 +327,7 @@
                                                     <option value="research">Research Paper</option>
                                                     <option value="book">Book</option>
                                                     <option value="teaching">Teaching Material</option>
+                                                    <option value="project">Project</option>
                                                 </select>
                                             </div>
                                         </div>
@@ -338,7 +350,7 @@
 
                                         <div>
                                             <label className="block text-sm font-medium text-gray-300 mb-1">Full Content</label>
-                                            <textarea rows="10" value={content} onChange={(e) => setContent(e.target.value)} className="w-full px-4 py-3 rounded-xl bg-gray-800 border border-gray-700 focus:outline-none focus:ring-2 focus:ring-emerald-custom text-white resize-vertical font-serif" placeholder="Write your full article here..."></textarea>
+                                            <textarea rows="10" value={content} onChange={(e) => setContent(e.target.value)} className="w-full px-4 py-3 rounded-xl bg-gray-800 border border-gray-700 focus:outline-none focus:ring-2 focus:ring-emerald-custom text-white font-serif" placeholder="Write your full article here..."></textarea>
                                         </div>
 
                                         <div className="flex justify-end pt-4 border-t border-gray-800">
@@ -352,12 +364,13 @@
                             </div>
 
                             {}
+                            {/* Manage Content Table */}
                             <div className="bg-gray-900 rounded-2xl border border-gray-800 shadow-xl overflow-hidden">
                                 <div className="p-6 border-b border-gray-800 bg-gray-900/50 flex justify-between items-center">
                                     <h3 className="text-lg font-bold text-white flex items-center">
                                         <i className="fas fa-layer-group text-emerald-500 mr-2"></i> Manage Content
                                     </h3>
-                                    <button onClick={fetchPublications} className="text-gray-400 hover:text-white transition-colors" title="Refresh List">
+                                    <button onClick={fetchPublications} type="button" className="text-gray-400 hover:text-white transition-colors" title="Refresh List">
                                         <i className="fas fa-sync-alt"></i>
                                     </button>
                                 </div>
@@ -401,15 +414,15 @@
                                                             {deletingId === pub.id ? (
                                                                 <div className="flex justify-end items-center space-x-3 bg-red-900/20 px-3 py-2 rounded-lg border border-red-900/50 inline-flex">
                                                                     <span className="text-xs text-red-200">Are you sure?</span>
-                                                                    <button onClick={() => confirmDelete(pub.id)} className="text-red-400 hover:text-red-300 font-bold text-sm bg-red-900/50 px-2 py-1 rounded">Delete</button>
-                                                                    <button onClick={() => setDeletingId(null)} className="text-gray-400 hover:text-white text-sm">Cancel</button>
+                                                                    <button onClick={() => confirmDelete(pub.id)} type="button" className="text-red-400 hover:text-red-300 font-bold text-sm bg-red-900/50 px-2 py-1 rounded">Delete</button>
+                                                                    <button onClick={() => setDeletingId(null)} type="button" className="text-gray-400 hover:text-white text-sm">Cancel</button>
                                                                 </div>
                                                             ) : (
                                                                 <div className="flex justify-end space-x-4">
-                                                                    <button onClick={() => handleEditClick(pub)} className="text-gray-400 hover:text-blue-400 transition-colors" title="Edit">
+                                                                    <button onClick={() => handleEditClick(pub)} type="button" className="text-gray-400 hover:text-blue-400 transition-colors" title="Edit">
                                                                         <i className="fas fa-edit"></i>
                                                                     </button>
-                                                                    <button onClick={() => setDeletingId(pub.id)} className="text-gray-400 hover:text-red-400 transition-colors" title="Delete">
+                                                                    <button onClick={() => setDeletingId(pub.id)} type="button" className="text-gray-400 hover:text-red-400 transition-colors" title="Delete">
                                                                         <i className="fas fa-trash-alt"></i>
                                                                     </button>
                                                                 </div>
@@ -434,4 +447,31 @@
             const [loading, setLoading] = useState(true);
 
             useEffect(() => {
-                supabase.auth.getSession().then(({ data: { session } })
+                supabase.auth.getSession().then(({ data: { session } }) => {
+                    setSession(session);
+                    setLoading(false);
+                });
+
+                const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+                    setSession(session);
+                });
+
+                return () => {
+                    if (subscription) subscription.unsubscribe();
+                };
+            }, []);
+
+            const handleLogout = async () => {
+                await supabase.auth.signOut();
+            };
+
+            if (loading) return <div className="min-h-screen bg-[#0a0a0a] flex items-center justify-center"><i className="fas fa-spinner fa-spin text-3xl text-emerald-500"></i></div>;
+            if (!session) return <LoginScreen onLoginSuccess={setSession} />;
+            return <AdminDashboardView onLogout={handleLogout} />;
+        };
+
+        const root = ReactDOM.createRoot(document.getElementById('root'));
+        root.render(<AdminApp />);
+    </script>
+</body>
+</html>
