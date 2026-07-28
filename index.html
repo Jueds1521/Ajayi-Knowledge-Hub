@@ -44,11 +44,17 @@
         .dark body::-webkit-scrollbar-thumb { background-color: #334155; }
         .hide-scrollbar::-webkit-scrollbar { display: none; }
         .hide-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
-        .glass-nav { background: rgba(255, 255, 255, 0.8); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px); }
-        .dark .glass-nav { background: rgba(11, 20, 35, 0.85); border-bottom: 1px solid rgba(255,255,255,0.05); }
+        
+        /* Solid Navbar styling */
+        .glass-nav { background: rgba(255, 255, 255, 0.95); backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px); border-bottom: 1px solid rgba(0,0,0,0.05); }
+        .dark .glass-nav { background: rgba(11, 20, 35, 0.95); backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px); border-bottom: 1px solid rgba(255,255,255,0.1); box-shadow: 0 4px 30px rgba(0, 0, 0, 0.5); }
+        
         @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+        @keyframes slideDown { from { opacity: 0; transform: translateY(-10px); } to { opacity: 1; transform: translateY(0); } }
         @keyframes slideUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+        
         .animate-fade-in { animation: fadeIn 0.5s ease-out forwards; }
+        .animate-slide-down { animation: slideDown 0.3s ease-out forwards; }
         .animate-slide-up { animation: slideUp 0.6s ease-out forwards; }
     </style>
 </head>
@@ -182,6 +188,7 @@
         const Navbar = ({ darkMode, setDarkMode, setView, currentView, settings }) => {
             const [mobileMenu, setMobileMenu] = useState(false);
             
+            // Lock body scroll when menu is open
             useEffect(() => {
                 if (mobileMenu) document.body.style.overflow = 'hidden';
                 else document.body.style.overflow = 'unset';
@@ -204,10 +211,11 @@
                 <nav className="glass-nav text-gray-900 dark:text-white w-full fixed top-0 z-50 transition-colors">
                     <div className="max-w-[1600px] mx-auto px-4 sm:px-6 lg:px-8">
                         <div className="flex justify-between items-center h-20">
+                            
                             {/* Logo */}
-                            <div className="flex-shrink-0 cursor-pointer flex items-center gap-3" onClick={() => setView('home')}>
+                            <div className="flex-shrink-0 cursor-pointer flex items-center gap-3" onClick={() => { setView('home'); setMobileMenu(false); }}>
                                 {settings?.logo_url ? (
-                                    <img src={settings.logo_url} alt="Logo" className="w-10 h-10 rounded-lg object-cover" />
+                                    <img src={settings.logo_url} alt="Logo" className="w-10 h-10 rounded-lg object-cover shadow-sm" />
                                 ) : (
                                     <div className="text-[#D4AF37] dark:text-[#2E8B57]">
                                         <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
@@ -221,41 +229,48 @@
                                 </div>
                             </div>
                             
-                            {/* Collapsed Actions for all screens */}
-                            <div className="flex items-center space-x-2 sm:space-x-4">
-                                <button onClick={() => setView('ai')} className="hidden sm:flex items-center px-4 py-2 rounded-lg bg-[#2E8B57]/10 dark:bg-[#2E8B57]/20 text-[#2E8B57] border border-[#2E8B57]/30 dark:border-[#2E8B57]/50 hover:bg-[#2E8B57] hover:text-white text-sm font-medium transition-colors">
+                            {/* Actions (Solid buttons to pop out) */}
+                            <div className="flex items-center space-x-2 sm:space-x-3">
+                                <button onClick={() => setView('ai')} className="hidden sm:flex items-center px-4 py-2 rounded-xl bg-white dark:bg-[#0B1423] text-[#2E8B57] border border-[#2E8B57]/30 dark:border-[#2E8B57]/50 hover:bg-[#2E8B57] hover:text-white text-sm font-bold transition-all shadow-sm">
                                     <Icon name="magic" size={16} className="mr-2" /> Ask AI
                                 </button>
-                                <button className="w-10 h-10 rounded-full border border-gray-200 dark:border-white/20 flex items-center justify-center text-gray-500 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white hover:border-gray-400 dark:hover:border-white transition-colors hidden xs:flex">
+                                <button className="w-10 h-10 rounded-xl bg-white dark:bg-[#0B1423] border border-gray-200 dark:border-white/10 flex items-center justify-center text-gray-600 dark:text-gray-300 hover:text-[#2E8B57] dark:hover:text-[#2E8B57] transition-all shadow-sm hidden xs:flex">
                                     <Icon name="search" size={18} />
                                 </button>
-                                <button onClick={() => setDarkMode(!darkMode)} className="w-10 h-10 rounded-full border border-gray-200 dark:border-white/20 flex items-center justify-center text-gray-500 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white hover:border-gray-400 dark:hover:border-white transition-colors">
+                                <button onClick={() => setDarkMode(!darkMode)} className="w-10 h-10 rounded-xl bg-white dark:bg-[#0B1423] border border-gray-200 dark:border-white/10 flex items-center justify-center text-gray-600 dark:text-gray-300 hover:text-[#2E8B57] dark:hover:text-[#2E8B57] transition-all shadow-sm">
                                     {darkMode ? <Icon name="sun" size={18} /> : <Icon name="moon" size={18} />}
                                 </button>
-                                <button onClick={() => setMobileMenu(!mobileMenu)} className="w-10 h-10 flex items-center justify-center text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white transition-colors">
-                                    <Icon name={mobileMenu ? "x" : "menu"} size={28} />
+                                
+                                {/* SOLID Hamburger Menu Button */}
+                                <button onClick={() => setMobileMenu(!mobileMenu)} className="w-12 h-12 rounded-xl bg-white dark:bg-[#0B1423] border border-gray-200 dark:border-white/20 flex items-center justify-center text-gray-800 dark:text-white hover:text-[#2E8B57] dark:hover:text-[#2E8B57] hover:border-[#2E8B57] transition-all shadow-md relative z-50">
+                                    <Icon name={mobileMenu ? "x" : "menu"} size={26} />
                                 </button>
                             </div>
                         </div>
                     </div>
 
-                    {/* Universal Fullscreen Dropdown Menu */}
+                    {/* Dark Background Overlay (Blurs out the site when menu is open) */}
                     {mobileMenu && (
-                        <div className="fixed inset-0 top-20 bg-white/95 dark:bg-[#0B1423]/95 backdrop-blur-xl z-40 overflow-y-auto px-4 py-6 animate-fade-in flex flex-col">
-                            <div className="max-w-3xl mx-auto w-full grid grid-cols-1 sm:grid-cols-2 gap-2">
+                        <div className="fixed inset-0 top-20 bg-black/40 backdrop-blur-sm z-30" onClick={() => setMobileMenu(false)}></div>
+                    )}
+
+                    {/* Universal Solid Dropdown Menu (No Transparency) */}
+                    {mobileMenu && (
+                        <div className="absolute top-full left-0 w-full bg-white dark:bg-[#0B1423] z-40 overflow-y-auto max-h-[80vh] px-4 py-8 animate-slide-down flex flex-col shadow-2xl border-t border-gray-200 dark:border-white/10">
+                            <div className="max-w-3xl mx-auto w-full grid grid-cols-1 sm:grid-cols-2 gap-3">
                                 {navLinks.map(link => (
                                     <button 
                                         key={link.id} 
                                         onClick={() => { setView(link.id); setMobileMenu(false); }}
-                                        className={`flex items-center w-full text-left px-6 py-4 rounded-xl text-lg font-medium transition-colors ${currentView === link.id ? 'bg-[#2E8B57] text-white' : 'text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-white/10 hover:text-gray-900 dark:hover:text-white border border-transparent hover:border-gray-200 dark:hover:border-white/10'}`}
+                                        className={`flex items-center w-full text-left px-6 py-4 rounded-xl text-lg font-bold transition-all transform hover:scale-[1.02] shadow-sm ${currentView === link.id ? 'bg-[#2E8B57] text-white' : 'bg-gray-50 dark:bg-gray-800 text-gray-800 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700 hover:text-gray-900 dark:hover:text-white border border-gray-200 dark:border-gray-700'}`}
                                     >
                                         <Icon name={link.icon} size={20} className="mr-4 opacity-70" />
                                         {link.name}
                                     </button>
                                 ))}
                             </div>
-                            <div className="max-w-3xl mx-auto w-full mt-8 pt-8 border-t border-gray-200 dark:border-white/10">
-                                <a href="/admin.html" className="flex justify-center items-center px-6 py-4 rounded-xl bg-gray-100 dark:bg-[#D4AF37]/10 text-gray-700 dark:text-[#D4AF37] border border-gray-200 dark:border-[#D4AF37]/30 hover:bg-gray-200 dark:hover:bg-[#D4AF37]/20 font-bold transition-colors w-full">
+                            <div className="max-w-3xl mx-auto w-full mt-8 pt-8 border-t border-gray-200 dark:border-gray-800">
+                                <a href="/admin.html" className="flex justify-center items-center px-6 py-4 rounded-xl bg-gray-100 dark:bg-[#D4AF37]/10 text-gray-800 dark:text-[#D4AF37] border border-gray-200 dark:border-[#D4AF37]/30 hover:bg-gray-200 dark:hover:bg-[#D4AF37]/20 font-bold transition-colors w-full shadow-sm">
                                     <Icon name="users" size={20} className="mr-3" /> Login to Admin Portal
                                 </a>
                             </div>
@@ -480,7 +495,6 @@
             </div>
         );
 
-        
         const HeroSection = ({ setView, isDarkMode }) => (
             <section className="relative pt-32 pb-24 flex items-center justify-center bg-[#0B1423] text-white overflow-hidden min-h-[80vh]">
                 <ParticleBackground isDarkMode={isDarkMode} />
@@ -744,7 +758,13 @@
                 setView(newView);
                 setSelectedItem(item);
                 window.scrollTo(0, 0);
-                window.history.pushState({ view: newView, item }, '', `?view=${newView}`);
+                
+                // Try-catch block prevents preview iframe crashes while keeping Vercel functionality intact
+                try {
+                    window.history.pushState({ view: newView, item }, '', `?view=${newView}`);
+                } catch (error) {
+                    console.warn("History API blocked in preview environment, but navigation will continue.");
+                }
             };
 
             useEffect(() => {
