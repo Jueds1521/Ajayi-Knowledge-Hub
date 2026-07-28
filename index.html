@@ -24,15 +24,6 @@
                 extend: {
                     colors: { navy: '#0B1F3A', emerald: '#2E8B57', gold: '#D4AF37', charcoal: '#121212', cardDark: '#1E1E1E' },
                     fontFamily: { sans: ['Inter', 'sans-serif'], serif: ['Merriweather', 'serif'] },
-                    animation: { 'float': 'float 20s infinite linear' },
-                    keyframes: {
-                        float: {
-                            '0%': { transform: 'translateY(100vh) scale(0.5)', opacity: '0' },
-                            '10%': { opacity: '0.4' },
-                            '90%': { opacity: '0.4' },
-                            '100%': { transform: 'translateY(-10vh) scale(1.2)', opacity: '0' },
-                        }
-                    }
                 }
             }
         }
@@ -45,15 +36,11 @@
         .hide-scrollbar::-webkit-scrollbar { display: none; }
         .hide-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
         
-        /* Solid Navbar styling */
-        .glass-nav { background: rgba(255, 255, 255, 0.95); backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px); border-bottom: 1px solid rgba(0,0,0,0.05); }
-        .dark .glass-nav { background: rgba(11, 20, 35, 0.95); backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px); border-bottom: 1px solid rgba(255,255,255,0.1); box-shadow: 0 4px 30px rgba(0, 0, 0, 0.5); }
-        
         @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
         @keyframes slideDown { from { opacity: 0; transform: translateY(-10px); } to { opacity: 1; transform: translateY(0); } }
         @keyframes slideUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
         
-        .animate-fade-in { animation: fadeIn 0.5s ease-out forwards; }
+        .animate-fade-in { animation: fadeIn 0.3s ease-out forwards; }
         .animate-slide-down { animation: slideDown 0.3s ease-out forwards; }
         .animate-slide-up { animation: slideUp 0.6s ease-out forwards; }
     </style>
@@ -138,17 +125,17 @@
                         ctx.lineWidth = 2;
 
                         ctx.beginPath();
-                        if (this.type === 0) { // Diplococci
+                        if (this.type === 0) {
                             ctx.arc(-this.size/1.5, 0, this.size/1.2, 0, Math.PI * 2);
                             ctx.arc(this.size/1.5, 0, this.size/1.2, 0, Math.PI * 2);
                             ctx.fill();
-                        } else if (this.type === 1) { // Bacilli
+                        } else if (this.type === 1) {
                             ctx.arc(-this.size, 0, this.size/1.5, Math.PI/2, Math.PI*1.5);
                             ctx.lineTo(this.size, -this.size/1.5);
                             ctx.arc(this.size, 0, this.size/1.5, -Math.PI/2, Math.PI/2);
                             ctx.closePath();
                             ctx.fill();
-                        } else { // Spirilla
+                        } else {
                             ctx.moveTo(-this.size * 2, 0);
                             ctx.bezierCurveTo(-this.size, -this.size*2, this.size, this.size*2, this.size * 2, 0);
                             ctx.stroke();
@@ -185,15 +172,14 @@
             return <canvas ref={canvasRef} className="absolute top-0 left-0 w-full h-full pointer-events-none z-10 opacity-70" />;
         };
 
-        const Navbar = ({ darkMode, setDarkMode, setView, currentView, settings }) => {
+        const Navbar = ({ darkMode, setDarkMode, setView, currentView, settings, isSearchOpen, setIsSearchOpen }) => {
             const [mobileMenu, setMobileMenu] = useState(false);
             
-            // Lock body scroll when menu is open
             useEffect(() => {
-                if (mobileMenu) document.body.style.overflow = 'hidden';
+                if (mobileMenu || isSearchOpen) document.body.style.overflow = 'hidden';
                 else document.body.style.overflow = 'unset';
                 return () => { document.body.style.overflow = 'unset'; };
-            }, [mobileMenu]);
+            }, [mobileMenu, isSearchOpen]);
 
             const navLinks = [
                 { name: 'Home', id: 'home', icon: 'layout' },
@@ -208,53 +194,52 @@
             ];
 
             return (
-                <nav className="glass-nav text-gray-900 dark:text-white w-full fixed top-0 z-50 transition-colors">
+                <nav className="bg-[#0B1423] text-white border-b border-white/10 w-full fixed top-0 z-50">
                     <div className="max-w-[1600px] mx-auto px-4 sm:px-6 lg:px-8">
                         <div className="flex justify-between items-center h-20">
                             
-                            {/* Logo */}
+                            {/* Logo synced exactly with footer colors */}
                             <div className="flex-shrink-0 cursor-pointer flex items-center gap-3" onClick={() => { setView('home'); setMobileMenu(false); }}>
                                 {settings?.logo_url ? (
                                     <img src={settings.logo_url} alt="Logo" className="w-10 h-10 rounded-lg object-cover shadow-sm" />
                                 ) : (
-                                    <div className="text-[#D4AF37] dark:text-[#2E8B57]">
+                                    <div className="text-[#D4AF37]">
                                         <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
                                             <path d="M4 19.5v-15A2.5 2.5 0 0 1 6.5 2H20v20H6.5a2.5 2.5 0 0 1 0-5H20"/><path d="M8 7h6"/><path d="M8 11h8"/>
                                         </svg>
                                     </div>
                                 )}
-                                <div className="flex flex-col">
-                                    <h1 className="font-serif font-bold text-xl leading-tight text-[#0B1423] dark:text-white">Ajayi Knowledge Hub</h1>
-                                    <span className="text-[#D4AF37] dark:text-[#2E8B57] text-[10px] tracking-wider uppercase font-medium">Explore. Learn. Discover. Grow.</span>
+                                <div className="flex flex-col hidden sm:block">
+                                    <h1 className="font-serif font-bold text-xl leading-tight text-white">Ajayi Knowledge Hub</h1>
+                                    <span className="text-[#D4AF37] text-[10px] tracking-wider uppercase font-medium">Explore. Learn. Discover. Grow.</span>
                                 </div>
                             </div>
                             
                             {/* Actions (Solid buttons to pop out) */}
                             <div className="flex items-center space-x-2 sm:space-x-3">
-                                <button onClick={() => setView('ai')} className="hidden sm:flex items-center px-4 py-2 rounded-xl bg-white dark:bg-[#0B1423] text-[#2E8B57] border border-[#2E8B57]/30 dark:border-[#2E8B57]/50 hover:bg-[#2E8B57] hover:text-white text-sm font-bold transition-all shadow-sm">
+                                <button onClick={() => setView('ai')} className="hidden sm:flex items-center px-4 py-2 rounded-xl bg-white dark:bg-[#1E1E1E] text-[#2E8B57] border border-[#2E8B57]/30 dark:border-[#2E8B57]/50 hover:bg-[#2E8B57] hover:text-white text-sm font-bold transition-all shadow-sm">
                                     <Icon name="magic" size={16} className="mr-2" /> Ask AI
                                 </button>
-                                <button className="w-10 h-10 rounded-xl bg-white dark:bg-[#0B1423] border border-gray-200 dark:border-white/10 flex items-center justify-center text-gray-600 dark:text-gray-300 hover:text-[#2E8B57] dark:hover:text-[#2E8B57] transition-all shadow-sm hidden xs:flex">
+                                <button onClick={() => setIsSearchOpen(true)} className="w-10 h-10 rounded-xl bg-white dark:bg-[#1E1E1E] border border-gray-200 dark:border-white/10 flex items-center justify-center text-gray-600 dark:text-gray-300 hover:text-[#2E8B57] dark:hover:text-[#2E8B57] transition-all shadow-sm">
                                     <Icon name="search" size={18} />
                                 </button>
-                                <button onClick={() => setDarkMode(!darkMode)} className="w-10 h-10 rounded-xl bg-white dark:bg-[#0B1423] border border-gray-200 dark:border-white/10 flex items-center justify-center text-gray-600 dark:text-gray-300 hover:text-[#2E8B57] dark:hover:text-[#2E8B57] transition-all shadow-sm">
+                                <button onClick={() => setDarkMode(!darkMode)} className="w-10 h-10 rounded-xl bg-white dark:bg-[#1E1E1E] border border-gray-200 dark:border-white/10 flex items-center justify-center text-gray-600 dark:text-gray-300 hover:text-[#2E8B57] dark:hover:text-[#2E8B57] transition-all shadow-sm">
                                     {darkMode ? <Icon name="sun" size={18} /> : <Icon name="moon" size={18} />}
                                 </button>
                                 
-                                {/* SOLID Hamburger Menu Button */}
-                                <button onClick={() => setMobileMenu(!mobileMenu)} className="w-12 h-12 rounded-xl bg-white dark:bg-[#0B1423] border border-gray-200 dark:border-white/20 flex items-center justify-center text-gray-800 dark:text-white hover:text-[#2E8B57] dark:hover:text-[#2E8B57] hover:border-[#2E8B57] transition-all shadow-md relative z-50">
+                                <button onClick={() => setMobileMenu(!mobileMenu)} className="w-12 h-12 rounded-xl bg-white dark:bg-[#1E1E1E] border border-gray-200 dark:border-white/20 flex items-center justify-center text-gray-800 dark:text-white hover:text-[#2E8B57] dark:hover:text-[#2E8B57] hover:border-[#2E8B57] transition-all shadow-md relative z-50">
                                     <Icon name={mobileMenu ? "x" : "menu"} size={26} />
                                 </button>
                             </div>
                         </div>
                     </div>
 
-                    {/* Dark Background Overlay (Blurs out the site when menu is open) */}
+                    {/* Dark Background Overlay */}
                     {mobileMenu && (
-                        <div className="fixed inset-0 top-20 bg-black/40 backdrop-blur-sm z-30" onClick={() => setMobileMenu(false)}></div>
+                        <div className="fixed inset-0 top-20 bg-black/60 backdrop-blur-sm z-30" onClick={() => setMobileMenu(false)}></div>
                     )}
 
-                    {/* Universal Solid Dropdown Menu (No Transparency) */}
+                    {/* Dropdown Menu */}
                     {mobileMenu && (
                         <div className="absolute top-full left-0 w-full bg-white dark:bg-[#0B1423] z-40 overflow-y-auto max-h-[80vh] px-4 py-8 animate-slide-down flex flex-col shadow-2xl border-t border-gray-200 dark:border-white/10">
                             <div className="max-w-3xl mx-auto w-full grid grid-cols-1 sm:grid-cols-2 gap-3">
@@ -262,7 +247,7 @@
                                     <button 
                                         key={link.id} 
                                         onClick={() => { setView(link.id); setMobileMenu(false); }}
-                                        className={`flex items-center w-full text-left px-6 py-4 rounded-xl text-lg font-bold transition-all transform hover:scale-[1.02] shadow-sm ${currentView === link.id ? 'bg-[#2E8B57] text-white' : 'bg-gray-50 dark:bg-gray-800 text-gray-800 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700 hover:text-gray-900 dark:hover:text-white border border-gray-200 dark:border-gray-700'}`}
+                                        className={`flex items-center w-full text-left px-6 py-4 rounded-xl text-lg font-bold transition-all shadow-sm ${currentView === link.id ? 'bg-[#2E8B57] text-white' : 'bg-gray-50 dark:bg-gray-800 text-gray-800 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700 hover:text-gray-900 dark:hover:text-white border border-gray-200 dark:border-gray-700'}`}
                                     >
                                         <Icon name={link.icon} size={20} className="mr-4 opacity-70" />
                                         {link.name}
@@ -280,20 +265,73 @@
             );
         };
 
+        const SearchOverlay = ({ isOpen, setIsOpen, publications, navigateTo }) => {
+            const [query, setQuery] = useState('');
+            
+            if (!isOpen) return null;
+            
+            const results = query.trim() === '' ? [] : publications.filter(p => 
+                p.title.toLowerCase().includes(query.toLowerCase()) || 
+                p.summary.toLowerCase().includes(query.toLowerCase()) ||
+                (p.tags && p.tags.join(' ').toLowerCase().includes(query.toLowerCase())) ||
+                p.category.toLowerCase().includes(query.toLowerCase())
+            );
+
+            return (
+                <div className="fixed inset-0 z-[100] bg-white/95 dark:bg-[#0a0a0a]/95 backdrop-blur-md animate-fade-in flex flex-col">
+                    <div className="max-w-4xl mx-auto w-full p-6 pt-12 flex-1 flex flex-col">
+                        <div className="flex justify-between items-center mb-8">
+                            <h2 className="text-2xl font-bold font-serif text-[#0B1423] dark:text-white">Search Hub</h2>
+                            <button onClick={() => { setIsOpen(false); setQuery(''); }} className="p-2 bg-gray-100 dark:bg-gray-800 rounded-full text-gray-600 dark:text-gray-300 hover:text-red-500">
+                                <Icon name="x" size={24} />
+                            </button>
+                        </div>
+                        
+                        <div className="relative mb-8">
+                            <Icon name="search" size={24} className="absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400" />
+                            <input 
+                                autoFocus
+                                type="text" 
+                                placeholder="Search by title, topic, or tag..." 
+                                value={query}
+                                onChange={(e) => setQuery(e.target.value)}
+                                className="w-full pl-12 pr-4 py-4 text-xl rounded-2xl bg-gray-100 dark:bg-[#1a1a1a] border border-gray-200 dark:border-gray-800 focus:outline-none focus:border-[#2E8B57] focus:ring-2 focus:ring-[#2E8B57]/20 text-gray-900 dark:text-white" 
+                            />
+                        </div>
+
+                        <div className="flex-1 overflow-y-auto hide-scrollbar space-y-4">
+                            {query && results.length === 0 && (
+                                <div className="text-center text-gray-500 mt-12 font-medium">No results found for "{query}"</div>
+                            )}
+                            {results.map(item => (
+                                <div 
+                                    key={item.id} 
+                                    onClick={() => {
+                                        setIsOpen(false);
+                                        setQuery('');
+                                        navigateTo((item.type === 'journal' || item.type === 'blog') ? 'reading' : 'detail', item);
+                                    }}
+                                    className="p-5 bg-white dark:bg-[#1E1E1E] rounded-xl border border-gray-200 dark:border-gray-800 shadow-sm hover:border-[#2E8B57] dark:hover:border-[#2E8B57] cursor-pointer transition-colors"
+                                >
+                                    <div className="text-xs font-bold uppercase text-[#2E8B57] mb-1">{item.type} • {item.category}</div>
+                                    <h4 className="text-lg font-bold text-[#0B1423] dark:text-white mb-2">{item.title}</h4>
+                                    <p className="text-sm text-gray-600 dark:text-gray-400 line-clamp-2">{item.summary}</p>
+                                </div>
+                            ))}
+                        </div>
+                    </div>
+                </div>
+            );
+        };
+
         const PublicationDetailView = ({ item, setView }) => {
             const [showCitation, setShowCitation] = useState(false);
-            
-            const handleDownload = async (url) => {
-                if(window.supabase) await window.supabase.rpc('increment_download');
-                window.open(url, '_blank');
-            };
-
+            const handleDownload = async (url) => { if(window.supabase) await window.supabase.rpc('increment_download'); window.open(url, '_blank'); };
             return (
                 <div className="max-w-5xl mx-auto px-4 sm:px-6 pt-32 pb-24 relative z-10 min-h-screen animate-fade-in">
                     <button onClick={() => window.history.back()} className="flex items-center text-[#2E8B57] hover:opacity-80 transition-opacity mb-8 font-medium">
                         &larr; Back
                     </button>
-                    
                     <div className="bg-white dark:bg-[#1E1E1E] rounded-3xl p-8 shadow-xl border border-gray-100 dark:border-gray-800 mb-12">
                         <div className="flex flex-col md:flex-row gap-10">
                             <div className="w-full md:w-1/3 flex-shrink-0">
@@ -308,15 +346,12 @@
                                     <span className="text-gray-500 dark:text-gray-400 text-sm font-medium">{item.published_date}</span>
                                 </div>
                                 <h1 className="text-3xl md:text-5xl font-bold font-serif text-[#0B1423] dark:text-white mb-6 leading-tight break-words">{item.title}</h1>
-                                
                                 <div className="flex flex-wrap gap-2 mb-6">
                                     {(item.tags || []).map(tag => (
                                         <span key={tag} className="text-xs text-gray-500 bg-gray-100 dark:bg-gray-800 px-2 py-1 rounded-md">#{tag}</span>
                                     ))}
                                 </div>
-
                                 <p className="text-gray-600 dark:text-gray-300 text-lg leading-relaxed mb-8">{item.summary}</p>
-                                
                                 <div className="flex flex-wrap gap-4 mt-auto">
                                     {item.file_url ? (
                                         <button onClick={() => handleDownload(item.file_url)} className="flex items-center bg-[#2E8B57] hover:bg-[#257348] text-white px-6 py-3 rounded-xl font-medium transition-all shadow-md">
@@ -331,7 +366,6 @@
                                         Cite
                                     </button>
                                 </div>
-
                                 {showCitation && (
                                     <div className="mt-4 p-4 bg-gray-50 dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 animate-fade-in text-sm font-serif break-words">
                                         Ajayi, P. O. ({item.published_date}). <i>{item.title}</i>.
@@ -345,11 +379,7 @@
         };
 
         const ArticleReadingView = ({ item, setView }) => {
-            const handleDownload = async (url) => {
-                if(window.supabase) await window.supabase.rpc('increment_download');
-                window.open(url, '_blank');
-            };
-
+            const handleDownload = async (url) => { if(window.supabase) await window.supabase.rpc('increment_download'); window.open(url, '_blank'); };
             return (
                 <div className="max-w-3xl mx-auto px-4 sm:px-6 pt-32 pb-24 relative z-10 min-h-screen animate-fade-in">
                     <button onClick={() => window.history.back()} className="flex items-center text-[#2E8B57] hover:opacity-80 transition-opacity mb-8 font-medium">
@@ -365,7 +395,6 @@
                             {item.content || item.summary}
                         </div>
                     </article>
-
                     {item.file_url && (
                         <div className="mt-12 p-6 bg-[#2E8B57]/10 rounded-2xl border border-[#2E8B57]/30 flex flex-col sm:flex-row items-center justify-between">
                             <div className="flex items-center mb-4 sm:mb-0">
@@ -403,12 +432,10 @@
                     <div className="w-full md:w-2/3 min-w-0">
                         <h1 className="text-4xl md:text-5xl font-bold font-serif text-[#0B1423] dark:text-white mb-2 break-words">{settings?.display_name || 'Paul Olakiitan Ajayi'}</h1>
                         <p className="text-xl text-[#2E8B57] font-medium mb-8 break-words">{settings?.bio || 'Microbiologist · Researcher · Educator'}</p>
-                        
                         <div className="p-6 bg-[#2E8B57]/10 rounded-2xl border border-[#2E8B57]/30 mb-8 shadow-sm">
                             <h3 className="text-xl font-bold text-[#0B1423] dark:text-white mb-3 mt-0 flex items-center">Mission</h3>
                             <p className="m-0 text-gray-800 dark:text-gray-200 font-medium">{settings?.mission_text || 'To advance science through research.'}</p>
                         </div>
-                        
                         <div className="text-gray-700 dark:text-gray-300 leading-relaxed font-serif text-lg whitespace-pre-wrap break-words">
                             {settings?.about_text || 'Loading about text...'}
                         </div>
@@ -511,10 +538,10 @@
                     <p className="text-base md:text-lg text-gray-300 mb-12 max-w-3xl mx-auto font-light leading-relaxed">Here I share my books, scientific research, teaching materials, journals, articles, and ideas as I pursue a lifelong mission of learning, discovery, and service.</p>
                     
                     <div className="flex flex-wrap items-center justify-center gap-4">
-                        <button onClick={() => setView('library')} className="px-8 py-3.5 bg-[#2E8B57] text-white text-sm font-semibold rounded-lg flex items-center justify-center gap-2 hover:bg-[#257348] border border-[#2E8B57]"><Icon name="book" size={18} /> Explore Library</button>
-                        <button onClick={() => setView('research')} className="px-8 py-3.5 bg-transparent text-white text-sm font-semibold rounded-lg flex items-center justify-center gap-2 hover:bg-white/5 border border-blue-400/30"><Icon name="microscope" size={18} /> Research Archive</button>
-                        <button onClick={() => setView('teaching')} className="px-8 py-3.5 bg-[#3B7A57]/80 text-white text-sm font-semibold rounded-lg flex items-center justify-center gap-2 hover:bg-[#3B7A57] border border-[#3B7A57]"><Icon name="gradCap" size={18} /> Teaching Hub</button>
-                        <button onClick={() => setView('about')} className="px-8 py-3.5 bg-transparent text-white text-sm font-semibold rounded-lg flex items-center justify-center gap-2 hover:bg-white/5 border border-white/20"><Icon name="users" size={18} /> About Me</button>
+                        <button onClick={() => setView('library')} className="px-8 py-3.5 bg-[#2E8B57] hover:bg-[#257348] text-white text-sm font-semibold rounded-lg flex items-center justify-center gap-2 border border-[#2E8B57] transition-colors"><Icon name="book" size={18} /> Explore Library</button>
+                        <button onClick={() => setView('research')} className="px-8 py-3.5 bg-transparent hover:bg-white/5 text-white text-sm font-semibold rounded-lg flex items-center justify-center gap-2 border border-blue-400/30 transition-colors"><Icon name="microscope" size={18} /> Research Archive</button>
+                        <button onClick={() => setView('teaching')} className="px-8 py-3.5 bg-[#3B7A57]/80 hover:bg-[#3B7A57] text-white text-sm font-semibold rounded-lg flex items-center justify-center gap-2 border border-[#3B7A57] transition-colors"><Icon name="gradCap" size={18} /> Teaching Hub</button>
+                        <button onClick={() => setView('about')} className="px-8 py-3.5 bg-transparent hover:bg-white/5 text-white text-sm font-semibold rounded-lg flex items-center justify-center gap-2 border border-white/20 transition-colors"><Icon name="users" size={18} /> About Me</button>
                     </div>
                 </div>
             </section>
@@ -532,19 +559,19 @@
                     <div className="max-w-[1600px] mx-auto px-4 sm:px-6 lg:px-8">
                         <div className="flex flex-nowrap overflow-x-auto pb-6 gap-6 snap-x snap-mandatory hide-scrollbar">
                             
-                            {/* Featured Book Card */}
+                            {/* Featured Book */}
                             <div className="snap-start shrink-0 w-[350px] md:w-[400px] bg-white dark:bg-[#1E1E1E] rounded-xl border border-gray-200 dark:border-gray-800 p-5 shadow-sm flex flex-col cursor-pointer" onClick={() => featuredBook && navigateTo('detail', featuredBook)}>
                                 <div className="flex justify-between items-center mb-5 border-b border-gray-100 dark:border-gray-800 pb-3">
                                     <div className="flex items-center gap-2 font-serif font-bold text-lg dark:text-white"><Icon name="book" size={20} className="text-gray-700 dark:text-gray-300" /> Featured Book</div>
                                 </div>
                                 <div className="flex gap-4 flex-grow min-w-0">
-                                    <div className="w-1/3 shrink-0">
-                                        <div className="bg-[#112435] p-2 rounded shadow-md aspect-[2/3] flex items-center justify-center text-center border-l-4 border-[#2E8B57]">
+                                    <div className="w-[100px] shrink-0">
+                                        <div className="bg-[#112435] p-2 rounded shadow-md aspect-[2/3] flex items-center justify-center text-center border-l-4 border-[#2E8B57] w-full">
                                             <div className="text-white min-w-0 w-full px-1">
                                                 <div className="text-[10px] uppercase mb-1 truncate">The</div>
-                                                <div className="text-xs font-serif font-bold leading-tight mb-2 line-clamp-3">{featuredBook ? featuredBook.title : "Hidden World of Microbes"}</div>
+                                                <div className="text-xs font-serif font-bold leading-tight mb-2 line-clamp-3">{featuredBook ? featuredBook.title : "Microbes"}</div>
                                                 <div className="w-6 h-[1px] bg-[#2E8B57] mx-auto mb-2"></div>
-                                                <div className="text-[8px] text-gray-400 truncate">Paul Olakiitan Ajayi</div>
+                                                <div className="text-[8px] text-gray-400 truncate">Paul Ajayi</div>
                                             </div>
                                         </div>
                                     </div>
@@ -558,26 +585,26 @@
                                 </div>
                             </div>
 
-                            {/* Latest Research Card */}
+                            {/* Latest Research */}
                             <div className="snap-start shrink-0 w-[350px] md:w-[400px] bg-white dark:bg-[#1E1E1E] rounded-xl border border-gray-200 dark:border-gray-800 p-5 shadow-sm flex flex-col cursor-pointer" onClick={() => latestResearch && navigateTo('detail', latestResearch)}>
                                 <div className="flex justify-between items-center mb-5 border-b border-gray-100 dark:border-gray-800 pb-3">
                                     <div className="flex items-center gap-2 font-serif font-bold text-lg dark:text-white"><Icon name="microscope" size={20} className="text-gray-700 dark:text-gray-300" /> Latest Research</div>
                                 </div>
                                 <div className="flex flex-col h-full min-w-0">
                                     <div className="h-32 shrink-0 bg-gray-200 dark:bg-gray-700 rounded-lg mb-4 overflow-hidden bg-[url('https://images.unsplash.com/photo-1576086213369-97a306d36557?auto=format&fit=crop&q=80&w=400')] bg-cover bg-center"></div>
-                                    <h4 className="font-serif font-bold text-base mb-1 leading-tight dark:text-white truncate">{latestResearch ? latestResearch.title : "Plant Growth-Promoting Bacillus"}</h4>
+                                    <h4 className="font-serif font-bold text-base mb-1 leading-tight dark:text-white truncate">{latestResearch ? latestResearch.title : "Plant Growth Bacillus"}</h4>
                                     <p className="text-sm text-gray-600 dark:text-gray-400 mb-4 line-clamp-3 flex-grow break-words">{latestResearch ? latestResearch.summary : "Whole genome analysis of Bacillus strains."}</p>
                                     <button className="text-[#2E8B57] text-sm font-medium hover:underline text-left flex items-center gap-1 mt-auto">Read Now <span className="text-lg leading-none">&rarr;</span></button>
                                 </div>
                             </div>
 
-                            {/* Latest Journal Card */}
+                            {/* Latest Journal */}
                             <div className="snap-start shrink-0 w-[350px] md:w-[400px] bg-white dark:bg-[#1E1E1E] rounded-xl border border-gray-200 dark:border-gray-800 p-5 shadow-sm flex flex-col cursor-pointer" onClick={() => latestJournal && navigateTo('reading', latestJournal)}>
                                 <div className="flex justify-between items-center mb-5 border-b border-gray-100 dark:border-gray-800 pb-3">
                                     <div className="flex items-center gap-2 font-serif font-bold text-lg dark:text-white"><Icon name="layout" size={20} className="text-gray-700 dark:text-gray-300" /> Latest Journal</div>
                                 </div>
                                 <div className="flex gap-4 h-full min-w-0">
-                                    <div className="w-2/5 shrink-0 min-h-[140px] bg-gray-200 rounded-lg overflow-hidden bg-[url('https://images.unsplash.com/photo-1464822759023-fed622ff2c3b?auto=format&fit=crop&q=80&w=400')] bg-cover bg-center"></div>
+                                    <div className="w-[120px] shrink-0 h-full min-h-[140px] bg-gray-200 rounded-lg overflow-hidden bg-[url('https://images.unsplash.com/photo-1464822759023-fed622ff2c3b?auto=format&fit=crop&q=80&w=400')] bg-cover bg-center"></div>
                                     <div className="flex flex-col flex-grow min-w-0">
                                         <h4 className="font-serif font-bold text-base mb-1 leading-tight dark:text-white line-clamp-2">{latestJournal ? latestJournal.title : "Reflections on Growth"}</h4>
                                         <p className="text-sm text-gray-600 dark:text-gray-400 mb-4 line-clamp-4 flex-grow break-words">{latestJournal ? latestJournal.summary : "A personal reflection on the journey of becoming."}</p>
@@ -586,13 +613,13 @@
                                 </div>
                             </div>
 
-                            {/* Latest Blog Card */}
+                            {/* Latest Blog */}
                             <div className="snap-start shrink-0 w-[350px] md:w-[400px] bg-white dark:bg-[#1E1E1E] rounded-xl border border-gray-200 dark:border-gray-800 p-5 shadow-sm flex flex-col cursor-pointer" onClick={() => latestBlog && navigateTo('reading', latestBlog)}>
                                 <div className="flex justify-between items-center mb-5 border-b border-gray-100 dark:border-gray-800 pb-3">
                                     <div className="flex items-center gap-2 font-serif font-bold text-lg dark:text-white"><Icon name="pencil" size={20} className="text-gray-700 dark:text-gray-300" /> Latest Blog</div>
                                 </div>
                                 <div className="flex gap-4 h-full min-w-0">
-                                    <div className="w-2/5 shrink-0 min-h-[140px] bg-gray-200 rounded-lg overflow-hidden bg-[url('https://images.unsplash.com/photo-1581093458791-9f3c3900df4b?auto=format&fit=crop&q=80&w=400')] bg-cover bg-center"></div>
+                                    <div className="w-[120px] shrink-0 h-full min-h-[140px] bg-gray-200 rounded-lg overflow-hidden bg-[url('https://images.unsplash.com/photo-1581093458791-9f3c3900df4b?auto=format&fit=crop&q=80&w=400')] bg-cover bg-center"></div>
                                     <div className="flex flex-col flex-grow min-w-0">
                                         <h4 className="font-serif font-bold text-base mb-1 leading-tight dark:text-white line-clamp-2">{latestBlog ? latestBlog.title : "Why Microbes Matter"}</h4>
                                         <p className="text-sm text-gray-600 dark:text-gray-400 mb-4 line-clamp-4 flex-grow break-words">{latestBlog ? latestBlog.summary : "Microorganisms are the unseen engineers of life."}</p>
@@ -601,7 +628,7 @@
                                 </div>
                             </div>
 
-                            {/* Current Projects Card */}
+                            {/* Current Project */}
                             <div className="snap-start shrink-0 w-[350px] md:w-[400px] bg-white dark:bg-[#1E1E1E] rounded-xl border border-gray-200 dark:border-gray-800 p-5 shadow-sm flex flex-col cursor-pointer" onClick={() => currentProject && navigateTo('detail', currentProject)}>
                                 <div className="flex justify-between items-center mb-5 border-b border-gray-100 dark:border-gray-800 pb-3">
                                     <div className="flex items-center gap-2 font-serif font-bold text-lg dark:text-white"><Icon name="chart" size={20} className="text-gray-700 dark:text-gray-300" /> Current Project</div>
@@ -633,65 +660,77 @@
             );
         };
 
-        const BottomInfo = ({ settings }) => (
-            <div className="max-w-[1600px] mx-auto px-4 sm:px-6 lg:px-8 mb-16 mt-8">
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                    {/* Quote */}
-                    <div className="bg-white dark:bg-[#1E1E1E] rounded-xl border border-gray-200 dark:border-gray-800 p-8 shadow-sm relative min-w-0">
-                        <div className="text-[#2E8B57] absolute top-6 left-6 opacity-30">
-                            <svg width="40" height="40" viewBox="0 0 24 24" fill="currentColor"><path d="M14.017 21v-7.391c0-5.704 3.731-9.57 8.983-10.609l.995 2.151c-2.432.917-3.995 3.638-3.995 5.849h4v10h-9.983zm-14.017 0v-7.391c0-5.704 3.748-9.57 9-10.609l.996 2.151c-2.433.917-3.996 3.638-3.996 5.849h3.983v10h-9.983z"/></svg>
-                        </div>
-                        <div className="pl-8 relative z-10">
-                            <h3 className="font-serif font-bold text-lg mb-4 dark:text-white flex items-center gap-2">Quote of the Day</h3>
-                            <p className="text-gray-700 dark:text-gray-300 font-serif italic mb-4">"The beautiful thing about learning is that no one can take it away from you."</p>
-                            <div className="text-sm font-bold text-[#2E8B57]">- B.B. King</div>
-                        </div>
-                    </div>
+        const BottomInfo = ({ settings }) => {
+            const [email, setEmail] = useState('');
+            const [status, setStatus] = useState('');
 
-                    {/* Newsletter */}
-                    <div className="bg-white dark:bg-[#1E1E1E] rounded-xl border border-gray-200 dark:border-gray-800 p-8 shadow-sm min-w-0">
-                        <h3 className="font-serif font-bold text-lg mb-2 dark:text-white flex items-center gap-2">
-                            <Icon name="pencil" size={20} className="text-gray-500" /> Stay Updated
-                        </h3>
-                        <p className="text-sm text-gray-600 dark:text-gray-400 mb-6">Subscribe to my newsletter and never miss new research, books, and insights.</p>
-                        <form className="flex gap-2 w-full" onSubmit={(e) => { e.preventDefault(); alert("Thanks for subscribing!"); }}>
-                            <input type="email" required placeholder="Email" className="w-full min-w-0 bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg px-4 py-2 text-sm focus:outline-none focus:border-[#2E8B57]" />
-                            <button className="shrink-0 bg-[#2E8B57] hover:bg-[#257348] text-white px-4 sm:px-6 py-2 rounded-lg text-sm font-medium transition-colors">Join</button>
-                        </form>
-                    </div>
+            const handleSubscribe = async (e) => {
+                e.preventDefault();
+                setStatus('Joining...');
+                if (window.supabase) {
+                    const { error } = await supabase.from('subscribers').insert([{ email }]);
+                    if (error) {
+                        setStatus(error.code === '23505' ? 'Already subscribed!' : 'Error subscribing.');
+                    } else {
+                        setStatus('Success! Thank you.');
+                        setEmail('');
+                    }
+                    setTimeout(() => setStatus(''), 5000);
+                }
+            };
 
-                    {/* Socials */}
-                    <div className="bg-white dark:bg-[#1E1E1E] rounded-xl border border-gray-200 dark:border-gray-800 p-8 shadow-sm min-w-0 md:col-span-2 lg:col-span-1">
-                        <h3 className="font-serif font-bold text-lg mb-2 dark:text-white flex items-center gap-2">
-                             <Icon name="globe" size={20} className="text-gray-500" /> Let's Connect
-                        </h3>
-                        <p className="text-sm text-gray-600 dark:text-gray-400 mb-6">Join a community of learners building a better future through knowledge.</p>
-                        <div className="flex flex-wrap gap-3">
-                            {settings?.linkedin_url && (
-                                <a href={settings.linkedin_url} target="_blank" className="w-10 h-10 rounded-full bg-[#0077b5] text-white flex items-center justify-center hover:opacity-90">
-                                    <span className="font-bold text-lg">in</span>
-                                </a>
-                            )}
-                            {settings?.facebook_url && (
-                                <a href={settings.facebook_url} target="_blank" className="w-10 h-10 rounded-full bg-[#1877F2] text-white flex items-center justify-center hover:opacity-90">
-                                    <span className="font-bold text-lg text-center leading-none mt-1">f</span>
-                                </a>
-                            )}
-                            {settings?.orcid_url && (
-                                <a href={settings.orcid_url} target="_blank" className="w-10 h-10 rounded-full bg-[#A6CE39] text-white flex items-center justify-center hover:opacity-90">
-                                    <span className="font-bold text-[10px]">iD</span>
-                                </a>
-                            )}
-                            {settings?.whatsapp_number && (
-                                <a href={`https://wa.me/${settings.whatsapp_number.replace(/\D/g,'')}`} target="_blank" className="w-10 h-10 rounded-full bg-[#25D366] text-white flex items-center justify-center hover:opacity-90">
-                                    <span className="font-bold text-lg">W</span>
-                                </a>
-                            )}
+            return (
+                <div className="max-w-[1600px] mx-auto px-4 sm:px-6 lg:px-8 mb-16 mt-8">
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                        {/* Quote */}
+                        <div className="bg-white dark:bg-[#1E1E1E] rounded-xl border border-gray-200 dark:border-gray-800 p-8 shadow-sm relative min-w-0">
+                            <div className="text-[#2E8B57] absolute top-6 left-6 opacity-30">
+                                <svg width="40" height="40" viewBox="0 0 24 24" fill="currentColor"><path d="M14.017 21v-7.391c0-5.704 3.731-9.57 8.983-10.609l.995 2.151c-2.432.917-3.995 3.638-3.995 5.849h4v10h-9.983zm-14.017 0v-7.391c0-5.704 3.748-9.57 9-10.609l.996 2.151c-2.433.917-3.996 3.638-3.996 5.849h3.983v10h-9.983z"/></svg>
+                            </div>
+                            <div className="pl-8 relative z-10">
+                                <h3 className="font-serif font-bold text-lg mb-4 dark:text-white flex items-center gap-2">Quote of the Day</h3>
+                                <p className="text-gray-700 dark:text-gray-300 font-serif italic mb-4">"The beautiful thing about learning is that no one can take it away from you."</p>
+                                <div className="text-sm font-bold text-[#2E8B57]">- B.B. King</div>
+                            </div>
+                        </div>
+
+                        {/* Newsletter */}
+                        <div className="bg-white dark:bg-[#1E1E1E] rounded-xl border border-gray-200 dark:border-gray-800 p-8 shadow-sm min-w-0">
+                            <h3 className="font-serif font-bold text-lg mb-2 dark:text-white flex items-center gap-2">
+                                <Icon name="pencil" size={20} className="text-gray-500" /> Stay Updated
+                            </h3>
+                            <p className="text-sm text-gray-600 dark:text-gray-400 mb-6">Subscribe to my newsletter and never miss new research, books, and insights.</p>
+                            <form className="flex gap-2 w-full" onSubmit={handleSubscribe}>
+                                <input type="email" required placeholder="Email address" value={email} onChange={e => setEmail(e.target.value)} className="w-full min-w-0 bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg px-4 py-2 text-sm focus:outline-none focus:border-[#2E8B57]" />
+                                <button type="submit" disabled={!!status} className="shrink-0 bg-[#2E8B57] hover:bg-[#257348] text-white px-4 sm:px-6 py-2 rounded-lg text-sm font-medium transition-colors">{status || 'Join'}</button>
+                            </form>
+                        </div>
+
+                        {/* Socials */}
+                        <div className="bg-white dark:bg-[#1E1E1E] rounded-xl border border-gray-200 dark:border-gray-800 p-8 shadow-sm min-w-0 md:col-span-2 lg:col-span-1">
+                            <h3 className="font-serif font-bold text-lg mb-2 dark:text-white flex items-center gap-2">
+                                 <Icon name="globe" size={20} className="text-gray-500" /> Let's Connect
+                            </h3>
+                            <p className="text-sm text-gray-600 dark:text-gray-400 mb-6">Join a community of learners building a better future through knowledge.</p>
+                            <div className="flex flex-wrap gap-3">
+                                {settings?.linkedin_url && (
+                                    <a href={settings.linkedin_url} target="_blank" className="w-10 h-10 rounded-full bg-[#0077b5] text-white flex items-center justify-center hover:opacity-90"><span className="font-bold text-lg">in</span></a>
+                                )}
+                                {settings?.facebook_url && (
+                                    <a href={settings.facebook_url} target="_blank" className="w-10 h-10 rounded-full bg-[#1877F2] text-white flex items-center justify-center hover:opacity-90"><span className="font-bold text-lg text-center leading-none mt-1">f</span></a>
+                                )}
+                                {settings?.orcid_url && (
+                                    <a href={settings.orcid_url} target="_blank" className="w-10 h-10 rounded-full bg-[#A6CE39] text-white flex items-center justify-center hover:opacity-90"><span className="font-bold text-[10px]">iD</span></a>
+                                )}
+                                {settings?.whatsapp_number && (
+                                    <a href={`https://wa.me/${settings.whatsapp_number.replace(/\D/g,'')}`} target="_blank" className="w-10 h-10 rounded-full bg-[#25D366] text-white flex items-center justify-center hover:opacity-90"><span className="font-bold text-lg">W</span></a>
+                                )}
+                            </div>
                         </div>
                     </div>
                 </div>
-            </div>
-        );
+            );
+        };
 
         const Footer = () => (
             <footer className="bg-[#0B1423] py-8 text-gray-400 text-sm border-t border-white/10">
@@ -707,7 +746,6 @@
                             <span className="text-[#D4AF37] text-[10px] tracking-wider uppercase font-medium block mt-1">Explore. Learn. Discover. Grow.</span>
                         </div>
                     </div>
-                    
                     <div className="flex-1">
                         <p>&copy; {new Date().getFullYear()} Paul Olakiitan Ajayi. All rights reserved.</p>
                         <div className="flex gap-4 justify-center mt-2 text-xs">
@@ -716,10 +754,7 @@
                             <span className="hover:text-white cursor-pointer">Sitemap</span>
                         </div>
                     </div>
-                    
-                    <div>
-                        Built with <span className="text-red-500">♥</span> for knowledge, science, and humanity.
-                    </div>
+                    <div>Built with <span className="text-red-500">♥</span> for knowledge, science, and humanity.</div>
                 </div>
             </footer>
         );
@@ -730,6 +765,7 @@
             const [selectedItem, setSelectedItem] = useState(null);
             const [publications, setPublications] = useState([]);
             const [settings, setSettings] = useState(null);
+            const [isSearchOpen, setIsSearchOpen] = useState(false);
 
             useEffect(() => {
                 if (darkMode) document.documentElement.classList.add('dark');
@@ -739,13 +775,10 @@
             useEffect(() => {
                 const fetchData = async () => {
                     if (!window.supabase) return;
-                    
                     const { data: pubs } = await supabase.from('publications').select('*').order('id', { ascending: false });
                     if (pubs) setPublications(pubs);
-
                     const { data: sets } = await supabase.from('site_settings').select('*').eq('id', 1).single();
                     if (sets) setSettings(sets);
-
                     if (!sessionStorage.getItem('view_counted')) {
                         await supabase.rpc('increment_page_view');
                         sessionStorage.setItem('view_counted', 'true');
@@ -758,13 +791,9 @@
                 setView(newView);
                 setSelectedItem(item);
                 window.scrollTo(0, 0);
-                
-                // Try-catch block prevents preview iframe crashes while keeping Vercel functionality intact
                 try {
                     window.history.pushState({ view: newView, item }, '', `?view=${newView}`);
-                } catch (error) {
-                    console.warn("History API blocked in preview environment, but navigation will continue.");
-                }
+                } catch (error) { console.warn("Navigation handled locally."); }
             };
 
             useEffect(() => {
@@ -816,6 +845,9 @@
 
             const GenericList = ({ title, data }) => (
                 <div className="pt-32 pb-24 max-w-7xl mx-auto px-4 sm:px-6 relative z-10 min-h-screen animate-fade-in">
+                    <button onClick={() => navigateTo('home')} className="flex items-center text-[#2E8B57] hover:opacity-80 transition-opacity mb-8 font-medium">
+                        &larr; Back to Home
+                    </button>
                     <h1 className="text-4xl font-bold font-serif text-[#0B1423] dark:text-white mb-12">{title}</h1>
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
                         {data.map(item => (
@@ -833,7 +865,9 @@
 
             return (
                 <div className="min-h-screen flex flex-col selection:bg-[#2E8B57] selection:text-white">
-                    <Navbar darkMode={darkMode} setDarkMode={setDarkMode} setView={navigateTo} currentView={view} settings={settings} />
+                    <Navbar darkMode={darkMode} setDarkMode={setDarkMode} setView={navigateTo} currentView={view} settings={settings} isSearchOpen={isSearchOpen} setIsSearchOpen={setIsSearchOpen} />
+                    <SearchOverlay isOpen={isSearchOpen} setIsOpen={setIsSearchOpen} publications={publications} navigateTo={navigateTo} />
+                    
                     <main className="flex-grow">
                         {view === 'home' && <HomeContent />}
                         {view === 'detail' && selectedItem && <PublicationDetailView item={selectedItem} setView={setView} />}
