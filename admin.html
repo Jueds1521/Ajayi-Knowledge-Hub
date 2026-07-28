@@ -1,0 +1,240 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Portal - Ajayi Knowledge Hub</title>
+    
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: { navy: '#0B1F3A', 'emerald-custom': '#2E8B57', gold: '#D4AF37' },
+                    fontFamily: { serif: ['Merriweather', 'serif'], sans: ['Inter', 'sans-serif'] }
+                }
+            }
+        }
+    </script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Merriweather:wght@400;700;900&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+    <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+    <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+    <style>
+        body { background-color: #0a0a0a; color: #F9FAFB; font-family: 'Inter', sans-serif; }
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+        .animate-fade-in { animation: fadeIn 0.8s ease-out forwards; }
+    </style>
+</head>
+<body>
+    <div id="root"></div>
+
+    <script type="text/babel">
+        const { useState, useEffect } = React;
+
+        const supabaseUrl = 'https://ulqihwnzujncqpexersp.supabase.co';
+        const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InVscWlod256dWpuY3FwZXhlcnNwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODUyNDIxNjMsImV4cCI6MjEwMDgxODE2M30.vvMQLeUtjVmciJxwqVgiFVZjmHlclY0Z-oHngY3SVso';
+        const supabase = window.supabase.createClient(supabaseUrl, supabaseKey);
+
+        const LoginScreen = ({ onLoginSuccess }) => {
+            const [email, setEmail] = useState('');
+            const [password, setPassword] = useState('');
+            const [loading, setLoading] = useState(false);
+            const [errorMsg, setErrorMsg] = useState(null);
+
+            const handleLogin = async (e) => {
+                e.preventDefault();
+                setLoading(true);
+                setErrorMsg(null);
+                
+                const { data, error } = await supabase.auth.signInWithPassword({
+                    email: email,
+                    password: password,
+                });
+
+                if (error) {
+                    setErrorMsg(error.message);
+                    setLoading(false);
+                } else {
+                    onLoginSuccess(data.session);
+                }
+            };
+
+            return (
+                <div className="min-h-screen flex items-center justify-center p-4 animate-fade-in relative overflow-hidden">
+                    {/* Background decorations */}
+                    <div className="absolute top-[-10%] left-[-10%] w-96 h-96 bg-emerald-900/20 rounded-full blur-3xl pointer-events-none"></div>
+                    <div className="absolute bottom-[-10%] right-[-10%] w-96 h-96 bg-navy rounded-full blur-3xl pointer-events-none"></div>
+
+                    <div className="bg-gray-900 border border-gray-800 p-8 rounded-3xl shadow-2xl w-full max-w-md relative z-10">
+                        <div className="text-center mb-8">
+                            <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-navy to-emerald-custom flex items-center justify-center shadow-lg mx-auto mb-4">
+                                <span className="text-white font-serif font-bold text-3xl">A</span>
+                            </div>
+                            <h2 className="text-2xl font-bold font-serif text-white">Admin Portal</h2>
+                            <p className="text-gray-400 text-sm mt-2">Sign in to manage the Knowledge Hub</p>
+                        </div>
+
+                        {errorMsg && (
+                            <div className="mb-6 p-4 bg-red-900/30 border border-red-800 rounded-xl text-red-200 text-sm flex items-start">
+                                <i className="fas fa-exclamation-circle mt-1 mr-2"></i>
+                                {errorMsg}
+                            </div>
+                        )}
+
+                        <form onSubmit={handleLogin} className="space-y-5">
+                            <div>
+                                <label className="block text-sm font-medium text-gray-300 mb-1">Email Address</label>
+                                <input 
+                                    type="email" 
+                                    required
+                                    value={email}
+                                    onChange={(e) => setEmail(e.target.value)}
+                                    className="w-full px-4 py-3 rounded-xl bg-gray-800 border border-gray-700 focus:outline-none focus:ring-2 focus:ring-emerald-custom text-white" 
+                                    placeholder="paul@example.com"
+                                />
+                            </div>
+                            <div>
+                                <label className="block text-sm font-medium text-gray-300 mb-1">Password</label>
+                                <input 
+                                    type="password" 
+                                    required
+                                    value={password}
+                                    onChange={(e) => setPassword(e.target.value)}
+                                    className="w-full px-4 py-3 rounded-xl bg-gray-800 border border-gray-700 focus:outline-none focus:ring-2 focus:ring-emerald-custom text-white" 
+                                    placeholder="••••••••"
+                                />
+                            </div>
+                            <button 
+                                type="submit" 
+                                disabled={loading}
+                                className={`w-full bg-emerald-600 hover:bg-emerald-700 text-white px-6 py-3.5 rounded-xl font-medium transition-all shadow-md flex justify-center items-center ${loading ? 'opacity-70 cursor-not-allowed' : ''}`}
+                            >
+                                {loading ? <i className="fas fa-spinner fa-spin mr-2"></i> : <i className="fas fa-lock mr-2"></i>}
+                                {loading ? 'Authenticating...' : 'Sign In'}
+                            </button>
+                        </form>
+                        
+                        <div className="mt-6 text-center">
+                            <a href="/index.html" className="text-sm text-gray-500 hover:text-emerald-400 transition-colors">
+                                <i className="fas fa-arrow-left mr-1"></i> Return to main website
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            );
+        };
+
+        const AdminDashboardView = ({ onLogout }) => {
+            return (
+                <div className="min-h-screen bg-[#0a0a0a] flex animate-fade-in">
+                    {/* Sidebar */}
+                    <div className="w-64 bg-gray-900 border-r border-gray-800 hidden md:flex flex-col">
+                        <div className="p-6 border-b border-gray-800">
+                            <div className="flex items-center space-x-2">
+                                <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-navy to-emerald-custom flex items-center justify-center">
+                                    <span className="text-white font-serif font-bold text-sm">A</span>
+                                </div>
+                                <span className="font-serif font-bold text-lg text-white">Ajayi Hub</span>
+                            </div>
+                        </div>
+                        <div className="p-4 flex-1">
+                            <h3 className="text-xs font-bold text-gray-500 uppercase tracking-wider mb-4 px-2">Menu</h3>
+                            <nav className="space-y-1">
+                                {[{name: 'Dashboard', icon: 'fa-chart-line'}, {name: 'Publications', icon: 'fa-book'}, {name: 'Journal & Blog', icon: 'fa-pen-nib'}, {name: 'Settings', icon: 'fa-cog'}].map((item, i) => (
+                                    <button key={i} className={`w-full flex items-center px-4 py-3 text-sm font-medium rounded-xl transition-colors ${i === 0 ? 'bg-emerald-900/20 text-emerald-400' : 'text-gray-400 hover:bg-gray-800'}`}>
+                                        <i className={`fas ${item.icon} mr-3`}></i> {item.name}
+                                    </button>
+                                ))}
+                            </nav>
+                        </div>
+                        <div className="p-4 border-t border-gray-800">
+                            <button onClick={onLogout} className="w-full flex items-center px-4 py-3 text-sm font-medium rounded-xl text-red-400 hover:bg-red-900/20 transition-colors">
+                                <i className="fas fa-sign-out-alt mr-3"></i> Sign Out
+                            </button>
+                        </div>
+                    </div>
+
+                    {/* Main Content */}
+                    <div className="flex-1 p-8 overflow-y-auto">
+                        <div className="max-w-6xl mx-auto">
+                            <div className="flex justify-between items-center mb-8">
+                                <h1 className="text-2xl font-bold font-serif text-white">Overview</h1>
+                                <button className="bg-emerald-600 text-white px-4 py-2 rounded-lg font-medium text-sm shadow-md hover:bg-emerald-700 transition-colors">
+                                    <i className="fas fa-plus mr-2"></i>New Publication
+                                </button>
+                            </div>
+                            
+                            <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+                                {[{label: 'Total Visitors', value: '14,205', trend: '+12%'}, {label: 'Publications Downloads', value: '3,842', trend: '+5%'}, {label: 'Newsletter Subscribers', value: '1,204', trend: '+18%'}].map((stat, i) => (
+                                    <div key={i} className="bg-gray-900 rounded-2xl p-6 border border-gray-800 shadow-sm">
+                                        <p className="text-sm font-medium text-gray-400 mb-1">{stat.label}</p>
+                                        <div className="flex items-end justify-between">
+                                            <h3 className="text-3xl font-bold text-white">{stat.value}</h3>
+                                            <span className="text-emerald-500 text-sm font-bold bg-emerald-900/30 px-2 py-1 rounded">{stat.trend}</span>
+                                        </div>
+                                    </div>
+                                ))}
+                            </div>
+                            
+                            <div className="bg-gray-900 rounded-2xl border border-gray-800 shadow-sm overflow-hidden">
+                                <div className="p-6 border-b border-gray-800">
+                                    <h3 className="text-lg font-bold text-white">Content Database (Coming Soon)</h3>
+                                    <p className="text-sm text-gray-400 mt-1">This is where we will build the forms to publish new content to Supabase.</p>
+                                </div>
+                                <div className="p-12 text-center text-gray-500">
+                                    <i className="fas fa-tools text-4xl mb-4"></i>
+                                    <p>CMS Editor module is under construction.</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            );
+        };
+
+        const AdminApp = () => {
+            const [session, setSession] = useState(null);
+            const [loading, setLoading] = useState(true);
+
+            useEffect(() => {
+                // Check if already logged in when the page loads
+                supabase.auth.getSession().then(({ data: { session } }) => {
+                    setSession(session);
+                    setLoading(false);
+                });
+
+                // Listen for login/logout events
+                const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+                    setSession(session);
+                });
+
+                return () => subscription.unsubscribe();
+            }, []);
+
+            const handleLogout = async () => {
+                await supabase.auth.signOut();
+            };
+
+            if (loading) {
+                return <div className="min-h-screen flex items-center justify-center"><i className="fas fa-spinner fa-spin text-3xl text-emerald-500"></i></div>;
+            }
+
+            // If not logged in, show Login Screen. If logged in, show Dashboard!
+            if (!session) {
+                return <LoginScreen onLoginSuccess={setSession} />;
+            }
+
+            return <AdminDashboardView onLogout={handleLogout} />;
+        };
+
+        const root = ReactDOM.createRoot(document.getElementById('root'));
+        root.render(<AdminApp />);
+    </script>
+</body>
+</html>
