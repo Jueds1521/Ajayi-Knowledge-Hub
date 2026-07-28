@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en" class="dark">
+<html lang="en" class="dark scroll-smooth">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -18,21 +18,27 @@
         }
     </script>
 
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Merriweather:wght@400;700;900&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Merriweather:wght@300;400;700;900&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 
     <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
     <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
     <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
-    
-    <!-- Supabase Client -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
     <style>
         body { background-color: #FAFAFA; color: #111827; font-family: 'Inter', sans-serif; transition: background-color 0.3s ease, color 0.3s ease; }
         .dark body { background-color: #0a0a0a; color: #F9FAFB; }
+        
+        /* Custom scrollbars from reference */
+        ::-webkit-scrollbar { width: 8px; height: 8px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background-color: #cbd5e1; border-radius: 20px; }
+        .dark ::-webkit-scrollbar-thumb { background-color: #334155; }
+        
         .hide-scrollbar::-webkit-scrollbar { display: none; }
         .hide-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+        
         @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
         @keyframes slideUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
         .animate-fade-in { animation: fadeIn 0.8s ease-out forwards; }
@@ -51,8 +57,7 @@
         ];
 
         const mockResearch = [
-          { id: 'm3', type: 'research', title: 'Molecular ID of PGPR in Maize', date: '2023', category: 'Agriculture', tags: ['Maize', 'PGPR'], summary: 'Isolating and identifying beneficial bacteria.', abstract: 'This study isolates and molecularly identifies specific strains of Plant Growth-Promoting Rhizobacteria associated with the rhizosphere of maize.' },
-          { id: 'm4', type: 'research', title: 'Helicobacter pylori Resistance', date: '2022', category: 'Human Health', tags: ['Pathogens', 'Resistance'], summary: 'Antibiotic resistance patterns.', abstract: 'An analysis of the increasing antibiotic resistance patterns observed in Helicobacter pylori and the implications for clinical treatment.' }
+          { id: 'm3', type: 'research', title: 'Molecular ID of PGPR in Maize', date: '2023', category: 'Agriculture', tags: ['Maize', 'PGPR'], summary: 'Isolating and identifying beneficial bacteria.', abstract: 'This study isolates and molecularly identifies specific strains of Plant Growth-Promoting Rhizobacteria associated with the rhizosphere of maize.' }
         ];
 
         const mockJournal = [
@@ -61,8 +66,7 @@
         ];
 
         const mockTeaching = [
-          { id: 'm7', type: 'teaching', title: 'Intro to Bioinformatics', date: '2025', category: 'Tutorial', tags: ['Code', 'Data'], summary: 'Beginner guide to genomic analysis.', abstract: 'A complete module covering the basics of bioinformatics, sequence alignment, and using AI tools to analyze massive biological datasets.' },
-          { id: 'm8', type: 'teaching', title: 'Lab Protocol: PCR Basics', date: '2024', category: 'Protocol', tags: ['Lab', 'Molecular'], summary: 'Step-by-step Polymerase Chain Reaction guide.', abstract: 'A detailed, interactive laboratory protocol for setting up, running, and troubleshooting standard PCR experiments for molecular biology students.' }
+          { id: 'm7', type: 'teaching', title: 'Intro to Bioinformatics', date: '2025', category: 'Tutorial', tags: ['Code', 'Data'], summary: 'Beginner guide to genomic analysis.', abstract: 'A complete module covering the basics of bioinformatics, sequence alignment, and using AI tools to analyze massive biological datasets.' }
         ];
 
         const mockProjects = [
@@ -116,7 +120,7 @@
             animate();
             return () => { window.removeEventListener('resize', resize); if (animationFrameId) cancelAnimationFrame(animationFrameId); };
           }, [isDarkMode]);
-          return <canvas ref={canvasRef} className="fixed top-0 left-0 w-full h-full pointer-events-none z-0" />;
+          return <canvas ref={canvasRef} className="absolute top-0 left-0 w-full h-full pointer-events-none z-0" />;
         };
 
         const PublicationDetailView = ({ item, setView }) => {
@@ -129,7 +133,7 @@
                 <i className="fas fa-arrow-left mr-2"></i> Back to Collection
               </button>
               
-              <div className="bg-white dark:bg-gray-900 rounded-3xl p-8 shadow-xl border border-gray-100 dark:border-gray-800 mb-12">
+              <div className="bg-white dark:bg-[#1E1E1E] rounded-3xl p-8 shadow-xl border border-gray-100 dark:border-gray-800 mb-12">
                 <div className="flex flex-col md:flex-row gap-10">
                   <div className="w-full md:w-1/3 flex-shrink-0">
                     <div className="aspect-[3/4] bg-gradient-to-br from-navy to-[#1a365d] dark:from-gray-800 dark:to-gray-950 rounded-2xl shadow-lg flex flex-col items-center justify-center p-6 text-center border border-gray-200 dark:border-gray-700 relative overflow-hidden">
@@ -180,34 +184,6 @@
                   </div>
                 </div>
               </div>
-
-              {/* Knowledge Graph Simulation */}
-              <div>
-                <h3 className="text-2xl font-bold font-serif text-navy dark:text-white mb-6">Related Knowledge</h3>
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                  <div className="bg-white dark:bg-gray-900 p-5 rounded-2xl border border-gray-100 dark:border-gray-800 shadow-sm flex items-start space-x-4 cursor-pointer hover:border-emerald-200 transition-colors">
-                    <div className="p-3 bg-blue-50 dark:bg-blue-900/20 text-blue-600 rounded-xl"><i className="fas fa-file-alt"></i></div>
-                    <div>
-                      <p className="text-xs text-gray-500 font-bold uppercase mb-1">Research Protocol</p>
-                      <p className="text-sm font-medium text-navy dark:text-white">Isolating Bacillus from Soil</p>
-                    </div>
-                  </div>
-                  <div className="bg-white dark:bg-gray-900 p-5 rounded-2xl border border-gray-100 dark:border-gray-800 shadow-sm flex items-start space-x-4 cursor-pointer hover:border-emerald-200 transition-colors">
-                    <div className="p-3 bg-purple-50 dark:bg-purple-900/20 text-purple-600 rounded-xl"><i className="fas fa-book-open"></i></div>
-                    <div>
-                      <p className="text-xs text-gray-500 font-bold uppercase mb-1">Teaching Module</p>
-                      <p className="text-sm font-medium text-navy dark:text-white">Genomics 101</p>
-                    </div>
-                  </div>
-                  <div className="bg-white dark:bg-gray-900 p-5 rounded-2xl border border-gray-100 dark:border-gray-800 shadow-sm flex items-start space-x-4 cursor-pointer hover:border-emerald-200 transition-colors">
-                    <div className="p-3 bg-orange-50 dark:bg-orange-900/20 text-orange-600 rounded-xl"><i className="fas fa-pen-nib"></i></div>
-                    <div>
-                      <p className="text-xs text-gray-500 font-bold uppercase mb-1">Blog Post</p>
-                      <p className="text-sm font-medium text-navy dark:text-white">The Future of Agriculture</p>
-                    </div>
-                  </div>
-                </div>
-              </div>
             </div>
           );
         };
@@ -225,8 +201,6 @@
                   <span>By Paul O. Ajayi</span>
                   <span>•</span>
                   <span>{item.date || item.published_date || 'Recent'}</span>
-                  <span>•</span>
-                  <span>4 min read</span>
                 </div>
               </div>
               <div className="text-gray-800 dark:text-gray-200 leading-relaxed font-serif whitespace-pre-wrap text-xl">
@@ -234,7 +208,6 @@
               </div>
             </article>
 
-            {/* THE NEW FIX: Added PDF Download Box for Blogs and Journals */}
             {item.file_url && (
               <div className="mt-12 p-6 bg-emerald-50 dark:bg-emerald-900/20 rounded-2xl border border-emerald-100 dark:border-emerald-800/50 flex flex-col sm:flex-row items-center justify-between shadow-sm">
                 <div className="flex items-center mb-4 sm:mb-0">
@@ -251,18 +224,6 @@
                 </a>
               </div>
             )}
-
-            <div className="mt-12 pt-8 border-t border-gray-200 dark:border-gray-800 flex items-center justify-between">
-              <div className="flex items-center space-x-4">
-                <button className="flex items-center text-gray-500 hover:text-emerald-600 dark:hover:text-emerald-400 transition-colors font-medium">
-                  <i className="fas fa-comment-dots mr-2"></i> 12 Comments
-                </button>
-              </div>
-              <div className="flex space-x-4">
-                <button className="p-2 bg-gray-100 dark:bg-gray-800 rounded-full text-gray-500 hover:text-emerald-600 transition-colors"><i className="fas fa-bookmark"></i></button>
-                <button className="p-2 bg-gray-100 dark:bg-gray-800 rounded-full text-gray-500 hover:text-emerald-600 transition-colors"><i className="fas fa-share-alt"></i></button>
-              </div>
-            </div>
           </div>
         );
 
@@ -275,34 +236,10 @@
                     <i className="fas fa-user-circle text-6xl opacity-50"></i>
                   </div>
                 </div>
-                
-                <div className="mt-8">
-                  <h3 className="text-lg font-bold font-serif text-navy dark:text-white mb-4 border-b border-gray-200 dark:border-gray-800 pb-2">Research Interests</h3>
-                  <div className="flex flex-wrap gap-2">
-                    {['Microbial Genomics', 'PGPR', 'Soil Microbiology', 'Molecular Biology', 'Bioinformatics'].map((tag, idx) => (
-                      <span key={idx} className="text-xs font-medium bg-emerald-50 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-400 px-3 py-1.5 rounded-md">
-                        {tag}
-                      </span>
-                    ))}
-                  </div>
-                </div>
-
-                <div className="mt-8">
-                  <h3 className="text-lg font-bold font-serif text-navy dark:text-white mb-4 border-b border-gray-200 dark:border-gray-800 pb-2">Personal Interests</h3>
-                  <div className="flex flex-wrap gap-2">
-                    {['Teaching', 'Leadership', 'Faith', 'Scientific Writing'].map((tag, idx) => (
-                      <span key={idx} className="text-xs font-medium bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 px-3 py-1.5 rounded-md">
-                        {tag}
-                      </span>
-                    ))}
-                  </div>
-                </div>
               </div>
-              
               <div className="w-full md:w-2/3">
                 <h1 className="text-4xl md:text-5xl font-bold font-serif text-navy dark:text-white mb-2">Paul Olakiitan Ajayi</h1>
                 <p className="text-xl text-emerald-custom font-medium mb-8">Microbiologist · Researcher · Educator · Writer</p>
-                
                 <div className="text-gray-700 dark:text-gray-300 leading-relaxed font-serif text-lg space-y-6">
                   <div className="p-6 bg-emerald-50 dark:bg-emerald-900/20 rounded-2xl border border-emerald-100 dark:border-emerald-900/50 mb-8 shadow-sm">
                     <h3 className="text-xl font-bold font-sans text-navy dark:text-white mb-3 flex items-center">
@@ -310,10 +247,8 @@
                     </h3>
                     <p className="text-gray-800 dark:text-gray-200 font-medium text-base">To advance science through research, education, innovation, and the open sharing of knowledge that improves agriculture, human health, and society.</p>
                   </div>
-                  
                   <p>Paul Olakiitan Ajayi is a microbiologist, educator, and aspiring researcher passionate about understanding microorganisms and their role in agriculture, human health, and sustainable development.</p>
                   <p>His academic journey began with a Bachelor of Technology in Microbiology, where his undergraduate research focused on isolating and molecularly identifying plant growth-promoting rhizobacteria (PGPR) associated with maize.</p>
-                  <p>Beyond research, Paul is deeply committed to teaching, mentoring students, scientific communication, and lifelong learning. He envisions a future where research, education, and technology work together to solve global challenges.</p>
                 </div>
               </div>
             </div>
@@ -327,7 +262,7 @@
               <p className="text-gray-600 dark:text-gray-400 text-lg max-w-2xl mx-auto">Whether you're interested in research collaboration, speaking engagements, or just want to discuss microbiology, I'd love to hear from you.</p>
             </div>
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-12">
-              <div className="bg-white dark:bg-gray-900 rounded-3xl p-8 shadow-xl border border-gray-100 dark:border-gray-800">
+              <div className="bg-white dark:bg-[#1E1E1E] rounded-3xl p-8 shadow-xl border border-gray-100 dark:border-gray-800">
                 <h3 className="text-2xl font-bold font-serif text-navy dark:text-white mb-6">Send a Message</h3>
                 <form className="space-y-4">
                   <input type="text" placeholder="Your Name" className="w-full px-4 py-3 rounded-xl bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 focus:outline-none focus:ring-2 focus:ring-emerald-custom text-gray-900 dark:text-white" />
@@ -337,28 +272,6 @@
                     <i className="fas fa-paper-plane mr-2"></i> Send Message
                   </button>
                 </form>
-              </div>
-              <div className="space-y-8">
-                <div className="bg-gradient-to-br from-emerald-50 to-emerald-100 dark:from-emerald-900/30 dark:to-emerald-900/10 rounded-3xl p-8 border border-emerald-200 dark:border-emerald-800 shadow-md text-center">
-                  <i className="fas fa-envelope-open-text text-4xl text-emerald-600 dark:text-emerald-400 mx-auto mb-4"></i>
-                  <h3 className="text-xl font-bold font-serif text-navy dark:text-white mb-2">Subscribe to my Newsletter</h3>
-                  <p className="text-gray-600 dark:text-gray-400 mb-6 text-sm">Join the community to receive updates on my latest research, essays, and educational resources directly to your inbox.</p>
-                  <div className="flex">
-                    <input type="email" placeholder="Enter your email" className="w-full px-4 py-3 rounded-l-xl border-y border-l border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 focus:outline-none text-gray-900 dark:text-white" />
-                    <button className="bg-emerald-600 text-white px-6 py-3 rounded-r-xl font-medium hover:bg-emerald-700 transition-colors">Subscribe</button>
-                  </div>
-                </div>
-                <div className="bg-white dark:bg-gray-900 rounded-3xl p-8 shadow-xl border border-gray-100 dark:border-gray-800">
-                  <h3 className="text-lg font-bold font-serif text-navy dark:text-white mb-6 border-b border-gray-100 dark:border-gray-800 pb-2">Academic & Professional Profiles</h3>
-                  <div className="grid grid-cols-2 gap-4">
-                    {[ {name: 'Google Scholar', icon: 'fa-graduation-cap'}, {name: 'ORCID', icon: 'fa-globe'}, {name: 'ResearchGate', icon: 'fa-microscope'}, {name: 'LinkedIn', icon: 'fa-users'}, {name: 'GitHub', icon: 'fa-code'} ].map((link, i) => (
-                      <a key={i} href="#" className="flex items-center p-3 rounded-xl hover:bg-gray-50 dark:hover:bg-gray-800 text-gray-700 dark:text-gray-300 transition-colors border border-transparent hover:border-gray-200 dark:hover:border-gray-700">
-                        <span className="mr-3 text-emerald-600 dark:text-emerald-400"><i className={`fas ${link.icon}`}></i></span>
-                        <span className="font-medium text-sm">{link.name}</span>
-                      </a>
-                    ))}
-                  </div>
-                </div>
               </div>
             </div>
           </div>
@@ -373,7 +286,7 @@
               <h2 className="text-3xl font-bold font-serif text-navy dark:text-white mb-2">AI Knowledge Assistant</h2>
               <p className="text-gray-600 dark:text-gray-400">Search and summarize Paul's published research, books, and articles.</p>
             </div>
-            <div className="flex-1 bg-white dark:bg-gray-900 rounded-3xl shadow-xl border border-gray-100 dark:border-gray-800 flex flex-col overflow-hidden min-h-[500px]">
+            <div className="flex-1 bg-white dark:bg-[#1E1E1E] rounded-3xl shadow-xl border border-gray-100 dark:border-gray-800 flex flex-col overflow-hidden min-h-[500px]">
               <div className="p-6 overflow-y-auto flex-1 space-y-6">
                 <div className="flex items-start">
                   <div className="w-10 h-10 rounded-full bg-emerald-100 dark:bg-emerald-900/50 flex items-center justify-center flex-shrink-0 mr-4">
@@ -385,13 +298,6 @@
                 </div>
               </div>
               <div className="p-4 bg-gray-50 dark:bg-gray-800 border-t border-gray-200 dark:border-gray-700">
-                <div className="flex space-x-2 overflow-x-auto pb-4 hide-scrollbar">
-                  {['Summarize Paul’s research on PGPR', 'Show work on Bacillus', 'Explain Microbial Genomics'].map((prompt, i) => (
-                    <button key={i} className="whitespace-nowrap px-4 py-2 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-full text-sm font-medium text-gray-700 dark:text-gray-300 hover:border-emerald-custom hover:text-emerald-custom transition-colors">
-                      {prompt}
-                    </button>
-                  ))}
-                </div>
                 <div className="relative">
                   <input type="text" placeholder="Ask a question..." className="w-full pl-6 pr-14 py-4 rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 focus:outline-none focus:ring-2 focus:ring-emerald-custom text-gray-900 dark:text-white" />
                   <button className="absolute right-3 top-1/2 transform -translate-y-1/2 p-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg transition-colors">
@@ -403,32 +309,277 @@
           </div>
         );
 
-        const HomeView = ({ setView, setSelectedItem }) => {
+        const HomeView = ({ setView, setSelectedItem, latestBook, latestResearch, latestJournal, latestBlog, latestProject }) => {
+          
+          const handleReadMore = (item) => {
+            if (!item) return;
+            setSelectedItem(item);
+            setView(['journal', 'blog'].includes(item.type) ? 'reading' : 'detail');
+          };
+
           return (
-            <div className="relative pt-32 pb-20 md:pt-48 md:pb-32 px-4 sm:px-6 max-w-7xl mx-auto flex flex-col items-center justify-center text-center z-10 min-h-[85vh]">
-              <div className="animate-slide-up">
-                <div className="inline-flex items-center px-4 py-2 rounded-full bg-emerald-50 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-400 font-medium text-sm mb-8 border border-emerald-100 dark:border-emerald-800 shadow-sm">
-                  <span className="w-2 h-2 rounded-full bg-emerald-500 mr-2 animate-pulse"></span>
-                  Microbiologist & Researcher
-                </div>
-                <h1 className="text-5xl md:text-7xl font-bold font-serif text-navy dark:text-white mb-6 leading-tight max-w-4xl mx-auto drop-shadow-sm">
-                  Knowledge that grows. <br className="hidden md:block"/>
-                  <span className="text-emerald-custom relative">
-                    Research that matters.
-                    <svg className="absolute w-full h-3 -bottom-1 left-0 text-emerald-300 dark:text-emerald-800 opacity-50" viewBox="0 0 100 10" preserveAspectRatio="none"><path d="M0 5 Q 50 10 100 5" stroke="currentColor" strokeWidth="2" fill="transparent"/></svg>
-                  </span>
-                </h1>
-                <p className="mt-6 text-xl text-gray-600 dark:text-gray-300 max-w-2xl mx-auto mb-10 leading-relaxed font-sans">
-                  Welcome to my digital knowledge hub. Explore books, scientific research, teaching materials, and ideas advancing agriculture and human health.
-                </p>
-                <div className="mt-8 flex flex-col sm:flex-row justify-center gap-4">
-                  <button onClick={() => setView('library')} className="bg-navy hover:bg-[#1a365d] dark:bg-emerald-600 dark:hover:bg-emerald-700 text-white px-8 py-4 rounded-xl font-medium transition-all shadow-lg hover:shadow-xl transform hover:-translate-y-1">
-                    Explore Library
-                  </button>
-                  <button onClick={() => setView('research')} className="bg-white hover:bg-gray-50 dark:bg-gray-800 dark:hover:bg-gray-700 text-navy dark:text-white border border-gray-200 dark:border-gray-700 px-8 py-4 rounded-xl font-medium transition-all shadow-sm">
-                    Research Archive
-                  </button>
-                </div>
+            <div className="relative z-10 pb-10">
+              {/* Hero Section with Reference Design */}
+              <section className="relative pt-32 pb-24 flex items-center justify-center bg-navy text-white overflow-hidden min-h-[80vh]">
+                  {/* Background Overlays */}
+                  <div className="absolute inset-0 z-0 bg-[url('https://images.unsplash.com/photo-1532094349884-543bc11b234d?auto=format&fit=crop&q=80')] bg-cover bg-center opacity-20 mix-blend-overlay"></div>
+                  <div className="absolute inset-0 z-0 bg-gradient-to-b from-navy/80 via-navy/60 to-navy"></div>
+                  <ParticleBackground isDarkMode={true} />
+                  
+                  <div className="relative z-10 container mx-auto px-6 text-center max-w-5xl animate-slide-up">
+                      <h1 className="font-serif text-5xl md:text-7xl font-bold mb-6 leading-tight tracking-tight">
+                          Knowledge that <span className="text-emerald-custom">grows</span>.<br />
+                          Research that <span className="text-gold">matters</span>.<br />
+                          Ideas that <span className="text-[#8B9C2A]">inspire</span>.
+                      </h1>
+                      
+                      <h2 className="text-xl md:text-2xl text-gold font-medium mb-6 font-serif">
+                          Welcome to my digital knowledge hub.
+                      </h2>
+                      
+                      <p className="text-base md:text-lg text-gray-300 mb-12 max-w-3xl mx-auto font-light leading-relaxed">
+                          Here I share my books, scientific research, teaching materials, journals, articles, and ideas as I pursue a lifelong mission of learning, discovery, and service.
+                      </p>
+                      
+                      <div className="flex flex-wrap items-center justify-center gap-4">
+                          <button onClick={() => setView('library')} className="px-8 py-3.5 bg-emerald-custom hover:bg-[#257348] text-white text-sm font-semibold rounded-lg transition-all flex items-center justify-center gap-2 border border-emerald-custom">
+                              <i className="fas fa-book text-lg"></i> Explore Library
+                          </button>
+                          <button onClick={() => setView('research')} className="px-8 py-3.5 bg-transparent hover:bg-white/5 text-white text-sm font-semibold rounded-lg transition-all border border-blue-400/30 flex items-center justify-center gap-2">
+                              <i className="fas fa-microscope text-lg"></i> Research Archive
+                          </button>
+                          <button onClick={() => setView('teaching')} className="px-8 py-3.5 bg-[#3B7A57]/80 hover:bg-[#3B7A57] text-white text-sm font-semibold rounded-lg transition-all border border-[#3B7A57] flex items-center justify-center gap-2">
+                              <i className="fas fa-graduation-cap text-lg"></i> Teaching Hub
+                          </button>
+                          <button onClick={() => setView('about')} className="px-8 py-3.5 bg-transparent hover:bg-white/5 text-white text-sm font-semibold rounded-lg transition-all border border-white/20 flex items-center justify-center gap-2">
+                              <i className="fas fa-users text-lg"></i> About Me
+                          </button>
+                      </div>
+                  </div>
+              </section>
+
+              {/* Floating Stats Banner */}
+              <div className="max-w-[1600px] mx-auto px-4 sm:px-6 lg:px-8 -mt-6 relative z-20 mb-12 animate-fade-in">
+                  <div className="bg-[#0f1b29] rounded-xl shadow-xl flex flex-wrap lg:flex-nowrap divide-y lg:divide-y-0 lg:divide-x divide-white/10 p-2">
+                      {[
+                          { count: "12", label: "Books & eBooks", icon: "fa-book" },
+                          { count: "28", label: "Research Notes", icon: "fa-microscope" },
+                          { count: "46", label: "Journal Entries", icon: "fa-pen-nib" },
+                          { count: "36", label: "Teaching Materials", icon: "fa-graduation-cap" },
+                          { count: "18", label: "Blog Articles", icon: "fa-blog" },
+                          { count: "1,248+", label: "Global Readers", icon: "fa-globe" },
+                          { count: "3,652+", label: "Downloads", icon: "fa-download" }
+                      ].map((stat, idx) => (
+                          <div key={idx} className="flex-1 min-w-[140px] p-4 flex items-center justify-center lg:justify-start gap-4">
+                              <div className="text-gold">
+                                  <i className={`fas ${stat.icon} text-2xl`}></i>
+                              </div>
+                              <div>
+                                  <div className="text-white font-bold text-xl leading-none mb-1">{stat.count}</div>
+                                  <div className="text-gray-400 text-xs">{stat.label}</div>
+                              </div>
+                          </div>
+                      ))}
+                  </div>
+              </div>
+
+              {/* Dynamic Horizontal Scrolling Content Cards */}
+              <div className="py-8 bg-[#FAFAFA] dark:bg-[#0a0a0a] animate-fade-in">
+                  <div className="max-w-[1600px] mx-auto px-4 sm:px-6 lg:px-8">
+                      <div className="flex flex-nowrap overflow-x-auto pb-6 gap-6 snap-x snap-mandatory hide-scrollbar">
+                          
+                          {/* Featured Book Card */}
+                          {latestBook && (
+                          <div className="snap-start shrink-0 w-[350px] md:w-[400px] bg-white dark:bg-[#1E1E1E] rounded-xl border border-gray-200 dark:border-gray-800 p-5 shadow-sm flex flex-col cursor-pointer hover:border-emerald-custom transition-colors" onClick={() => handleReadMore(latestBook)}>
+                              <div className="flex justify-between items-center mb-5 border-b border-gray-100 dark:border-gray-800 pb-3">
+                                  <div className="flex items-center gap-2 font-serif font-bold text-lg dark:text-white">
+                                      <i className="fas fa-book text-gray-700 dark:text-gray-300"></i> Featured Book
+                                  </div>
+                                  <button onClick={(e) => { e.stopPropagation(); setView('library'); }} className="text-xs text-gray-500 hover:text-gray-900 dark:hover:text-white flex items-center gap-1">
+                                      View all <span>&rarr;</span>
+                                  </button>
+                              </div>
+                              <div className="flex-grow flex gap-4">
+                                  <div className="w-1/3 shrink-0">
+                                      <div className="bg-[#112435] p-2 rounded shadow-md aspect-[2/3] flex items-center justify-center text-center border-l-4 border-emerald-custom h-full relative overflow-hidden">
+                                          <i className="fas fa-book absolute opacity-10 text-6xl text-white"></i>
+                                          <div className="text-white relative z-10 flex flex-col justify-center h-full">
+                                              <div className="text-sm font-serif font-bold leading-tight mb-2 line-clamp-3">{latestBook.title}</div>
+                                              <div className="w-8 h-[1px] bg-emerald-custom mx-auto mb-2"></div>
+                                          </div>
+                                      </div>
+                                  </div>
+                                  <div className="flex flex-col justify-between w-2/3">
+                                      <div>
+                                          <h4 className="font-serif font-bold text-lg mb-2 leading-tight dark:text-white line-clamp-2">{latestBook.title}</h4>
+                                          <p className="text-sm text-gray-600 dark:text-gray-400 mb-2 line-clamp-3">{latestBook.summary || latestBook.abstract}</p>
+                                          <div className="text-xs text-emerald-custom font-medium mb-1">{latestBook.category || 'Library'}</div>
+                                      </div>
+                                      <button className="mt-4 px-4 py-1.5 border border-gray-300 dark:border-gray-600 rounded text-sm font-medium hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors w-max dark:text-white">View Book</button>
+                                  </div>
+                              </div>
+                          </div>
+                          )}
+
+                          {/* Latest Research Card */}
+                          {latestResearch && (
+                          <div className="snap-start shrink-0 w-[350px] md:w-[400px] bg-white dark:bg-[#1E1E1E] rounded-xl border border-gray-200 dark:border-gray-800 p-5 shadow-sm flex flex-col cursor-pointer hover:border-emerald-custom transition-colors" onClick={() => handleReadMore(latestResearch)}>
+                              <div className="flex justify-between items-center mb-5 border-b border-gray-100 dark:border-gray-800 pb-3">
+                                  <div className="flex items-center gap-2 font-serif font-bold text-lg dark:text-white">
+                                      <i className="fas fa-microscope text-gray-700 dark:text-gray-300"></i> Latest Research
+                                  </div>
+                                  <button onClick={(e) => { e.stopPropagation(); setView('research'); }} className="text-xs text-gray-500 hover:text-gray-900 dark:hover:text-white flex items-center gap-1">
+                                      View all <span>&rarr;</span>
+                                  </button>
+                              </div>
+                              <div className="flex-grow flex flex-col h-full">
+                                  <div className="h-32 bg-gray-200 dark:bg-gray-700 rounded-lg mb-4 overflow-hidden bg-[url('https://images.unsplash.com/photo-1576086213369-97a306d36557?auto=format&fit=crop&q=80&w=400')] bg-cover bg-center"></div>
+                                  <h4 className="font-serif font-bold text-base mb-1 leading-tight dark:text-white line-clamp-2">{latestResearch.title}</h4>
+                                  <div className="text-xs text-gray-500 mb-2">{latestResearch.category || 'Research'} &bull; {latestResearch.published_date || latestResearch.date || '2026'}</div>
+                                  <p className="text-sm text-gray-600 dark:text-gray-400 mb-4 line-clamp-3 flex-grow">{latestResearch.summary || latestResearch.abstract}</p>
+                                  <div className="flex gap-2 mb-4 overflow-hidden">
+                                      {(latestResearch.tags || []).slice(0,3).map((tag, i) => (
+                                          <span key={i} className="px-2 py-1 bg-blue-50 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 text-[10px] rounded whitespace-nowrap">{tag}</span>
+                                      ))}
+                                  </div>
+                                  <button className="text-emerald-custom text-sm font-medium hover:underline text-left flex items-center gap-1">Read Now <span className="text-lg leading-none">&rarr;</span></button>
+                              </div>
+                          </div>
+                          )}
+
+                          {/* Latest Journal Card */}
+                          {latestJournal && (
+                          <div className="snap-start shrink-0 w-[350px] md:w-[400px] bg-white dark:bg-[#1E1E1E] rounded-xl border border-gray-200 dark:border-gray-800 p-5 shadow-sm flex flex-col cursor-pointer hover:border-emerald-custom transition-colors" onClick={() => handleReadMore(latestJournal)}>
+                              <div className="flex justify-between items-center mb-5 border-b border-gray-100 dark:border-gray-800 pb-3">
+                                  <div className="flex items-center gap-2 font-serif font-bold text-lg dark:text-white">
+                                      <i className="fas fa-pen-nib text-gray-700 dark:text-gray-300"></i> Latest Journal
+                                  </div>
+                                  <button onClick={(e) => { e.stopPropagation(); setView('journal'); }} className="text-xs text-gray-500 hover:text-gray-900 dark:hover:text-white flex items-center gap-1">
+                                      View all <span>&rarr;</span>
+                                  </button>
+                              </div>
+                              <div className="flex-grow flex gap-4 h-full">
+                                  <div className="w-2/5 shrink-0 h-full min-h-[140px] bg-gray-200 rounded-lg overflow-hidden bg-[url('https://images.unsplash.com/photo-1464822759023-fed622ff2c3b?auto=format&fit=crop&q=80&w=400')] bg-cover bg-center"></div>
+                                  <div className="flex flex-col">
+                                      <h4 className="font-serif font-bold text-base mb-1 leading-tight dark:text-white line-clamp-3">{latestJournal.title}</h4>
+                                      <div className="text-xs text-gray-500 mb-2">{latestJournal.published_date || latestJournal.date || '2026'} &bull; {latestJournal.category || 'Entry'}</div>
+                                      <p className="text-sm text-gray-600 dark:text-gray-400 mb-4 line-clamp-4 flex-grow">{latestJournal.summary || (latestJournal.content ? latestJournal.content.substring(0,80)+'...' : '')}</p>
+                                      <button className="text-emerald-custom text-sm font-medium hover:underline text-left flex items-center gap-1 mt-auto">Read Entry <span className="text-lg leading-none">&rarr;</span></button>
+                                  </div>
+                              </div>
+                          </div>
+                          )}
+
+                          {/* Latest Blog Card */}
+                          {latestBlog && (
+                          <div className="snap-start shrink-0 w-[350px] md:w-[400px] bg-white dark:bg-[#1E1E1E] rounded-xl border border-gray-200 dark:border-gray-800 p-5 shadow-sm flex flex-col cursor-pointer hover:border-emerald-custom transition-colors" onClick={() => handleReadMore(latestBlog)}>
+                              <div className="flex justify-between items-center mb-5 border-b border-gray-100 dark:border-gray-800 pb-3">
+                                  <div className="flex items-center gap-2 font-serif font-bold text-lg dark:text-white">
+                                      <i className="fas fa-blog text-gray-700 dark:text-gray-300"></i> Latest Blog
+                                  </div>
+                                  <button onClick={(e) => { e.stopPropagation(); setView('blog'); }} className="text-xs text-gray-500 hover:text-gray-900 dark:hover:text-white flex items-center gap-1">
+                                      View all <span>&rarr;</span>
+                                  </button>
+                              </div>
+                              <div className="flex-grow flex gap-4 h-full">
+                                  <div className="w-2/5 shrink-0 h-full min-h-[140px] bg-gray-200 rounded-lg overflow-hidden bg-[url('https://images.unsplash.com/photo-1581093458791-9f3c3900df4b?auto=format&fit=crop&q=80&w=400')] bg-cover bg-center"></div>
+                                  <div className="flex flex-col">
+                                      <h4 className="font-serif font-bold text-base mb-1 leading-tight dark:text-white line-clamp-3">{latestBlog.title}</h4>
+                                      <div className="text-xs text-gray-500 mb-2">{latestBlog.published_date || latestBlog.date || '2026'} &bull; {latestBlog.category || 'Article'}</div>
+                                      <p className="text-sm text-gray-600 dark:text-gray-400 mb-4 line-clamp-4 flex-grow">{latestBlog.summary || (latestBlog.content ? latestBlog.content.substring(0,80)+'...' : '')}</p>
+                                      <button className="text-emerald-custom text-sm font-medium hover:underline text-left flex items-center gap-1 mt-auto">Read Article <span className="text-lg leading-none">&rarr;</span></button>
+                                  </div>
+                              </div>
+                          </div>
+                          )}
+
+                          {/* Current Project Card */}
+                          {latestProject && (
+                          <div className="snap-start shrink-0 w-[350px] md:w-[400px] bg-white dark:bg-[#1E1E1E] rounded-xl border border-gray-200 dark:border-gray-800 p-5 shadow-sm flex flex-col cursor-pointer hover:border-emerald-custom transition-colors" onClick={() => handleReadMore(latestProject)}>
+                              <div className="flex justify-between items-center mb-5 border-b border-gray-100 dark:border-gray-800 pb-3">
+                                  <div className="flex items-center gap-2 font-serif font-bold text-lg dark:text-white">
+                                      <i className="fas fa-chart-line text-gray-700 dark:text-gray-300"></i> Current Project
+                                  </div>
+                                  <button onClick={(e) => { e.stopPropagation(); setView('projects'); }} className="text-xs text-gray-500 hover:text-gray-900 dark:hover:text-white flex items-center gap-1">
+                                      View all <span>&rarr;</span>
+                                  </button>
+                              </div>
+                              <div className="flex-grow flex flex-col h-full">
+                                  <div className="flex gap-4 mb-4">
+                                       <div className="w-20 h-20 shrink-0 bg-gray-200 rounded-lg overflow-hidden bg-[url('https://images.unsplash.com/photo-1574926053457-371804b4c10a?auto=format&fit=crop&q=80&w=200')] bg-cover bg-center"></div>
+                                       <div>
+                                           <h4 className="font-serif font-bold text-base mb-1 leading-tight dark:text-white line-clamp-2">{latestProject.title}</h4>
+                                       </div>
+                                  </div>
+                                  
+                                  <div className="mb-4">
+                                      <div className="flex justify-between text-xs mb-1">
+                                          <span className="text-gray-600 dark:text-gray-400">In Progress</span>
+                                          <span className="font-medium dark:text-white">65%</span>
+                                      </div>
+                                      <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-1.5">
+                                          <div className="bg-emerald-custom h-1.5 rounded-full" style={{ width: '65%' }}></div>
+                                      </div>
+                                  </div>
+                                  <p className="text-sm text-gray-600 dark:text-gray-400 mb-4 flex-grow line-clamp-3">{latestProject.summary || latestProject.abstract}</p>
+                                  <button className="text-emerald-custom text-sm font-medium hover:underline text-left flex items-center gap-1 mt-auto">View Project <span className="text-lg leading-none">&rarr;</span></button>
+                              </div>
+                          </div>
+                          )}
+
+                      </div>
+                  </div>
+              </div>
+              
+              {/* Bottom Info Section */}
+              <div className="max-w-[1600px] mx-auto px-4 sm:px-6 lg:px-8 py-16 animate-fade-in">
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                      {/* Quote */}
+                      <div className="bg-white dark:bg-[#1E1E1E] rounded-xl border border-gray-200 dark:border-gray-800 p-8 shadow-sm relative">
+                          <div className="text-emerald-custom absolute top-6 left-6 opacity-20">
+                              <i className="fas fa-quote-left text-4xl"></i>
+                          </div>
+                          <div className="pl-8 relative z-10">
+                              <h3 className="font-serif font-bold text-lg mb-4 dark:text-white flex items-center gap-2">Quote of the Day</h3>
+                              <p className="text-gray-700 dark:text-gray-300 font-serif italic mb-4">"The beautiful thing about learning is that no one can take it away from you."</p>
+                              <div className="text-sm font-bold text-emerald-custom">- B.B. King</div>
+                          </div>
+                      </div>
+
+                      {/* Newsletter */}
+                      <div className="bg-white dark:bg-[#1E1E1E] rounded-xl border border-gray-200 dark:border-gray-800 p-8 shadow-sm">
+                          <h3 className="font-serif font-bold text-lg mb-2 dark:text-white flex items-center gap-2">
+                              <i className="fas fa-envelope text-gray-500"></i> Stay Updated
+                          </h3>
+                          <p className="text-sm text-gray-600 dark:text-gray-400 mb-6">Subscribe to my newsletter and never miss new research, books, teaching materials, and insights.</p>
+                          <form className="flex gap-2" onSubmit={(e) => e.preventDefault()}>
+                              <input type="email" placeholder="Enter your email" className="flex-1 bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg px-4 py-2 text-sm focus:outline-none focus:border-emerald-custom text-gray-900 dark:text-white" />
+                              <button className="bg-emerald-custom hover:bg-[#257348] text-white px-6 py-2 rounded-lg text-sm font-medium transition-colors">Subscribe</button>
+                          </form>
+                      </div>
+
+                      {/* Socials */}
+                      <div className="bg-white dark:bg-[#1E1E1E] rounded-xl border border-gray-200 dark:border-gray-800 p-8 shadow-sm">
+                          <h3 className="font-serif font-bold text-lg mb-2 dark:text-white flex items-center gap-2">
+                               <i className="fas fa-globe text-gray-500"></i> Let's Connect
+                          </h3>
+                          <p className="text-sm text-gray-600 dark:text-gray-400 mb-6">Join a community of learners, researchers, and dreamers building a better future through knowledge.</p>
+                          <div className="flex gap-3">
+                              <a href="#" className="w-10 h-10 rounded-full bg-[#0077b5] text-white flex items-center justify-center hover:opacity-90 transition-opacity">
+                                  <i className="fab fa-linkedin-in"></i>
+                              </a>
+                              <a href="#" className="w-10 h-10 rounded-full bg-[#1DA1F2] text-white flex items-center justify-center hover:opacity-90 transition-opacity">
+                                  <i className="fab fa-twitter"></i>
+                              </a>
+                              <a href="#" className="w-10 h-10 rounded-full bg-[#00CC99] text-white flex items-center justify-center hover:opacity-90 transition-opacity font-serif font-bold">
+                                  R<span className="text-[10px] align-top">G</span>
+                              </a>
+                              <a href="#" className="w-10 h-10 rounded-full bg-[#333] text-white flex items-center justify-center hover:opacity-90 transition-opacity">
+                                  <i className="fab fa-github"></i>
+                              </a>
+                          </div>
+                      </div>
+                  </div>
               </div>
             </div>
           );
@@ -439,7 +590,6 @@
           const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
           const [currentView, setCurrentView] = useState('home');
           const [selectedItem, setSelectedItem] = useState(null);
-          
           const [dbPublications, setDbPublications] = useState([]);
 
           useEffect(() => {
@@ -455,18 +605,14 @@
               if (window.supabase) {
                 const supabase = window.supabase.createClient(supabaseUrl, supabaseKey);
                 try {
-                  const { data, error } = await supabase.from('publications').select('*');
-                  if (error) {
-                    console.error('Error fetching from Supabase:', error);
-                  } else if (data) {
-                    setDbPublications(data);
-                  }
+                  const { data, error } = await supabase.from('publications').select('*').order('id', { ascending: false });
+                  if (error) console.error('Error fetching from Supabase:', error);
+                  else if (data) setDbPublications(data);
                 } catch (error) {
                   console.error('Supabase connection failed:', error);
                 }
               }
             };
-            
             fetchSupabaseData();
           }, []);
 
@@ -475,15 +621,22 @@
           const combinedJournal = [...dbPublications.filter(p => p.type === 'journal'), ...mockJournal.filter(j => j.type === 'journal')];
           const combinedBlog = [...dbPublications.filter(p => p.type === 'blog'), ...mockJournal.filter(j => j.type === 'blog')];
 
+          const latestBook = combinedLibrary[0] || null;
+          const latestResearch = combinedResearch[0] || null;
+          const latestJournal = combinedJournal[0] || null;
+          const latestBlog = combinedBlog[0] || null;
+          const latestProject = mockProjects[0] || null;
+
           const navItems = [
-            { name: 'Library', view: 'library' },
-            { name: 'Research', view: 'research' },
-            { name: 'Teaching', view: 'teaching' },
-            { name: 'Journal', view: 'journal' },
-            { name: 'Blog', view: 'blog' },
-            { name: 'Projects', view: 'projects' },
-            { name: 'About', view: 'about' },
-            { name: 'Contact', view: 'contact' }
+            { name: 'Home', view: 'home', icon: 'fa-home' },
+            { name: 'Library', view: 'library', icon: 'fa-book' },
+            { name: 'Research', view: 'research', icon: 'fa-microscope' },
+            { name: 'Teaching', view: 'teaching', icon: 'fa-graduation-cap' },
+            { name: 'Journal', view: 'journal', icon: 'fa-pen-nib' },
+            { name: 'Blog', view: 'blog', icon: 'fa-blog' },
+            { name: 'Projects', view: 'projects', icon: 'fa-chart-line' },
+            { name: 'About', view: 'about', icon: 'fa-users' },
+            { name: 'Contact', view: 'contact', icon: 'fa-envelope' }
           ];
 
           const renderGenericList = (title, data) => (
@@ -493,14 +646,14 @@
               
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 mt-12">
                 {data.map(item => (
-                  <div key={item.id} className="bg-white dark:bg-gray-900 rounded-2xl p-6 shadow-sm hover:shadow-md transition-shadow border border-gray-100 dark:border-gray-800 flex flex-col h-full relative group">
+                  <div key={item.id} className="bg-white dark:bg-[#1E1E1E] rounded-2xl p-6 shadow-sm hover:shadow-md transition-shadow border border-gray-100 dark:border-gray-800 flex flex-col h-full relative group">
                     <div className="flex justify-between items-start mb-2">
                         <span className="text-xs font-bold uppercase tracking-wider text-emerald-600 dark:text-emerald-400">{item.category || 'Content'}</span>
                         {item.file_url && <span className="text-gray-400 dark:text-gray-500 text-sm group-hover:text-emerald-500 transition-colors" title="PDF Attached"><i className="fas fa-paperclip"></i></span>}
                     </div>
                     
                     <h3 className="text-xl font-bold text-navy dark:text-white mb-3">{item.title}</h3>
-                    <p className="text-sm text-gray-600 dark:text-gray-400 mb-6 flex-grow">{item.summary || item.content?.substring(0, 100) + '...'}</p>
+                    <p className="text-sm text-gray-600 dark:text-gray-400 mb-6 flex-grow">{item.summary || (item.content ? item.content.substring(0, 100) + '...' : '')}</p>
                     <button onClick={() => { 
                       setSelectedItem(item); 
                       setCurrentView((item.type === 'journal' || item.type === 'blog') ? 'reading' : 'detail'); 
@@ -514,73 +667,96 @@
           );
 
           return (
-            <div className={`min-h-screen flex flex-col overflow-x-hidden bg-[#FAFAFA] dark:bg-[#0a0a0a] text-gray-900 dark:text-gray-100 font-sans transition-colors duration-300 ${isDarkMode ? 'dark' : ''}`}>
-              <ParticleBackground isDarkMode={isDarkMode} />
+            <div className="min-h-screen flex flex-col overflow-x-hidden text-gray-900 dark:text-gray-100 font-sans transition-colors duration-300">
               
-              <header className="fixed top-0 w-full z-50 bg-white/80 dark:bg-[#0a0a0a]/80 backdrop-blur-md border-b border-gray-200 dark:border-gray-800 transition-all duration-300">
-                <div className="max-w-7xl mx-auto px-4 sm:px-6 h-20 flex items-center justify-between">
-                  <div className="flex items-center space-x-2 cursor-pointer group" onClick={() => setCurrentView('home')}>
-                    <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-navy to-emerald-custom flex items-center justify-center shadow-md">
-                      <span className="text-white font-serif font-bold text-xl">A</span>
-                    </div>
-                    <span className="font-serif font-bold text-xl text-navy dark:text-white hidden lg:block">Ajayi Hub</span>
+              {/* Sleek Dark Navbar (Collapsed Design) */}
+              <nav className="bg-navy text-white border-b border-white/10 w-full fixed top-0 z-50 transition-all duration-300">
+                  <div className="max-w-[1600px] mx-auto px-4 sm:px-6 lg:px-8">
+                      <div className="flex justify-between items-center h-20">
+                          {/* Logo Area */}
+                          <div className="flex items-center space-x-3 cursor-pointer group" onClick={() => setCurrentView('home')}>
+                              <div className="text-gold">
+                                  <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+                                      <path d="M4 19.5v-15A2.5 2.5 0 0 1 6.5 2H20v20H6.5a2.5 2.5 0 0 1 0-5H20"/>
+                                      <path d="M8 7h6"/><path d="M8 11h8"/>
+                                  </svg>
+                              </div>
+                              <div className="flex flex-col">
+                                  <h1 className="font-serif font-bold text-xl leading-tight hidden sm:block">Ajayi Knowledge Hub</h1>
+                                  <span className="text-gold text-[10px] tracking-wider uppercase font-medium hidden sm:block">Explore. Learn. Discover. Grow.</span>
+                              </div>
+                          </div>
+                          
+                          {/* Collapsed Utilities & Menu Toggle */}
+                          <div className="flex items-center space-x-2 sm:space-x-4">
+                              <button onClick={() => setCurrentView('ai')} className="hidden sm:flex items-center text-sm font-bold text-emerald-custom border border-emerald-custom/50 px-4 py-2 rounded-xl hover:bg-emerald-custom hover:text-white transition-colors shadow-sm">
+                                  <i className="fas fa-magic mr-2"></i> Ask AI
+                              </button>
+                              <button className="w-10 h-10 rounded-full border border-white/20 flex items-center justify-center text-gray-300 hover:text-white hover:border-white transition-colors hidden sm:flex" title="Global Search">
+                                  <i className="fas fa-search text-sm"></i>
+                              </button>
+                              <button onClick={() => setIsDarkMode(!isDarkMode)} className="w-10 h-10 rounded-full border border-white/20 flex items-center justify-center text-gray-300 hover:text-white hover:border-white transition-colors">
+                                  <i className={`fas ${isDarkMode ? 'fa-sun' : 'fa-moon'} text-sm`}></i>
+                              </button>
+                              
+                              {/* Universal Hamburger Menu Button */}
+                              <button 
+                                  className={`w-10 h-10 rounded-xl flex items-center justify-center border transition-all ${mobileMenuOpen ? 'border-emerald-custom text-emerald-custom bg-white/10' : 'border-white/20 text-gray-300 hover:text-white hover:border-white'}`}
+                                  onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+                              >
+                                  <i className={`fas ${mobileMenuOpen ? 'fa-times' : 'fa-bars'} text-lg`}></i>
+                              </button>
+                          </div>
+                      </div>
                   </div>
-                  
-                  <nav className="hidden md:flex items-center space-x-1 lg:space-x-2">
-                    {navItems.map((item) => (
-                      <button key={item.name} onClick={() => setCurrentView(item.view)} className={`px-3 py-2 rounded-lg text-sm font-medium transition-colors ${currentView === item.view ? 'text-emerald-custom bg-emerald-50 dark:bg-emerald-900/20' : 'text-gray-600 dark:text-gray-300 hover:text-navy dark:hover:text-white'}`}>
-                        {item.name}
-                      </button>
-                    ))}
-                  </nav>
-                  
-                  <div className="flex items-center space-x-2 sm:space-x-4">
-                    <button onClick={() => setCurrentView('ai')} className="hidden sm:flex items-center text-sm font-medium text-emerald-custom border border-emerald-200 dark:border-emerald-800 px-3 py-1.5 rounded-lg hover:bg-emerald-50 dark:hover:bg-emerald-900/30 transition-colors">
-                      <i className="fas fa-magic mr-1.5"></i> Ask AI
-                    </button>
-                    <button className="p-2 rounded-full text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors hidden sm:block" title="Global Search">
-                      <i className="fas fa-search text-lg"></i>
-                    </button>
-                    <button onClick={() => setIsDarkMode(!isDarkMode)} className="p-2 rounded-full text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors">
-                      <i className={`fas ${isDarkMode ? 'fa-sun' : 'fa-moon'} text-lg`}></i>
-                    </button>
-                    
-                    {/* The Secure Admin Link */}
-                    <button onClick={() => window.location.href = '/admin.html'} className="p-2 rounded-full text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors" title="Admin Dashboard">
-                      <i className="fas fa-chart-line text-lg"></i>
-                    </button>
 
-                    <button className="md:hidden p-2 text-gray-500" onClick={() => setMobileMenuOpen(!mobileMenuOpen)}>
-                      <i className={`fas ${mobileMenuOpen ? 'fa-times' : 'fa-bars'} text-xl`}></i>
-                    </button>
-                  </div>
-                </div>
+                  {/* Universal Dropdown Menu */}
+                  {mobileMenuOpen && (
+                      <div className="absolute top-20 right-4 sm:right-8 w-[calc(100%-2rem)] sm:w-72 bg-navy border border-white/10 shadow-2xl rounded-2xl py-3 px-3 flex flex-col space-y-1 animate-fade-in z-50">
+                          <div className="mb-2 px-3 py-2 border-b border-white/10">
+                              <p className="text-xs font-bold text-gray-400 uppercase tracking-wider">Navigation</p>
+                          </div>
+                          {navItems.map((item) => (
+                              <button 
+                                  key={item.name} 
+                                  onClick={() => { setCurrentView(item.view); setMobileMenuOpen(false); }} 
+                                  className={`w-full flex items-center px-4 py-3 rounded-xl text-sm font-medium transition-colors ${currentView === item.view ? 'text-white bg-emerald-custom' : 'text-gray-300 hover:bg-white/10 hover:text-white'}`}
+                              >
+                                  <i className={`fas ${item.icon} w-6 mr-2 opacity-70`}></i> {item.name}
+                              </button>
+                          ))}
+                          
+                          <div className="mt-2 pt-2 border-t border-white/10">
+                              <button onClick={() => { window.location.href = '/admin.html'; }} className="w-full flex items-center px-4 py-3 rounded-xl text-sm font-bold text-gold hover:bg-white/10 transition-colors">
+                                  <i className="fas fa-lock w-6 mr-2 opacity-70"></i> Admin Portal
+                              </button>
+                          </div>
+                          
+                          {/* Mobile Only Quick Actions */}
+                          <div className="mt-2 pt-2 border-t border-white/10 flex space-x-2 block sm:hidden">
+                              <button onClick={() => { setCurrentView('ai'); setMobileMenuOpen(false); }} className="flex-1 flex justify-center items-center text-sm font-bold text-white bg-emerald-custom hover:bg-[#257348] py-2.5 rounded-lg transition-colors">
+                                  <i className="fas fa-magic mr-2"></i> Ask AI
+                              </button>
+                              <button className="flex-1 flex justify-center items-center text-sm font-bold text-gray-300 bg-white/5 hover:bg-white/10 py-2.5 rounded-lg transition-colors">
+                                  <i className="fas fa-search"></i>
+                              </button>
+                          </div>
+                      </div>
+                  )}
+              </nav>
 
-                {mobileMenuOpen && (
-                  <div className="md:hidden absolute top-20 left-0 w-full bg-white/95 dark:bg-[#0a0a0a]/95 backdrop-blur-lg border-b border-gray-200 dark:border-gray-800 shadow-xl py-4 px-4 flex flex-col space-y-2 animate-fade-in z-50">
-                    {navItems.map((item) => (
-                      <button 
-                        key={item.name} 
-                        onClick={() => { setCurrentView(item.view); setMobileMenuOpen(false); }} 
-                        className={`w-full text-left px-4 py-3 rounded-xl text-base font-medium transition-colors ${currentView === item.view ? 'text-emerald-custom bg-emerald-50 dark:bg-emerald-900/30' : 'text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-800'}`}
-                      >
-                        {item.name}
-                      </button>
-                    ))}
-                    <div className="pt-4 mt-2 border-t border-gray-200 dark:border-gray-800 flex space-x-4">
-                      <button onClick={() => { setCurrentView('ai'); setMobileMenuOpen(false); }} className="flex-1 flex justify-center items-center text-sm font-medium text-emerald-custom border border-emerald-200 dark:border-emerald-800 px-4 py-2 rounded-lg hover:bg-emerald-50 dark:hover:bg-emerald-900/30 transition-colors">
-                        <i className="fas fa-magic mr-2"></i> Ask AI
-                      </button>
-                      <button className="flex-1 flex justify-center items-center text-sm font-medium text-gray-700 dark:text-gray-300 border border-gray-200 dark:border-gray-700 px-4 py-2 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors">
-                        <i className="fas fa-search mr-2"></i> Search
-                      </button>
-                    </div>
-                  </div>
+              <main className="flex-grow">
+                {currentView === 'home' && (
+                  <HomeView 
+                    setView={setCurrentView} 
+                    setSelectedItem={setSelectedItem}
+                    latestBook={latestBook}
+                    latestResearch={latestResearch}
+                    latestJournal={latestJournal}
+                    latestBlog={latestBlog}
+                    latestProject={latestProject}
+                  />
                 )}
-              </header>
-
-              <main className="flex-1">
-                {currentView === 'home' && <HomeView setView={setCurrentView} setSelectedItem={setSelectedItem} />}
                 {currentView === 'detail' && selectedItem && <PublicationDetailView item={selectedItem} setView={setCurrentView} />}
                 {currentView === 'reading' && selectedItem && <ArticleReadingView item={selectedItem} setView={setCurrentView} />}
                 {currentView === 'about' && <AboutView />}
@@ -595,46 +771,35 @@
                 {currentView === 'blog' && renderGenericList('Professional Blog', combinedBlog)}
               </main>
               
-              <footer className="relative z-10 border-t border-gray-200 dark:border-gray-800 bg-white dark:bg-[#0a0a0a] pt-16 pb-8 mt-auto">
-                <div className="max-w-7xl mx-auto px-4 sm:px-6">
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mb-12">
-                    <div>
-                      <div className="flex items-center space-x-2 mb-4">
-                        <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-navy to-emerald-custom flex items-center justify-center">
-                          <span className="text-white font-serif font-bold text-sm">A</span>
-                        </div>
-                        <span className="font-serif font-bold text-lg text-navy dark:text-white">Ajayi Hub</span>
+              {/* Footer updated to match reference */}
+              <footer className="bg-navy py-8 text-gray-400 text-sm border-t border-white/10 mt-auto">
+                  <div className="max-w-[1600px] mx-auto px-4 sm:px-6 lg:px-8 flex flex-col md:flex-row justify-between items-center gap-4">
+                      <div className="flex items-center gap-3">
+                          <div className="text-gold">
+                              <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+                                  <path d="M4 19.5v-15A2.5 2.5 0 0 1 6.5 2H20v20H6.5a2.5 2.5 0 0 1 0-5H20"/>
+                                  <path d="M8 7h6"/><path d="M8 11h8"/>
+                              </svg>
+                          </div>
+                          <div>
+                              <h2 className="text-white font-serif font-bold text-lg leading-none">Ajayi Knowledge Hub</h2>
+                              <span className="text-gold text-[10px] tracking-wider uppercase font-medium">Explore. Learn. Discover. Grow.</span>
+                          </div>
                       </div>
-                      <p className="text-sm text-gray-500 dark:text-gray-400 max-w-xs">
-                        A digital knowledge ecosystem for advancing science through research, education, and innovation.
-                      </p>
-                    </div>
-                    <div>
-                      <h4 className="font-bold text-navy dark:text-white mb-4">Quick Links</h4>
-                      <ul className="space-y-2 text-sm text-gray-500 dark:text-gray-400">
-                        <li><button onClick={() => setCurrentView('research')} className="hover:text-emerald-500">Research Archive</button></li>
-                        <li><button onClick={() => setCurrentView('library')} className="hover:text-emerald-500">Digital Library</button></li>
-                        <li><button onClick={() => setCurrentView('teaching')} className="hover:text-emerald-500">Teaching Materials</button></li>
-                        <li><button onClick={() => setCurrentView('contact')} className="hover:text-emerald-500">Collaborate</button></li>
-                      </ul>
-                    </div>
-                    <div>
-                      <h4 className="font-bold text-navy dark:text-white mb-4">Connect</h4>
-                      <div className="flex space-x-4 text-gray-400">
-                        <a href="#" className="hover:text-emerald-500"><i className="fas fa-globe text-xl"></i></a>
-                        <a href="#" className="hover:text-emerald-500"><i className="fas fa-users text-xl"></i></a>
-                        <a href="#" className="hover:text-emerald-500"><i className="fas fa-chart-line text-xl"></i></a>
+                      
+                      <div className="text-center">
+                          <p>&copy; {new Date().getFullYear()} Paul Olakiitan Ajayi. All rights reserved.</p>
+                          <div className="flex gap-4 justify-center mt-2 text-xs">
+                              <a href="#" className="hover:text-white">Privacy Policy</a>
+                              <a href="#" className="hover:text-white">Terms of Use</a>
+                              <a href="#" className="hover:text-white">Sitemap</a>
+                          </div>
                       </div>
-                    </div>
+                      
+                      <div>
+                          Built with <span className="text-emerald-custom">♥</span> for knowledge, science, and humanity.
+                      </div>
                   </div>
-                  <div className="border-t border-gray-200 dark:border-gray-800 pt-8 flex flex-col md:flex-row justify-between items-center text-gray-500 dark:text-gray-400 text-sm">
-                    <p>© {new Date().getFullYear()} Paul Olakiitan Ajayi. All rights reserved.</p>
-                    <div className="flex space-x-4 mt-4 md:mt-0">
-                      <a href="#" className="hover:text-emerald-500">Privacy Policy</a>
-                      <a href="#" className="hover:text-emerald-500">Terms of Service</a>
-                    </div>
-                  </div>
-                </div>
               </footer>
             </div>
           );
