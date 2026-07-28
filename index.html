@@ -1,812 +1,840 @@
 <!DOCTYPE html>
-<html lang="en" class="dark scroll-smooth">
+<html lang="en" class="scroll-smooth">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Ajayi Knowledge Hub</title>
     
+    <!-- React & Babel -->
+    <script src="https://unpkg.com/react@18/umd/react.development.js"></script>
+    <script src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    
+    <!-- Tailwind CSS & Supabase -->
     <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Merriweather:wght@300;400;700;900&display=swap" rel="stylesheet">
+    
     <script>
         tailwind.config = {
             darkMode: 'class',
             theme: {
                 extend: {
-                    colors: { navy: '#0B1F3A', 'emerald-custom': '#2E8B57', gold: '#D4AF37' },
-                    fontFamily: { serif: ['Merriweather', 'serif'], sans: ['Inter', 'sans-serif'] }
+                    colors: { navy: '#0B1F3A', emerald: '#2E8B57', gold: '#D4AF37', charcoal: '#121212', cardDark: '#1E1E1E' },
+                    fontFamily: { sans: ['Inter', 'sans-serif'], serif: ['Merriweather', 'serif'] },
+                    animation: { 'float': 'float 20s infinite linear' },
+                    keyframes: {
+                        float: {
+                            '0%': { transform: 'translateY(100vh) scale(0.5)', opacity: '0' },
+                            '10%': { opacity: '0.4' },
+                            '90%': { opacity: '0.4' },
+                            '100%': { transform: 'translateY(-10vh) scale(1.2)', opacity: '0' },
+                        }
+                    }
                 }
             }
         }
     </script>
-
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Merriweather:wght@300;400;700;900&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-
-    <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
-    <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
-    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-
     <style>
-        body { background-color: #FAFAFA; color: #111827; font-family: 'Inter', sans-serif; transition: background-color 0.3s ease, color 0.3s ease; }
-        .dark body { background-color: #0a0a0a; color: #F9FAFB; }
-        
-        /* Custom scrollbars from reference */
-        ::-webkit-scrollbar { width: 8px; height: 8px; }
-        ::-webkit-scrollbar-track { background: transparent; }
-        ::-webkit-scrollbar-thumb { background-color: #cbd5e1; border-radius: 20px; }
-        .dark ::-webkit-scrollbar-thumb { background-color: #334155; }
-        
+        body::-webkit-scrollbar { width: 8px; }
+        body::-webkit-scrollbar-track { background: transparent; }
+        body::-webkit-scrollbar-thumb { background-color: #cbd5e1; border-radius: 20px; }
+        .dark body::-webkit-scrollbar-thumb { background-color: #334155; }
         .hide-scrollbar::-webkit-scrollbar { display: none; }
         .hide-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
-        
+        .glass-nav { background: rgba(255, 255, 255, 0.8); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px); }
+        .dark .glass-nav { background: rgba(11, 20, 35, 0.85); border-bottom: 1px solid rgba(255,255,255,0.05); }
         @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
         @keyframes slideUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
-        .animate-fade-in { animation: fadeIn 0.8s ease-out forwards; }
-        .animate-slide-up { animation: slideUp 0.8s ease-out forwards; }
+        .animate-fade-in { animation: fadeIn 0.5s ease-out forwards; }
+        .animate-slide-up { animation: slideUp 0.6s ease-out forwards; }
     </style>
 </head>
-<body>
+<body class="bg-gray-50 dark:bg-charcoal text-gray-900 dark:text-gray-100 transition-colors duration-300 antialiased font-sans">
     <div id="root"></div>
 
     <script type="text/babel">
-        const { useState, useEffect, useRef } = React;
+        const { useState, useEffect, useRef, Fragment } = React;
 
-        const mockLibrary = [
-          { id: 'm1', type: 'book', title: 'The Soil Microbiome', date: '2025', category: 'Microbial Genomics', tags: ['Soil', 'Genomics'], summary: 'An exploration of soil microbial networks.', abstract: 'This book covers the comprehensive study of soil microbiomes, focusing on the genetic interactions that drive soil health and agricultural productivity.' },
-          { id: 'm2', type: 'book', title: 'Bacillus Insights', date: '2024', category: 'PGPR', tags: ['Bacillus', 'Agriculture'], summary: 'Understanding Bacillus species in crop yield.', abstract: 'A deep dive into how beneficial Bacillus species can be leveraged as Plant Growth-Promoting Rhizobacteria (PGPR) to sustainably improve crop resilience and yield.' }
-        ];
+        const supabaseUrl = 'https://ulqihwnzujncqpexersp.supabase.co';
+        const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InVscWlod256dWpuY3FwZXhlcnNwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODUyNDIxNjMsImV4cCI6MjEwMDgxODE2M30.vvMQLeUtjVmciJxwqVgiFVZjmHlclY0Z-oHngY3SVso';
+        const supabase = window.supabase.createClient(supabaseUrl, supabaseKey);
 
-        const mockResearch = [
-          { id: 'm3', type: 'research', title: 'Molecular ID of PGPR in Maize', date: '2023', category: 'Agriculture', tags: ['Maize', 'PGPR'], summary: 'Isolating and identifying beneficial bacteria.', abstract: 'This study isolates and molecularly identifies specific strains of Plant Growth-Promoting Rhizobacteria associated with the rhizosphere of maize.' }
-        ];
-
-        const mockJournal = [
-          { id: 'm5', type: 'journal', title: 'My Graduate School Journey', date: 'Oct 12, 2025', category: 'Personal', tags: ['Grad School', 'Life'], summary: 'Lessons learned in the first year of my PhD.', content: 'Starting graduate school has been one of the most challenging yet rewarding experiences of my life. From late nights in the lab running PCRs to presenting at my first major conference, the journey has reshaped how I view scientific inquiry.\n\nResearch is not a straight line; it is a series of iterative loops where failure is just data telling you what not to do next time.' },
-          { id: 'm6', type: 'blog', title: 'Why Microbes Matter', date: 'Sep 05, 2025', category: 'Science', tags: ['Microbiology', 'Public Health'], summary: 'How invisible life shapes our visible world.', content: 'Microbes are the unseen engines of our planet. They drive nutrient cycles, digest our food, and even regulate our climate. Yet, for a long time, humanity only viewed them through the lens of disease. Today, the advent of genomics is allowing us to map the microbiome of oceans, soils, and humans. By understanding these tiny organisms, we can revolutionize agriculture, develop novel therapeutics, and perhaps solve some of our most pressing environmental crises.' }
-        ];
-
-        const mockTeaching = [
-          { id: 'm7', type: 'teaching', title: 'Intro to Bioinformatics', date: '2025', category: 'Tutorial', tags: ['Code', 'Data'], summary: 'Beginner guide to genomic analysis.', abstract: 'A complete module covering the basics of bioinformatics, sequence alignment, and using AI tools to analyze massive biological datasets.' }
-        ];
-
-        const mockProjects = [
-          { id: 'm9', type: 'project', title: 'AI in Agriculture Initiative', date: 'Ongoing', category: 'Innovation', tags: ['AI', 'Sustainability'], summary: 'Predicting crop yields using microbial data.', abstract: 'A collaborative project utilizing machine learning models to analyze soil microbiome data and predict optimal crop yield conditions.' }
-        ];
+        const Icon = ({ name, size = 20, className = "" }) => {
+            const icons = {
+                book: <Fragment><path d="M4 19.5v-15A2.5 2.5 0 0 1 6.5 2H20v20H6.5a2.5 2.5 0 0 1 0-5H20"/><path d="M8 7h6"/><path d="M8 11h8"/></Fragment>,
+                microscope: <path d="M6 18h8 M3 22h18 M14 22a7 7 0 1 0 0-14h-1 M9 14h2 M9 12a2 2 0 0 1-2-2V6h6v4a2 2 0 0 1-2 2Z M12 6V3a1 1 0 0 0-1-1H9a1 1 0 0 0-1 1v3"/>,
+                gradCap: <path d="M22 10v6M2 10l10-5 10 5-10 5z M6 12v5c3 3 9 3 12 0v-5"/>,
+                pencil: <path d="M17 3a2.828 2.828 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3z M15 5l4 4"/>,
+                menu: <path d="M4 12h16M4 6h16M4 18h16"/>,
+                x: <path d="M18 6 6 18M6 6l12 12"/>,
+                sun: <path d="M12 3v1M12 20v1M4.22 4.22l.71.71M19.07 19.07l.71.71M1 12h1M20 12h1M4.22 19.78l.71-.71M19.07 4.93l.71-.71M12 17a5 5 0 1 0 0-10 5 5 0 0 0 0 10z"/>,
+                moon: <path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z"/>,
+                download: <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4 M7 10l5 5 5-5 M12 15V3"/>,
+                layout: <Fragment><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><line x1="3" y1="9" x2="21" y2="9"/><line x1="9" y1="21" x2="9" y2="9"/></Fragment>,
+                users: <Fragment><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></Fragment>,
+                chart: <Fragment><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></Fragment>,
+                magic: <Fragment><path d="M20.24 12.24a6 6 0 0 0-8.49-8.49L5 10.5V19h8.5z"/><line x1="16" y1="8" x2="2" y2="22"/><line x1="17.5" y1="15" x2="9" y2="6.5"/></Fragment>,
+                search: <Fragment><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></Fragment>,
+                globe: <Fragment><circle cx="12" cy="12" r="10"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/><path d="M2 12h20"/></Fragment>,
+                envelope: <Fragment><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></Fragment>,
+                send: <Fragment><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></Fragment>,
+                facebook: <path d="M18 2h-3a5 5 0 0 0-5 5v3H7v4h3v8h4v-8h3l1-4h-4V7a1 1 0 0 1 1-1h3z"/>,
+                linkedin: <Fragment><path d="M16 8a6 6 0 0 1 6 6v7h-4v-7a2 2 0 0 0-2-2 2 2 0 0 0-2 2v7h-4v-7a6 6 0 0 1 6-6z"/><rect x="2" y="9" width="4" height="12"/><circle cx="4" cy="4" r="2"/></Fragment>,
+                whatsapp: <Fragment><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"/></Fragment>,
+                orcid: <Fragment><circle cx="12" cy="12" r="10"/><path d="M8 7h2.5v10H8V7zM12 7h2.5c2 0 3.5 1.5 3.5 3.5v3c0 2-1.5 3.5-3.5 3.5H12V7zM14 9v6h.5c1 0 1.5-.8 1.5-1.5v-3C16 9.8 15.5 9 14.5 9H14z"/></Fragment>,
+                paperclip: <path d="m21.44 11.05-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48"/>
+            };
+            return <svg xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}>{icons[name] || icons.book}</svg>;
+        };
 
         const ParticleBackground = ({ isDarkMode }) => {
-          const canvasRef = useRef(null);
-          useEffect(() => {
-            const canvas = canvasRef.current;
-            if (!canvas) return;
-            const ctx = canvas.getContext('2d');
-            if (!ctx) return;
-            let animationFrameId;
-            let particles = [];
-            const resize = () => { if (canvas) { canvas.width = window.innerWidth; canvas.height = window.innerHeight; } };
-            window.addEventListener('resize', resize);
-            resize();
-            class Particle {
-              constructor() {
-                this.x = Math.random() * canvas.width; this.y = Math.random() * canvas.height;
-                this.vx = (Math.random() - 0.5) * 0.5; this.vy = (Math.random() - 0.5) * 0.5;
-                this.radius = Math.random() * 2 + 1;
-              }
-              update() {
-                this.x += this.vx; this.y += this.vy;
-                if (this.x < 0 || this.x > canvas.width) this.vx = -this.vx;
-                if (this.y < 0 || this.y > canvas.height) this.vy = -this.vy;
-              }
-              draw() {
-                ctx.beginPath(); ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2);
-                ctx.fillStyle = isDarkMode ? 'rgba(46, 139, 87, 0.2)' : 'rgba(11, 31, 58, 0.1)'; ctx.fill();
-              }
-            }
-            for (let i = 0; i < 40; i++) particles.push(new Particle());
-            const animate = () => {
-              if (!ctx || !canvas) return;
-              ctx.clearRect(0, 0, canvas.width, canvas.height);
-              particles.forEach(p => { p.update(); p.draw(); });
-              particles.forEach((p1, i) => {
-                particles.slice(i + 1).forEach(p2 => {
-                  const dist = Math.sqrt(Math.pow(p1.x - p2.x, 2) + Math.pow(p1.y - p2.y, 2));
-                  if (dist < 100) {
-                    ctx.beginPath(); ctx.moveTo(p1.x, p1.y); ctx.lineTo(p2.x, p2.y);
-                    ctx.strokeStyle = isDarkMode ? `rgba(46, 139, 87, ${0.15 - dist/600})` : `rgba(11, 31, 58, ${0.1 - dist/1000})`; ctx.stroke();
-                  }
-                });
-              });
-              animationFrameId = requestAnimationFrame(animate);
-            };
-            animate();
-            return () => { window.removeEventListener('resize', resize); if (animationFrameId) cancelAnimationFrame(animationFrameId); };
-          }, [isDarkMode]);
-          return <canvas ref={canvasRef} className="absolute top-0 left-0 w-full h-full pointer-events-none z-0" />;
+            const canvasRef = useRef(null);
+            
+            useEffect(() => {
+                const canvas = canvasRef.current;
+                if (!canvas) return;
+                const ctx = canvas.getContext('2d');
+                if (!ctx) return;
+                let animationFrameId;
+                let particles = [];
+                
+                const resize = () => { if(canvas) {canvas.width = window.innerWidth; canvas.height = window.innerHeight;} };
+                window.addEventListener('resize', resize);
+                resize();
+                
+                class Particle {
+                    constructor() {
+                        this.x = Math.random() * canvas.width; 
+                        this.y = Math.random() * canvas.height;
+                        this.vx = (Math.random() - 0.5) * 0.8; 
+                        this.vy = (Math.random() - 0.5) * 0.8;
+                        this.size = Math.random() * 6 + 3; 
+                        this.type = Math.floor(Math.random() * 3); 
+                        this.angle = Math.random() * Math.PI * 2;
+                        this.va = (Math.random() - 0.5) * 0.02; 
+                    }
+                    update() {
+                        this.x += this.vx; this.y += this.vy;
+                        this.angle += this.va;
+                        if (this.x < -50 || this.x > canvas.width + 50) this.vx = -this.vx;
+                        if (this.y < -50 || this.y > canvas.height + 50) this.vy = -this.vy;
+                    }
+                    draw() {
+                        ctx.save();
+                        ctx.translate(this.x, this.y);
+                        ctx.rotate(this.angle);
+                        
+                        ctx.fillStyle = isDarkMode ? 'rgba(46, 139, 87, 0.45)' : 'rgba(11, 31, 58, 0.3)';
+                        ctx.strokeStyle = isDarkMode ? 'rgba(46, 139, 87, 0.65)' : 'rgba(11, 31, 58, 0.5)';
+                        ctx.lineWidth = 2;
+
+                        ctx.beginPath();
+                        if (this.type === 0) { // Diplococci
+                            ctx.arc(-this.size/1.5, 0, this.size/1.2, 0, Math.PI * 2);
+                            ctx.arc(this.size/1.5, 0, this.size/1.2, 0, Math.PI * 2);
+                            ctx.fill();
+                        } else if (this.type === 1) { // Bacilli
+                            ctx.arc(-this.size, 0, this.size/1.5, Math.PI/2, Math.PI*1.5);
+                            ctx.lineTo(this.size, -this.size/1.5);
+                            ctx.arc(this.size, 0, this.size/1.5, -Math.PI/2, Math.PI/2);
+                            ctx.closePath();
+                            ctx.fill();
+                        } else { // Spirilla
+                            ctx.moveTo(-this.size * 2, 0);
+                            ctx.bezierCurveTo(-this.size, -this.size*2, this.size, this.size*2, this.size * 2, 0);
+                            ctx.stroke();
+                        }
+                        ctx.restore();
+                    }
+                }
+                
+                for (let i = 0; i < 35; i++) particles.push(new Particle());
+                
+                const animate = () => {
+                    if (!ctx || !canvas) return;
+                    ctx.clearRect(0, 0, canvas.width, canvas.height);
+                    
+                    particles.forEach(p => { p.update(); p.draw(); });
+                    
+                    particles.forEach((p1, i) => {
+                        particles.slice(i + 1).forEach(p2 => {
+                            const dist = Math.sqrt(Math.pow(p1.x - p2.x, 2) + Math.pow(p1.y - p2.y, 2));
+                            if (dist < 130) {
+                                ctx.beginPath(); ctx.moveTo(p1.x, p1.y); ctx.lineTo(p2.x, p2.y);
+                                ctx.strokeStyle = isDarkMode ? `rgba(46, 139, 87, ${0.4 - dist/325})` : `rgba(11, 31, 58, ${0.3 - dist/433})`; 
+                                ctx.lineWidth = 1;
+                                ctx.stroke();
+                            }
+                        });
+                    });
+                    animationFrameId = requestAnimationFrame(animate);
+                };
+                animate();
+                return () => { window.removeEventListener('resize', resize); if (animationFrameId) cancelAnimationFrame(animationFrameId); };
+            }, [isDarkMode]);
+            
+            return <canvas ref={canvasRef} className="absolute top-0 left-0 w-full h-full pointer-events-none z-10 opacity-70" />;
+        };
+
+        const Navbar = ({ darkMode, setDarkMode, setView, currentView, settings }) => {
+            const [mobileMenu, setMobileMenu] = useState(false);
+            
+            useEffect(() => {
+                if (mobileMenu) document.body.style.overflow = 'hidden';
+                else document.body.style.overflow = 'unset';
+                return () => { document.body.style.overflow = 'unset'; };
+            }, [mobileMenu]);
+
+            const navLinks = [
+                { name: 'Home', id: 'home', icon: 'layout' },
+                { name: 'Library', id: 'library', icon: 'book' },
+                { name: 'Research', id: 'research', icon: 'microscope' },
+                { name: 'Journal', id: 'journal', icon: 'layout' },
+                { name: 'Teaching', id: 'teaching', icon: 'gradCap' },
+                { name: 'Blog', id: 'blog', icon: 'pencil' },
+                { name: 'Projects', id: 'projects', icon: 'chart' },
+                { name: 'About', id: 'about', icon: 'users' },
+                { name: 'Contact', id: 'contact', icon: 'envelope' },
+            ];
+
+            return (
+                <nav className="glass-nav text-gray-900 dark:text-white w-full fixed top-0 z-50 transition-colors">
+                    <div className="max-w-[1600px] mx-auto px-4 sm:px-6 lg:px-8">
+                        <div className="flex justify-between items-center h-20">
+                            {/* Logo */}
+                            <div className="flex-shrink-0 cursor-pointer flex items-center gap-3" onClick={() => setView('home')}>
+                                {settings?.logo_url ? (
+                                    <img src={settings.logo_url} alt="Logo" className="w-10 h-10 rounded-lg object-cover" />
+                                ) : (
+                                    <div className="text-[#D4AF37] dark:text-[#2E8B57]">
+                                        <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+                                            <path d="M4 19.5v-15A2.5 2.5 0 0 1 6.5 2H20v20H6.5a2.5 2.5 0 0 1 0-5H20"/><path d="M8 7h6"/><path d="M8 11h8"/>
+                                        </svg>
+                                    </div>
+                                )}
+                                <div className="flex flex-col">
+                                    <h1 className="font-serif font-bold text-xl leading-tight text-[#0B1423] dark:text-white">Ajayi Knowledge Hub</h1>
+                                    <span className="text-[#D4AF37] dark:text-[#2E8B57] text-[10px] tracking-wider uppercase font-medium">Explore. Learn. Discover. Grow.</span>
+                                </div>
+                            </div>
+                            
+                            {/* Collapsed Actions for all screens */}
+                            <div className="flex items-center space-x-2 sm:space-x-4">
+                                <button onClick={() => setView('ai')} className="hidden sm:flex items-center px-4 py-2 rounded-lg bg-[#2E8B57]/10 dark:bg-[#2E8B57]/20 text-[#2E8B57] border border-[#2E8B57]/30 dark:border-[#2E8B57]/50 hover:bg-[#2E8B57] hover:text-white text-sm font-medium transition-colors">
+                                    <Icon name="magic" size={16} className="mr-2" /> Ask AI
+                                </button>
+                                <button className="w-10 h-10 rounded-full border border-gray-200 dark:border-white/20 flex items-center justify-center text-gray-500 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white hover:border-gray-400 dark:hover:border-white transition-colors hidden xs:flex">
+                                    <Icon name="search" size={18} />
+                                </button>
+                                <button onClick={() => setDarkMode(!darkMode)} className="w-10 h-10 rounded-full border border-gray-200 dark:border-white/20 flex items-center justify-center text-gray-500 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white hover:border-gray-400 dark:hover:border-white transition-colors">
+                                    {darkMode ? <Icon name="sun" size={18} /> : <Icon name="moon" size={18} />}
+                                </button>
+                                <button onClick={() => setMobileMenu(!mobileMenu)} className="w-10 h-10 flex items-center justify-center text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white transition-colors">
+                                    <Icon name={mobileMenu ? "x" : "menu"} size={28} />
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                    {/* Universal Fullscreen Dropdown Menu */}
+                    {mobileMenu && (
+                        <div className="fixed inset-0 top-20 bg-white/95 dark:bg-[#0B1423]/95 backdrop-blur-xl z-40 overflow-y-auto px-4 py-6 animate-fade-in flex flex-col">
+                            <div className="max-w-3xl mx-auto w-full grid grid-cols-1 sm:grid-cols-2 gap-2">
+                                {navLinks.map(link => (
+                                    <button 
+                                        key={link.id} 
+                                        onClick={() => { setView(link.id); setMobileMenu(false); }}
+                                        className={`flex items-center w-full text-left px-6 py-4 rounded-xl text-lg font-medium transition-colors ${currentView === link.id ? 'bg-[#2E8B57] text-white' : 'text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-white/10 hover:text-gray-900 dark:hover:text-white border border-transparent hover:border-gray-200 dark:hover:border-white/10'}`}
+                                    >
+                                        <Icon name={link.icon} size={20} className="mr-4 opacity-70" />
+                                        {link.name}
+                                    </button>
+                                ))}
+                            </div>
+                            <div className="max-w-3xl mx-auto w-full mt-8 pt-8 border-t border-gray-200 dark:border-white/10">
+                                <a href="/admin.html" className="flex justify-center items-center px-6 py-4 rounded-xl bg-gray-100 dark:bg-[#D4AF37]/10 text-gray-700 dark:text-[#D4AF37] border border-gray-200 dark:border-[#D4AF37]/30 hover:bg-gray-200 dark:hover:bg-[#D4AF37]/20 font-bold transition-colors w-full">
+                                    <Icon name="users" size={20} className="mr-3" /> Login to Admin Portal
+                                </a>
+                            </div>
+                        </div>
+                    )}
+                </nav>
+            );
         };
 
         const PublicationDetailView = ({ item, setView }) => {
-          const [showCitation, setShowCitation] = useState(false);
-          const getBackView = () => ['book','research','teaching','project'].includes(item.type) ? (item.type === 'book' ? 'library' : item.type === 'project' ? 'projects' : item.type) : 'home';
+            const [showCitation, setShowCitation] = useState(false);
+            
+            const handleDownload = async (url) => {
+                if(window.supabase) await window.supabase.rpc('increment_download');
+                window.open(url, '_blank');
+            };
 
-          return (
-            <div className="max-w-5xl mx-auto px-4 sm:px-6 pt-32 pb-24 relative z-10 min-h-screen animate-fade-in">
-              <button onClick={() => setView(getBackView())} className="flex items-center text-emerald-600 dark:text-emerald-400 hover:opacity-80 transition-opacity mb-8 font-medium">
-                <i className="fas fa-arrow-left mr-2"></i> Back to Collection
-              </button>
-              
-              <div className="bg-white dark:bg-[#1E1E1E] rounded-3xl p-8 shadow-xl border border-gray-100 dark:border-gray-800 mb-12">
-                <div className="flex flex-col md:flex-row gap-10">
-                  <div className="w-full md:w-1/3 flex-shrink-0">
-                    <div className="aspect-[3/4] bg-gradient-to-br from-navy to-[#1a365d] dark:from-gray-800 dark:to-gray-950 rounded-2xl shadow-lg flex flex-col items-center justify-center p-6 text-center border border-gray-200 dark:border-gray-700 relative overflow-hidden">
-                       <i className={`fas ${item.type === 'book' ? 'fa-book' : 'fa-file-alt'} text-6xl text-emerald-custom opacity-20 absolute`}></i>
-                       <h3 className="text-white font-serif font-bold text-xl leading-tight z-10">{item.title}</h3>
-                       <p className="text-emerald-300 text-sm mt-4 z-10">Paul O. Ajayi</p>
-                    </div>
-                  </div>
-                  <div className="w-full md:w-2/3 flex flex-col justify-center">
-                    <div className="flex items-center space-x-3 mb-4">
-                      <span className="px-3 py-1 bg-emerald-50 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-400 rounded-full text-xs font-bold uppercase tracking-wider">{item.category || 'General'}</span>
-                      <span className="text-gray-500 dark:text-gray-400 text-sm font-medium">{item.date || item.published_date || '2026'}</span>
-                    </div>
-                    <h1 className="text-3xl md:text-5xl font-bold font-serif text-navy dark:text-white mb-6 leading-tight">{item.title}</h1>
+            return (
+                <div className="max-w-5xl mx-auto px-4 sm:px-6 pt-32 pb-24 relative z-10 min-h-screen animate-fade-in">
+                    <button onClick={() => window.history.back()} className="flex items-center text-[#2E8B57] hover:opacity-80 transition-opacity mb-8 font-medium">
+                        &larr; Back
+                    </button>
                     
-                    <div className="flex flex-wrap gap-2 mb-6">
-                      {(item.tags || []).map(tag => (
-                        <span key={tag} className="text-xs text-gray-500 dark:text-gray-400 bg-gray-100 dark:bg-gray-800 px-2 py-1 rounded-md">#{tag}</span>
-                      ))}
-                    </div>
+                    <div className="bg-white dark:bg-[#1E1E1E] rounded-3xl p-8 shadow-xl border border-gray-100 dark:border-gray-800 mb-12">
+                        <div className="flex flex-col md:flex-row gap-10">
+                            <div className="w-full md:w-1/3 flex-shrink-0">
+                                <div className="aspect-[3/4] bg-gradient-to-br from-[#0B1423] to-[#1a365d] dark:from-gray-800 dark:to-gray-950 rounded-2xl shadow-lg flex flex-col items-center justify-center p-6 text-center border border-gray-200 dark:border-gray-700 relative overflow-hidden">
+                                    <Icon name={item.type === 'book' ? 'book' : 'microscope'} size={80} className="text-[#2E8B57] opacity-20 absolute" />
+                                    <h3 className="text-white font-serif font-bold text-xl leading-tight z-10">{item.title}</h3>
+                                </div>
+                            </div>
+                            <div className="w-full md:w-2/3 flex flex-col justify-center min-w-0">
+                                <div className="flex items-center space-x-3 mb-4 flex-wrap">
+                                    <span className="px-3 py-1 bg-[#2E8B57]/10 text-[#2E8B57] rounded-full text-xs font-bold uppercase tracking-wider mb-2 sm:mb-0">{item.category}</span>
+                                    <span className="text-gray-500 dark:text-gray-400 text-sm font-medium">{item.published_date}</span>
+                                </div>
+                                <h1 className="text-3xl md:text-5xl font-bold font-serif text-[#0B1423] dark:text-white mb-6 leading-tight break-words">{item.title}</h1>
+                                
+                                <div className="flex flex-wrap gap-2 mb-6">
+                                    {(item.tags || []).map(tag => (
+                                        <span key={tag} className="text-xs text-gray-500 bg-gray-100 dark:bg-gray-800 px-2 py-1 rounded-md">#{tag}</span>
+                                    ))}
+                                </div>
 
-                    <h3 className="text-lg font-bold text-navy dark:text-white mb-2">Abstract / Summary</h3>
-                    <p className="text-gray-600 dark:text-gray-300 text-lg leading-relaxed mb-8">{item.abstract || item.summary || item.content}</p>
-                    
-                    <div className="flex flex-wrap gap-4 mt-auto">
-                      {item.file_url ? (
-                        <a href={item.file_url} target="_blank" rel="noopener noreferrer" className="flex items-center bg-navy hover:bg-[#1a365d] dark:bg-emerald-600 dark:hover:bg-emerald-700 text-white px-6 py-3 rounded-xl font-medium transition-all shadow-md">
-                          <i className="fas fa-download mr-2"></i> Download PDF
-                        </a>
-                      ) : (
-                        <button disabled className="flex items-center bg-gray-200 dark:bg-gray-800 text-gray-400 dark:text-gray-600 px-6 py-3 rounded-xl font-medium transition-all shadow-sm cursor-not-allowed">
-                          <i className="fas fa-file-pdf mr-2"></i> No PDF Attached
-                        </button>
-                      )}
-                      <button onClick={() => setShowCitation(!showCitation)} className="flex items-center bg-gray-100 hover:bg-gray-200 dark:bg-gray-800 dark:hover:bg-gray-700 text-navy dark:text-white px-6 py-3 rounded-xl font-medium transition-all">
-                        <i className="fas fa-quote-right mr-2"></i> Cite
-                      </button>
-                    </div>
+                                <p className="text-gray-600 dark:text-gray-300 text-lg leading-relaxed mb-8">{item.summary}</p>
+                                
+                                <div className="flex flex-wrap gap-4 mt-auto">
+                                    {item.file_url ? (
+                                        <button onClick={() => handleDownload(item.file_url)} className="flex items-center bg-[#2E8B57] hover:bg-[#257348] text-white px-6 py-3 rounded-xl font-medium transition-all shadow-md">
+                                            <Icon name="download" size={18} className="mr-2" /> Download PDF
+                                        </button>
+                                    ) : (
+                                        <button disabled className="flex items-center bg-gray-200 dark:bg-gray-800 text-gray-400 px-6 py-3 rounded-xl font-medium cursor-not-allowed">
+                                            No PDF Attached
+                                        </button>
+                                    )}
+                                    <button onClick={() => setShowCitation(!showCitation)} className="flex items-center bg-gray-100 dark:bg-gray-800 text-[#0B1423] dark:text-white px-6 py-3 rounded-xl font-medium transition-all">
+                                        Cite
+                                    </button>
+                                </div>
 
-                    {showCitation && (
-                      <div className="mt-4 p-4 bg-gray-50 dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 animate-fade-in">
-                        <p className="text-sm font-serif text-gray-700 dark:text-gray-300">
-                          Ajayi, P. O. ({item.date || item.published_date || '2026'}). <i>{item.title}</i>. Ajayi Knowledge Hub.
-                        </p>
-                        <button className="mt-2 text-xs text-emerald-600 font-medium hover:underline">Copy to clipboard</button>
-                      </div>
-                    )}
-                  </div>
+                                {showCitation && (
+                                    <div className="mt-4 p-4 bg-gray-50 dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 animate-fade-in text-sm font-serif break-words">
+                                        Ajayi, P. O. ({item.published_date}). <i>{item.title}</i>.
+                                    </div>
+                                )}
+                            </div>
+                        </div>
+                    </div>
                 </div>
-              </div>
-            </div>
-          );
+            );
         };
 
-        const ArticleReadingView = ({ item, setView }) => (
-          <div className="max-w-3xl mx-auto px-4 sm:px-6 pt-32 pb-24 relative z-10 min-h-screen animate-fade-in">
-            <button onClick={() => setView(item.type === 'blog' ? 'blog' : 'journal')} className="flex items-center text-emerald-600 dark:text-emerald-400 hover:opacity-80 transition-opacity mb-8 font-medium">
-              <i className="fas fa-arrow-left mr-2"></i> Back to {item.type === 'blog' ? 'Blog' : 'Journal'}
-            </button>
-            <article className="max-w-none">
-              <div className="text-center mb-12">
-                <span className="px-3 py-1 bg-emerald-50 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-400 rounded-full text-xs font-bold uppercase tracking-wider inline-block mb-4">{item.category || 'Post'}</span>
-                <h1 className="text-4xl md:text-5xl font-bold font-serif text-navy dark:text-white mb-6 leading-tight">{item.title}</h1>
-                <div className="flex items-center justify-center space-x-4 text-gray-500 dark:text-gray-400 font-medium text-sm">
-                  <span>By Paul O. Ajayi</span>
-                  <span>•</span>
-                  <span>{item.date || item.published_date || 'Recent'}</span>
-                </div>
-              </div>
-              <div className="text-gray-800 dark:text-gray-200 leading-relaxed font-serif whitespace-pre-wrap text-xl">
-                {item.content || item.summary}
-              </div>
-            </article>
+        const ArticleReadingView = ({ item, setView }) => {
+            const handleDownload = async (url) => {
+                if(window.supabase) await window.supabase.rpc('increment_download');
+                window.open(url, '_blank');
+            };
 
-            {item.file_url && (
-              <div className="mt-12 p-6 bg-emerald-50 dark:bg-emerald-900/20 rounded-2xl border border-emerald-100 dark:border-emerald-800/50 flex flex-col sm:flex-row items-center justify-between shadow-sm">
-                <div className="flex items-center mb-4 sm:mb-0">
-                  <div className="w-12 h-12 bg-white dark:bg-gray-800 rounded-full flex items-center justify-center shadow-sm mr-4 text-emerald-600 dark:text-emerald-400">
-                    <i className="fas fa-file-pdf text-xl"></i>
-                  </div>
-                  <div className="text-left">
-                    <h4 className="font-bold text-navy dark:text-white">Attached Document</h4>
-                    <p className="text-sm text-gray-600 dark:text-gray-400">Download the full PDF for this post</p>
-                  </div>
+            return (
+                <div className="max-w-3xl mx-auto px-4 sm:px-6 pt-32 pb-24 relative z-10 min-h-screen animate-fade-in">
+                    <button onClick={() => window.history.back()} className="flex items-center text-[#2E8B57] hover:opacity-80 transition-opacity mb-8 font-medium">
+                        &larr; Back
+                    </button>
+                    <article className="max-w-none break-words">
+                        <div className="text-center mb-12">
+                            <span className="px-3 py-1 bg-[#2E8B57]/10 text-[#2E8B57] rounded-full text-xs font-bold uppercase tracking-wider inline-block mb-4">{item.category}</span>
+                            <h1 className="text-4xl md:text-5xl font-bold font-serif text-[#0B1423] dark:text-white mb-6 leading-tight">{item.title}</h1>
+                            <div className="text-gray-500 font-medium text-sm">By Paul O. Ajayi &bull; {item.published_date}</div>
+                        </div>
+                        <div className="text-gray-800 dark:text-gray-200 leading-relaxed font-serif whitespace-pre-wrap text-xl">
+                            {item.content || item.summary}
+                        </div>
+                    </article>
+
+                    {item.file_url && (
+                        <div className="mt-12 p-6 bg-[#2E8B57]/10 rounded-2xl border border-[#2E8B57]/30 flex flex-col sm:flex-row items-center justify-between">
+                            <div className="flex items-center mb-4 sm:mb-0">
+                                <div className="w-12 h-12 bg-white dark:bg-gray-800 rounded-full flex items-center justify-center shadow-sm mr-4 text-[#2E8B57]">
+                                    <Icon name="download" size={20} />
+                                </div>
+                                <div className="text-left">
+                                    <h4 className="font-bold text-[#0B1423] dark:text-white">Attached Document</h4>
+                                    <p className="text-sm text-gray-600 dark:text-gray-400">Download the full PDF for this post</p>
+                                </div>
+                            </div>
+                            <button onClick={() => handleDownload(item.file_url)} className="px-6 py-3 bg-[#2E8B57] hover:bg-[#257348] text-white rounded-xl font-medium transition-all shadow-md w-full sm:w-auto">
+                                Download PDF
+                            </button>
+                        </div>
+                    )}
                 </div>
-                <a href={item.file_url} target="_blank" rel="noopener noreferrer" className="px-6 py-3 w-full sm:w-auto text-center bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl font-medium transition-all shadow-md flex justify-center items-center">
-                  <i className="fas fa-download mr-2"></i> Download PDF
-                </a>
-              </div>
-            )}
-          </div>
+            );
+        };
+
+        const AboutView = ({ settings }) => (
+            <div className="max-w-5xl mx-auto px-4 sm:px-6 pt-32 pb-24 relative z-10 min-h-screen animate-fade-in">
+                <div className="flex flex-col md:flex-row gap-12 items-start">
+                    <div className="w-full md:w-1/3 flex-shrink-0 md:sticky md:top-32">
+                        <div className="aspect-square rounded-3xl bg-gradient-to-br from-[#0B1423] to-[#1a365d] p-1 shadow-lg border border-gray-100 dark:border-gray-800 relative overflow-hidden">
+                            {settings?.profile_pic_url ? (
+                                <img src={settings.profile_pic_url} alt="Profile" className="w-full h-full object-cover rounded-[22px]" />
+                            ) : (
+                                <div className="w-full h-full bg-gray-50 dark:bg-[#111] rounded-[22px] flex items-center justify-center text-[#0B1423] dark:text-[#2E8B57]">
+                                    <Icon name="users" size={80} className="opacity-50" />
+                                </div>
+                            )}
+                        </div>
+                    </div>
+                    <div className="w-full md:w-2/3 min-w-0">
+                        <h1 className="text-4xl md:text-5xl font-bold font-serif text-[#0B1423] dark:text-white mb-2 break-words">{settings?.display_name || 'Paul Olakiitan Ajayi'}</h1>
+                        <p className="text-xl text-[#2E8B57] font-medium mb-8 break-words">{settings?.bio || 'Microbiologist · Researcher · Educator'}</p>
+                        
+                        <div className="p-6 bg-[#2E8B57]/10 rounded-2xl border border-[#2E8B57]/30 mb-8 shadow-sm">
+                            <h3 className="text-xl font-bold text-[#0B1423] dark:text-white mb-3 mt-0 flex items-center">Mission</h3>
+                            <p className="m-0 text-gray-800 dark:text-gray-200 font-medium">{settings?.mission_text || 'To advance science through research.'}</p>
+                        </div>
+                        
+                        <div className="text-gray-700 dark:text-gray-300 leading-relaxed font-serif text-lg whitespace-pre-wrap break-words">
+                            {settings?.about_text || 'Loading about text...'}
+                        </div>
+                    </div>
+                </div>
+            </div>
         );
 
-        const AboutView = () => (
-          <div className="max-w-5xl mx-auto px-4 sm:px-6 pt-32 pb-24 relative z-10 min-h-screen animate-fade-in">
-            <div className="flex flex-col md:flex-row gap-12 items-start">
-              <div className="w-full md:w-1/3 flex-shrink-0 md:sticky md:top-32">
-                <div className="aspect-square rounded-3xl bg-gradient-to-br from-navy to-[#1a365d] dark:from-gray-800 dark:to-gray-900 p-1 flex flex-col items-center justify-center text-center shadow-lg border border-gray-100 dark:border-gray-800 relative overflow-hidden">
-                  <div className="w-full h-full bg-gray-50 dark:bg-[#111] rounded-[22px] flex items-center justify-center text-navy dark:text-emerald-custom">
-                    <i className="fas fa-user-circle text-6xl opacity-50"></i>
-                  </div>
-                </div>
-              </div>
-              <div className="w-full md:w-2/3">
-                <h1 className="text-4xl md:text-5xl font-bold font-serif text-navy dark:text-white mb-2">Paul Olakiitan Ajayi</h1>
-                <p className="text-xl text-emerald-custom font-medium mb-8">Microbiologist · Researcher · Educator · Writer</p>
-                <div className="text-gray-700 dark:text-gray-300 leading-relaxed font-serif text-lg space-y-6">
-                  <div className="p-6 bg-emerald-50 dark:bg-emerald-900/20 rounded-2xl border border-emerald-100 dark:border-emerald-900/50 mb-8 shadow-sm">
-                    <h3 className="text-xl font-bold font-sans text-navy dark:text-white mb-3 flex items-center">
-                      <i className="fas fa-check-circle text-emerald-600 mr-2"></i> Mission
-                    </h3>
-                    <p className="text-gray-800 dark:text-gray-200 font-medium text-base">To advance science through research, education, innovation, and the open sharing of knowledge that improves agriculture, human health, and society.</p>
-                  </div>
-                  <p>Paul Olakiitan Ajayi is a microbiologist, educator, and aspiring researcher passionate about understanding microorganisms and their role in agriculture, human health, and sustainable development.</p>
-                  <p>His academic journey began with a Bachelor of Technology in Microbiology, where his undergraduate research focused on isolating and molecularly identifying plant growth-promoting rhizobacteria (PGPR) associated with maize.</p>
-                </div>
-              </div>
-            </div>
-          </div>
-        );
+        const ContactView = ({ settings }) => {
+            const [formData, setFormData] = useState({ name: '', email: '', message: '' });
+            const [status, setStatus] = useState('');
 
-        const ContactView = () => (
-          <div className="max-w-5xl mx-auto px-4 sm:px-6 pt-32 pb-24 relative z-10 min-h-screen animate-fade-in">
-            <div className="text-center mb-16">
-              <h2 className="text-4xl font-bold font-serif text-navy dark:text-white mb-4">Let's Connect</h2>
-              <p className="text-gray-600 dark:text-gray-400 text-lg max-w-2xl mx-auto">Whether you're interested in research collaboration, speaking engagements, or just want to discuss microbiology, I'd love to hear from you.</p>
-            </div>
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-12">
-              <div className="bg-white dark:bg-[#1E1E1E] rounded-3xl p-8 shadow-xl border border-gray-100 dark:border-gray-800">
-                <h3 className="text-2xl font-bold font-serif text-navy dark:text-white mb-6">Send a Message</h3>
-                <form className="space-y-4">
-                  <input type="text" placeholder="Your Name" className="w-full px-4 py-3 rounded-xl bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 focus:outline-none focus:ring-2 focus:ring-emerald-custom text-gray-900 dark:text-white" />
-                  <input type="email" placeholder="Your Email" className="w-full px-4 py-3 rounded-xl bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 focus:outline-none focus:ring-2 focus:ring-emerald-custom text-gray-900 dark:text-white" />
-                  <textarea rows="5" placeholder="Your Message" className="w-full px-4 py-3 rounded-xl bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 focus:outline-none focus:ring-2 focus:ring-emerald-custom text-gray-900 dark:text-white resize-none"></textarea>
-                  <button type="button" className="w-full bg-navy dark:bg-emerald-600 hover:bg-[#1a365d] dark:hover:bg-emerald-700 text-white px-6 py-4 rounded-xl font-medium transition-all shadow-md flex justify-center items-center">
-                    <i className="fas fa-paper-plane mr-2"></i> Send Message
-                  </button>
-                </form>
-              </div>
-            </div>
-          </div>
-        );
+            const handleSubmit = async (e) => {
+                e.preventDefault();
+                setStatus('Sending...');
+                const { error } = await supabase.from('messages').insert([formData]);
+                if (error) setStatus('Error sending message. Please try again.');
+                else { setStatus('Message sent successfully!'); setFormData({ name: '', email: '', message: '' }); }
+                setTimeout(() => setStatus(''), 5000);
+            };
+
+            return (
+                <div className="max-w-5xl mx-auto px-4 sm:px-6 pt-32 pb-24 relative z-10 min-h-screen animate-fade-in">
+                    <div className="text-center mb-16">
+                        <h2 className="text-4xl font-bold font-serif text-[#0B1423] dark:text-white mb-4">Let's Connect</h2>
+                        <p className="text-gray-600 dark:text-gray-400 text-lg max-w-2xl mx-auto">Interested in collaboration or have a question? Send me a message below.</p>
+                    </div>
+                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-12">
+                        <div className="bg-white dark:bg-[#1E1E1E] rounded-3xl p-8 shadow-xl border border-gray-100 dark:border-gray-800 min-w-0">
+                            <h3 className="text-2xl font-bold font-serif text-[#0B1423] dark:text-white mb-6">Send a Message</h3>
+                            {status && <div className={`p-4 mb-4 rounded-xl text-sm font-medium ${status.includes('Error') ? 'bg-red-100 text-red-700' : 'bg-green-100 text-green-700'}`}>{status}</div>}
+                            <form onSubmit={handleSubmit} className="space-y-4">
+                                <input required type="text" placeholder="Your Name" value={formData.name} onChange={e => setFormData({...formData, name: e.target.value})} className="w-full px-4 py-3 rounded-xl bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 focus:outline-none focus:ring-2 focus:ring-[#2E8B57] text-gray-900 dark:text-white" />
+                                <input required type="email" placeholder="Your Email" value={formData.email} onChange={e => setFormData({...formData, email: e.target.value})} className="w-full px-4 py-3 rounded-xl bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 focus:outline-none focus:ring-2 focus:ring-[#2E8B57] text-gray-900 dark:text-white" />
+                                <textarea required rows="5" placeholder="Your Message" value={formData.message} onChange={e => setFormData({...formData, message: e.target.value})} className="w-full px-4 py-3 rounded-xl bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 focus:outline-none focus:ring-2 focus:ring-[#2E8B57] text-gray-900 dark:text-white resize-none"></textarea>
+                                <button type="submit" className="w-full bg-[#0B1423] dark:bg-[#2E8B57] text-white px-6 py-4 rounded-xl font-medium transition-all shadow-md flex justify-center items-center hover:opacity-90">
+                                    <Icon name="send" size={18} className="mr-2" /> Send Message
+                                </button>
+                            </form>
+                        </div>
+                        <div className="space-y-8 min-w-0">
+                            <div className="bg-white dark:bg-[#1E1E1E] rounded-3xl p-8 shadow-xl border border-gray-100 dark:border-gray-800">
+                                <h3 className="text-lg font-bold font-serif text-[#0B1423] dark:text-white mb-6 border-b border-gray-100 dark:border-gray-800 pb-2">Professional Profiles</h3>
+                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                    {settings?.linkedin_url && <a href={settings.linkedin_url} target="_blank" className="flex items-center p-3 rounded-xl hover:bg-gray-50 dark:hover:bg-gray-800 border border-transparent hover:border-gray-200 dark:hover:border-gray-700 break-words"><Icon name="linkedin" className="text-[#0077b5] mr-3 shrink-0"/> LinkedIn</a>}
+                                    {settings?.orcid_url && <a href={settings.orcid_url} target="_blank" className="flex items-center p-3 rounded-xl hover:bg-gray-50 dark:hover:bg-gray-800 border border-transparent hover:border-gray-200 dark:hover:border-gray-700 break-words"><Icon name="orcid" className="text-[#A6CE39] mr-3 shrink-0"/> ORCID</a>}
+                                    {settings?.facebook_url && <a href={settings.facebook_url} target="_blank" className="flex items-center p-3 rounded-xl hover:bg-gray-50 dark:hover:bg-gray-800 border border-transparent hover:border-gray-200 dark:hover:border-gray-700 break-words"><Icon name="facebook" className="text-[#1877F2] mr-3 shrink-0"/> Facebook</a>}
+                                    {settings?.whatsapp_number && <a href={`https://wa.me/${settings.whatsapp_number.replace(/\D/g,'')}`} target="_blank" className="flex items-center p-3 rounded-xl hover:bg-gray-50 dark:hover:bg-gray-800 border border-transparent hover:border-gray-200 dark:hover:border-gray-700 break-words"><Icon name="whatsapp" className="text-[#25D366] mr-3 shrink-0"/> WhatsApp</a>}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            );
+        };
 
         const AiAssistantView = () => (
-          <div className="max-w-4xl mx-auto px-4 sm:px-6 pt-32 pb-24 relative z-10 min-h-screen animate-fade-in flex flex-col">
-            <div className="text-center mb-8">
-              <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-gradient-to-br from-emerald-400 to-emerald-600 text-white shadow-lg mb-4">
-                <i className="fas fa-magic text-2xl"></i>
-              </div>
-              <h2 className="text-3xl font-bold font-serif text-navy dark:text-white mb-2">AI Knowledge Assistant</h2>
-              <p className="text-gray-600 dark:text-gray-400">Search and summarize Paul's published research, books, and articles.</p>
-            </div>
-            <div className="flex-1 bg-white dark:bg-[#1E1E1E] rounded-3xl shadow-xl border border-gray-100 dark:border-gray-800 flex flex-col overflow-hidden min-h-[500px]">
-              <div className="p-6 overflow-y-auto flex-1 space-y-6">
-                <div className="flex items-start">
-                  <div className="w-10 h-10 rounded-full bg-emerald-100 dark:bg-emerald-900/50 flex items-center justify-center flex-shrink-0 mr-4">
-                    <i className="fas fa-robot text-emerald-600 dark:text-emerald-400"></i>
-                  </div>
-                  <div className="bg-gray-50 dark:bg-gray-800 rounded-2xl rounded-tl-none p-4 text-gray-800 dark:text-gray-200 shadow-sm border border-gray-100 dark:border-gray-700 max-w-[80%]">
-                    <p>Hello! I'm trained on Paul Olakiitan Ajayi's knowledge base. You can ask me to summarize his research, find articles on specific topics like PGPR, or explain microbiology concepts. How can I help you today?</p>
-                  </div>
+            <div className="max-w-4xl mx-auto px-4 sm:px-6 pt-32 pb-24 relative z-10 min-h-screen animate-fade-in flex flex-col">
+                <div className="text-center mb-8">
+                    <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-[#2E8B57] text-white shadow-lg mb-4">
+                        <Icon name="magic" size={32} />
+                    </div>
+                    <h2 className="text-3xl font-bold font-serif text-[#0B1423] dark:text-white mb-2">AI Knowledge Assistant</h2>
+                    <p className="text-gray-600 dark:text-gray-400">Search and summarize Paul's published research and articles.</p>
                 </div>
-              </div>
-              <div className="p-4 bg-gray-50 dark:bg-gray-800 border-t border-gray-200 dark:border-gray-700">
-                <div className="relative">
-                  <input type="text" placeholder="Ask a question..." className="w-full pl-6 pr-14 py-4 rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 focus:outline-none focus:ring-2 focus:ring-emerald-custom text-gray-900 dark:text-white" />
-                  <button className="absolute right-3 top-1/2 transform -translate-y-1/2 p-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg transition-colors">
-                    <i className="fas fa-paper-plane"></i>
-                  </button>
+                <div className="flex-1 bg-white dark:bg-[#1E1E1E] rounded-3xl shadow-xl border border-gray-100 dark:border-gray-800 flex flex-col overflow-hidden min-h-[500px]">
+                    <div className="p-6 overflow-y-auto flex-1 space-y-6">
+                        <div className="flex items-start">
+                            <div className="w-10 h-10 rounded-full bg-[#2E8B57]/20 flex items-center justify-center flex-shrink-0 mr-4 text-[#2E8B57]">
+                                <Icon name="magic" size={20} />
+                            </div>
+                            <div className="bg-gray-50 dark:bg-gray-800 rounded-2xl rounded-tl-none p-4 text-gray-800 dark:text-gray-200 shadow-sm border border-gray-100 dark:border-gray-700 max-w-[80%]">
+                                <p>Hello! I'm trained on Paul Olakiitan Ajayi's knowledge base. How can I help you today?</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div className="p-4 bg-gray-50 dark:bg-gray-800 border-t border-gray-200 dark:border-gray-700">
+                        <div className="relative">
+                            <input type="text" placeholder="Ask a question..." className="w-full pl-6 pr-14 py-4 rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 focus:outline-none focus:ring-2 focus:ring-[#2E8B57] text-gray-900 dark:text-white" />
+                            <button className="absolute right-3 top-1/2 transform -translate-y-1/2 p-2 bg-[#2E8B57] text-white rounded-lg"><Icon name="send" size={18} /></button>
+                        </div>
+                    </div>
                 </div>
-              </div>
             </div>
-          </div>
         );
 
-        const HomeView = ({ setView, setSelectedItem, latestBook, latestResearch, latestJournal, latestBlog, latestProject }) => {
-          
-          const handleReadMore = (item) => {
-            if (!item) return;
-            setSelectedItem(item);
-            setView(['journal', 'blog'].includes(item.type) ? 'reading' : 'detail');
-          };
+        
+        const HeroSection = ({ setView, isDarkMode }) => (
+            <section className="relative pt-32 pb-24 flex items-center justify-center bg-[#0B1423] text-white overflow-hidden min-h-[80vh]">
+                <ParticleBackground isDarkMode={isDarkMode} />
+                <div className="absolute inset-0 z-0 bg-[url('https://images.unsplash.com/photo-1532094349884-543bc11b234d?auto=format&fit=crop&q=80')] bg-cover bg-center opacity-20 mix-blend-overlay"></div>
+                <div className="absolute inset-0 z-0 bg-gradient-to-b from-[#0B1423]/80 via-[#0B1423]/60 to-[#0B1423]"></div>
+                
+                <div className="relative z-10 container mx-auto px-6 text-center max-w-5xl animate-slide-up">
+                    <h1 className="font-serif text-5xl md:text-7xl font-bold mb-6 leading-tight tracking-tight">
+                        Knowledge that <span className="text-[#2E8B57]">grows</span>.<br />
+                        Research that <span className="text-[#D4AF37]">matters</span>.<br />
+                        Ideas that <span className="text-[#8B9C2A]">inspire</span>.
+                    </h1>
+                    <h2 className="text-xl md:text-2xl text-[#D4AF37] font-medium mb-6 font-serif">Welcome to my digital knowledge hub.</h2>
+                    <p className="text-base md:text-lg text-gray-300 mb-12 max-w-3xl mx-auto font-light leading-relaxed">Here I share my books, scientific research, teaching materials, journals, articles, and ideas as I pursue a lifelong mission of learning, discovery, and service.</p>
+                    
+                    <div className="flex flex-wrap items-center justify-center gap-4">
+                        <button onClick={() => setView('library')} className="px-8 py-3.5 bg-[#2E8B57] text-white text-sm font-semibold rounded-lg flex items-center justify-center gap-2 hover:bg-[#257348] border border-[#2E8B57]"><Icon name="book" size={18} /> Explore Library</button>
+                        <button onClick={() => setView('research')} className="px-8 py-3.5 bg-transparent text-white text-sm font-semibold rounded-lg flex items-center justify-center gap-2 hover:bg-white/5 border border-blue-400/30"><Icon name="microscope" size={18} /> Research Archive</button>
+                        <button onClick={() => setView('teaching')} className="px-8 py-3.5 bg-[#3B7A57]/80 text-white text-sm font-semibold rounded-lg flex items-center justify-center gap-2 hover:bg-[#3B7A57] border border-[#3B7A57]"><Icon name="gradCap" size={18} /> Teaching Hub</button>
+                        <button onClick={() => setView('about')} className="px-8 py-3.5 bg-transparent text-white text-sm font-semibold rounded-lg flex items-center justify-center gap-2 hover:bg-white/5 border border-white/20"><Icon name="users" size={18} /> About Me</button>
+                    </div>
+                </div>
+            </section>
+        );
 
-          return (
-            <div className="relative z-10 pb-10">
-              {/* Hero Section with Reference Design */}
-              <section className="relative pt-32 pb-24 flex items-center justify-center bg-navy text-white overflow-hidden min-h-[80vh]">
-                  {/* Background Overlays */}
-                  <div className="absolute inset-0 z-0 bg-[url('https://images.unsplash.com/photo-1532094349884-543bc11b234d?auto=format&fit=crop&q=80')] bg-cover bg-center opacity-20 mix-blend-overlay"></div>
-                  <div className="absolute inset-0 z-0 bg-gradient-to-b from-navy/80 via-navy/60 to-navy"></div>
-                  <ParticleBackground isDarkMode={true} />
-                  
-                  <div className="relative z-10 container mx-auto px-6 text-center max-w-5xl animate-slide-up">
-                      <h1 className="font-serif text-5xl md:text-7xl font-bold mb-6 leading-tight tracking-tight">
-                          Knowledge that <span className="text-emerald-custom">grows</span>.<br />
-                          Research that <span className="text-gold">matters</span>.<br />
-                          Ideas that <span className="text-[#8B9C2A]">inspire</span>.
-                      </h1>
-                      
-                      <h2 className="text-xl md:text-2xl text-gold font-medium mb-6 font-serif">
-                          Welcome to my digital knowledge hub.
-                      </h2>
-                      
-                      <p className="text-base md:text-lg text-gray-300 mb-12 max-w-3xl mx-auto font-light leading-relaxed">
-                          Here I share my books, scientific research, teaching materials, journals, articles, and ideas as I pursue a lifelong mission of learning, discovery, and service.
-                      </p>
-                      
-                      <div className="flex flex-wrap items-center justify-center gap-4">
-                          <button onClick={() => setView('library')} className="px-8 py-3.5 bg-emerald-custom hover:bg-[#257348] text-white text-sm font-semibold rounded-lg transition-all flex items-center justify-center gap-2 border border-emerald-custom">
-                              <i className="fas fa-book text-lg"></i> Explore Library
-                          </button>
-                          <button onClick={() => setView('research')} className="px-8 py-3.5 bg-transparent hover:bg-white/5 text-white text-sm font-semibold rounded-lg transition-all border border-blue-400/30 flex items-center justify-center gap-2">
-                              <i className="fas fa-microscope text-lg"></i> Research Archive
-                          </button>
-                          <button onClick={() => setView('teaching')} className="px-8 py-3.5 bg-[#3B7A57]/80 hover:bg-[#3B7A57] text-white text-sm font-semibold rounded-lg transition-all border border-[#3B7A57] flex items-center justify-center gap-2">
-                              <i className="fas fa-graduation-cap text-lg"></i> Teaching Hub
-                          </button>
-                          <button onClick={() => setView('about')} className="px-8 py-3.5 bg-transparent hover:bg-white/5 text-white text-sm font-semibold rounded-lg transition-all border border-white/20 flex items-center justify-center gap-2">
-                              <i className="fas fa-users text-lg"></i> About Me
-                          </button>
-                      </div>
-                  </div>
-              </section>
+        const ContentCards = ({ navigateTo, books, research, journal, blog, projects }) => {
+            const featuredBook = books[0];
+            const latestResearch = research[0];
+            const latestJournal = journal[0];
+            const latestBlog = blog[0];
+            const currentProject = projects[0];
 
-              {/* Floating Stats Banner */}
-              <div className="max-w-[1600px] mx-auto px-4 sm:px-6 lg:px-8 -mt-6 relative z-20 mb-12 animate-fade-in">
-                  <div className="bg-[#0f1b29] rounded-xl shadow-xl flex flex-wrap lg:flex-nowrap divide-y lg:divide-y-0 lg:divide-x divide-white/10 p-2">
-                      {[
-                          { count: "12", label: "Books & eBooks", icon: "fa-book" },
-                          { count: "28", label: "Research Notes", icon: "fa-microscope" },
-                          { count: "46", label: "Journal Entries", icon: "fa-pen-nib" },
-                          { count: "36", label: "Teaching Materials", icon: "fa-graduation-cap" },
-                          { count: "18", label: "Blog Articles", icon: "fa-blog" },
-                          { count: "1,248+", label: "Global Readers", icon: "fa-globe" },
-                          { count: "3,652+", label: "Downloads", icon: "fa-download" }
-                      ].map((stat, idx) => (
-                          <div key={idx} className="flex-1 min-w-[140px] p-4 flex items-center justify-center lg:justify-start gap-4">
-                              <div className="text-gold">
-                                  <i className={`fas ${stat.icon} text-2xl`}></i>
-                              </div>
-                              <div>
-                                  <div className="text-white font-bold text-xl leading-none mb-1">{stat.count}</div>
-                                  <div className="text-gray-400 text-xs">{stat.label}</div>
-                              </div>
-                          </div>
-                      ))}
-                  </div>
-              </div>
+            return (
+                <div className="py-8 bg-gray-50 dark:bg-[#121212]">
+                    <div className="max-w-[1600px] mx-auto px-4 sm:px-6 lg:px-8">
+                        <div className="flex flex-nowrap overflow-x-auto pb-6 gap-6 snap-x snap-mandatory hide-scrollbar">
+                            
+                            {/* Featured Book Card */}
+                            <div className="snap-start shrink-0 w-[350px] md:w-[400px] bg-white dark:bg-[#1E1E1E] rounded-xl border border-gray-200 dark:border-gray-800 p-5 shadow-sm flex flex-col cursor-pointer" onClick={() => featuredBook && navigateTo('detail', featuredBook)}>
+                                <div className="flex justify-between items-center mb-5 border-b border-gray-100 dark:border-gray-800 pb-3">
+                                    <div className="flex items-center gap-2 font-serif font-bold text-lg dark:text-white"><Icon name="book" size={20} className="text-gray-700 dark:text-gray-300" /> Featured Book</div>
+                                </div>
+                                <div className="flex gap-4 flex-grow min-w-0">
+                                    <div className="w-1/3 shrink-0">
+                                        <div className="bg-[#112435] p-2 rounded shadow-md aspect-[2/3] flex items-center justify-center text-center border-l-4 border-[#2E8B57]">
+                                            <div className="text-white min-w-0 w-full px-1">
+                                                <div className="text-[10px] uppercase mb-1 truncate">The</div>
+                                                <div className="text-xs font-serif font-bold leading-tight mb-2 line-clamp-3">{featuredBook ? featuredBook.title : "Hidden World of Microbes"}</div>
+                                                <div className="w-6 h-[1px] bg-[#2E8B57] mx-auto mb-2"></div>
+                                                <div className="text-[8px] text-gray-400 truncate">Paul Olakiitan Ajayi</div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div className="flex flex-col justify-between flex-grow min-w-0">
+                                        <div>
+                                            <h4 className="font-serif font-bold text-lg mb-2 leading-tight dark:text-white line-clamp-2">{featuredBook ? featuredBook.title : "The Hidden World of Microbes"}</h4>
+                                            <p className="text-sm text-gray-600 dark:text-gray-400 mb-2 line-clamp-3 break-words">{featuredBook ? featuredBook.summary : "Explore the invisible world of microorganisms."}</p>
+                                        </div>
+                                        <button className="mt-2 px-4 py-1.5 border border-gray-300 dark:border-gray-600 rounded text-sm font-medium hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors w-max dark:text-white">View Book</button>
+                                    </div>
+                                </div>
+                            </div>
 
-              {/* Dynamic Horizontal Scrolling Content Cards */}
-              <div className="py-8 bg-[#FAFAFA] dark:bg-[#0a0a0a] animate-fade-in">
-                  <div className="max-w-[1600px] mx-auto px-4 sm:px-6 lg:px-8">
-                      <div className="flex flex-nowrap overflow-x-auto pb-6 gap-6 snap-x snap-mandatory hide-scrollbar">
-                          
-                          {/* Featured Book Card */}
-                          {latestBook && (
-                          <div className="snap-start shrink-0 w-[350px] md:w-[400px] bg-white dark:bg-[#1E1E1E] rounded-xl border border-gray-200 dark:border-gray-800 p-5 shadow-sm flex flex-col cursor-pointer hover:border-emerald-custom transition-colors" onClick={() => handleReadMore(latestBook)}>
-                              <div className="flex justify-between items-center mb-5 border-b border-gray-100 dark:border-gray-800 pb-3">
-                                  <div className="flex items-center gap-2 font-serif font-bold text-lg dark:text-white">
-                                      <i className="fas fa-book text-gray-700 dark:text-gray-300"></i> Featured Book
-                                  </div>
-                                  <button onClick={(e) => { e.stopPropagation(); setView('library'); }} className="text-xs text-gray-500 hover:text-gray-900 dark:hover:text-white flex items-center gap-1">
-                                      View all <span>&rarr;</span>
-                                  </button>
-                              </div>
-                              <div className="flex-grow flex gap-4">
-                                  <div className="w-1/3 shrink-0">
-                                      <div className="bg-[#112435] p-2 rounded shadow-md aspect-[2/3] flex items-center justify-center text-center border-l-4 border-emerald-custom h-full relative overflow-hidden">
-                                          <i className="fas fa-book absolute opacity-10 text-6xl text-white"></i>
-                                          <div className="text-white relative z-10 flex flex-col justify-center h-full">
-                                              <div className="text-sm font-serif font-bold leading-tight mb-2 line-clamp-3">{latestBook.title}</div>
-                                              <div className="w-8 h-[1px] bg-emerald-custom mx-auto mb-2"></div>
-                                          </div>
-                                      </div>
-                                  </div>
-                                  <div className="flex flex-col justify-between w-2/3">
-                                      <div>
-                                          <h4 className="font-serif font-bold text-lg mb-2 leading-tight dark:text-white line-clamp-2">{latestBook.title}</h4>
-                                          <p className="text-sm text-gray-600 dark:text-gray-400 mb-2 line-clamp-3">{latestBook.summary || latestBook.abstract}</p>
-                                          <div className="text-xs text-emerald-custom font-medium mb-1">{latestBook.category || 'Library'}</div>
-                                      </div>
-                                      <button className="mt-4 px-4 py-1.5 border border-gray-300 dark:border-gray-600 rounded text-sm font-medium hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors w-max dark:text-white">View Book</button>
-                                  </div>
-                              </div>
-                          </div>
-                          )}
+                            {/* Latest Research Card */}
+                            <div className="snap-start shrink-0 w-[350px] md:w-[400px] bg-white dark:bg-[#1E1E1E] rounded-xl border border-gray-200 dark:border-gray-800 p-5 shadow-sm flex flex-col cursor-pointer" onClick={() => latestResearch && navigateTo('detail', latestResearch)}>
+                                <div className="flex justify-between items-center mb-5 border-b border-gray-100 dark:border-gray-800 pb-3">
+                                    <div className="flex items-center gap-2 font-serif font-bold text-lg dark:text-white"><Icon name="microscope" size={20} className="text-gray-700 dark:text-gray-300" /> Latest Research</div>
+                                </div>
+                                <div className="flex flex-col h-full min-w-0">
+                                    <div className="h-32 shrink-0 bg-gray-200 dark:bg-gray-700 rounded-lg mb-4 overflow-hidden bg-[url('https://images.unsplash.com/photo-1576086213369-97a306d36557?auto=format&fit=crop&q=80&w=400')] bg-cover bg-center"></div>
+                                    <h4 className="font-serif font-bold text-base mb-1 leading-tight dark:text-white truncate">{latestResearch ? latestResearch.title : "Plant Growth-Promoting Bacillus"}</h4>
+                                    <p className="text-sm text-gray-600 dark:text-gray-400 mb-4 line-clamp-3 flex-grow break-words">{latestResearch ? latestResearch.summary : "Whole genome analysis of Bacillus strains."}</p>
+                                    <button className="text-[#2E8B57] text-sm font-medium hover:underline text-left flex items-center gap-1 mt-auto">Read Now <span className="text-lg leading-none">&rarr;</span></button>
+                                </div>
+                            </div>
 
-                          {/* Latest Research Card */}
-                          {latestResearch && (
-                          <div className="snap-start shrink-0 w-[350px] md:w-[400px] bg-white dark:bg-[#1E1E1E] rounded-xl border border-gray-200 dark:border-gray-800 p-5 shadow-sm flex flex-col cursor-pointer hover:border-emerald-custom transition-colors" onClick={() => handleReadMore(latestResearch)}>
-                              <div className="flex justify-between items-center mb-5 border-b border-gray-100 dark:border-gray-800 pb-3">
-                                  <div className="flex items-center gap-2 font-serif font-bold text-lg dark:text-white">
-                                      <i className="fas fa-microscope text-gray-700 dark:text-gray-300"></i> Latest Research
-                                  </div>
-                                  <button onClick={(e) => { e.stopPropagation(); setView('research'); }} className="text-xs text-gray-500 hover:text-gray-900 dark:hover:text-white flex items-center gap-1">
-                                      View all <span>&rarr;</span>
-                                  </button>
-                              </div>
-                              <div className="flex-grow flex flex-col h-full">
-                                  <div className="h-32 bg-gray-200 dark:bg-gray-700 rounded-lg mb-4 overflow-hidden bg-[url('https://images.unsplash.com/photo-1576086213369-97a306d36557?auto=format&fit=crop&q=80&w=400')] bg-cover bg-center"></div>
-                                  <h4 className="font-serif font-bold text-base mb-1 leading-tight dark:text-white line-clamp-2">{latestResearch.title}</h4>
-                                  <div className="text-xs text-gray-500 mb-2">{latestResearch.category || 'Research'} &bull; {latestResearch.published_date || latestResearch.date || '2026'}</div>
-                                  <p className="text-sm text-gray-600 dark:text-gray-400 mb-4 line-clamp-3 flex-grow">{latestResearch.summary || latestResearch.abstract}</p>
-                                  <div className="flex gap-2 mb-4 overflow-hidden">
-                                      {(latestResearch.tags || []).slice(0,3).map((tag, i) => (
-                                          <span key={i} className="px-2 py-1 bg-blue-50 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 text-[10px] rounded whitespace-nowrap">{tag}</span>
-                                      ))}
-                                  </div>
-                                  <button className="text-emerald-custom text-sm font-medium hover:underline text-left flex items-center gap-1">Read Now <span className="text-lg leading-none">&rarr;</span></button>
-                              </div>
-                          </div>
-                          )}
+                            {/* Latest Journal Card */}
+                            <div className="snap-start shrink-0 w-[350px] md:w-[400px] bg-white dark:bg-[#1E1E1E] rounded-xl border border-gray-200 dark:border-gray-800 p-5 shadow-sm flex flex-col cursor-pointer" onClick={() => latestJournal && navigateTo('reading', latestJournal)}>
+                                <div className="flex justify-between items-center mb-5 border-b border-gray-100 dark:border-gray-800 pb-3">
+                                    <div className="flex items-center gap-2 font-serif font-bold text-lg dark:text-white"><Icon name="layout" size={20} className="text-gray-700 dark:text-gray-300" /> Latest Journal</div>
+                                </div>
+                                <div className="flex gap-4 h-full min-w-0">
+                                    <div className="w-2/5 shrink-0 min-h-[140px] bg-gray-200 rounded-lg overflow-hidden bg-[url('https://images.unsplash.com/photo-1464822759023-fed622ff2c3b?auto=format&fit=crop&q=80&w=400')] bg-cover bg-center"></div>
+                                    <div className="flex flex-col flex-grow min-w-0">
+                                        <h4 className="font-serif font-bold text-base mb-1 leading-tight dark:text-white line-clamp-2">{latestJournal ? latestJournal.title : "Reflections on Growth"}</h4>
+                                        <p className="text-sm text-gray-600 dark:text-gray-400 mb-4 line-clamp-4 flex-grow break-words">{latestJournal ? latestJournal.summary : "A personal reflection on the journey of becoming."}</p>
+                                        <button className="text-[#2E8B57] text-sm font-medium hover:underline text-left flex items-center gap-1 mt-auto">Read Entry <span className="text-lg leading-none">&rarr;</span></button>
+                                    </div>
+                                </div>
+                            </div>
 
-                          {/* Latest Journal Card */}
-                          {latestJournal && (
-                          <div className="snap-start shrink-0 w-[350px] md:w-[400px] bg-white dark:bg-[#1E1E1E] rounded-xl border border-gray-200 dark:border-gray-800 p-5 shadow-sm flex flex-col cursor-pointer hover:border-emerald-custom transition-colors" onClick={() => handleReadMore(latestJournal)}>
-                              <div className="flex justify-between items-center mb-5 border-b border-gray-100 dark:border-gray-800 pb-3">
-                                  <div className="flex items-center gap-2 font-serif font-bold text-lg dark:text-white">
-                                      <i className="fas fa-pen-nib text-gray-700 dark:text-gray-300"></i> Latest Journal
-                                  </div>
-                                  <button onClick={(e) => { e.stopPropagation(); setView('journal'); }} className="text-xs text-gray-500 hover:text-gray-900 dark:hover:text-white flex items-center gap-1">
-                                      View all <span>&rarr;</span>
-                                  </button>
-                              </div>
-                              <div className="flex-grow flex gap-4 h-full">
-                                  <div className="w-2/5 shrink-0 h-full min-h-[140px] bg-gray-200 rounded-lg overflow-hidden bg-[url('https://images.unsplash.com/photo-1464822759023-fed622ff2c3b?auto=format&fit=crop&q=80&w=400')] bg-cover bg-center"></div>
-                                  <div className="flex flex-col">
-                                      <h4 className="font-serif font-bold text-base mb-1 leading-tight dark:text-white line-clamp-3">{latestJournal.title}</h4>
-                                      <div className="text-xs text-gray-500 mb-2">{latestJournal.published_date || latestJournal.date || '2026'} &bull; {latestJournal.category || 'Entry'}</div>
-                                      <p className="text-sm text-gray-600 dark:text-gray-400 mb-4 line-clamp-4 flex-grow">{latestJournal.summary || (latestJournal.content ? latestJournal.content.substring(0,80)+'...' : '')}</p>
-                                      <button className="text-emerald-custom text-sm font-medium hover:underline text-left flex items-center gap-1 mt-auto">Read Entry <span className="text-lg leading-none">&rarr;</span></button>
-                                  </div>
-                              </div>
-                          </div>
-                          )}
+                            {/* Latest Blog Card */}
+                            <div className="snap-start shrink-0 w-[350px] md:w-[400px] bg-white dark:bg-[#1E1E1E] rounded-xl border border-gray-200 dark:border-gray-800 p-5 shadow-sm flex flex-col cursor-pointer" onClick={() => latestBlog && navigateTo('reading', latestBlog)}>
+                                <div className="flex justify-between items-center mb-5 border-b border-gray-100 dark:border-gray-800 pb-3">
+                                    <div className="flex items-center gap-2 font-serif font-bold text-lg dark:text-white"><Icon name="pencil" size={20} className="text-gray-700 dark:text-gray-300" /> Latest Blog</div>
+                                </div>
+                                <div className="flex gap-4 h-full min-w-0">
+                                    <div className="w-2/5 shrink-0 min-h-[140px] bg-gray-200 rounded-lg overflow-hidden bg-[url('https://images.unsplash.com/photo-1581093458791-9f3c3900df4b?auto=format&fit=crop&q=80&w=400')] bg-cover bg-center"></div>
+                                    <div className="flex flex-col flex-grow min-w-0">
+                                        <h4 className="font-serif font-bold text-base mb-1 leading-tight dark:text-white line-clamp-2">{latestBlog ? latestBlog.title : "Why Microbes Matter"}</h4>
+                                        <p className="text-sm text-gray-600 dark:text-gray-400 mb-4 line-clamp-4 flex-grow break-words">{latestBlog ? latestBlog.summary : "Microorganisms are the unseen engineers of life."}</p>
+                                        <button className="text-[#2E8B57] text-sm font-medium hover:underline text-left flex items-center gap-1 mt-auto">Read Article <span className="text-lg leading-none">&rarr;</span></button>
+                                    </div>
+                                </div>
+                            </div>
 
-                          {/* Latest Blog Card */}
-                          {latestBlog && (
-                          <div className="snap-start shrink-0 w-[350px] md:w-[400px] bg-white dark:bg-[#1E1E1E] rounded-xl border border-gray-200 dark:border-gray-800 p-5 shadow-sm flex flex-col cursor-pointer hover:border-emerald-custom transition-colors" onClick={() => handleReadMore(latestBlog)}>
-                              <div className="flex justify-between items-center mb-5 border-b border-gray-100 dark:border-gray-800 pb-3">
-                                  <div className="flex items-center gap-2 font-serif font-bold text-lg dark:text-white">
-                                      <i className="fas fa-blog text-gray-700 dark:text-gray-300"></i> Latest Blog
-                                  </div>
-                                  <button onClick={(e) => { e.stopPropagation(); setView('blog'); }} className="text-xs text-gray-500 hover:text-gray-900 dark:hover:text-white flex items-center gap-1">
-                                      View all <span>&rarr;</span>
-                                  </button>
-                              </div>
-                              <div className="flex-grow flex gap-4 h-full">
-                                  <div className="w-2/5 shrink-0 h-full min-h-[140px] bg-gray-200 rounded-lg overflow-hidden bg-[url('https://images.unsplash.com/photo-1581093458791-9f3c3900df4b?auto=format&fit=crop&q=80&w=400')] bg-cover bg-center"></div>
-                                  <div className="flex flex-col">
-                                      <h4 className="font-serif font-bold text-base mb-1 leading-tight dark:text-white line-clamp-3">{latestBlog.title}</h4>
-                                      <div className="text-xs text-gray-500 mb-2">{latestBlog.published_date || latestBlog.date || '2026'} &bull; {latestBlog.category || 'Article'}</div>
-                                      <p className="text-sm text-gray-600 dark:text-gray-400 mb-4 line-clamp-4 flex-grow">{latestBlog.summary || (latestBlog.content ? latestBlog.content.substring(0,80)+'...' : '')}</p>
-                                      <button className="text-emerald-custom text-sm font-medium hover:underline text-left flex items-center gap-1 mt-auto">Read Article <span className="text-lg leading-none">&rarr;</span></button>
-                                  </div>
-                              </div>
-                          </div>
-                          )}
+                            {/* Current Projects Card */}
+                            <div className="snap-start shrink-0 w-[350px] md:w-[400px] bg-white dark:bg-[#1E1E1E] rounded-xl border border-gray-200 dark:border-gray-800 p-5 shadow-sm flex flex-col cursor-pointer" onClick={() => currentProject && navigateTo('detail', currentProject)}>
+                                <div className="flex justify-between items-center mb-5 border-b border-gray-100 dark:border-gray-800 pb-3">
+                                    <div className="flex items-center gap-2 font-serif font-bold text-lg dark:text-white"><Icon name="chart" size={20} className="text-gray-700 dark:text-gray-300" /> Current Project</div>
+                                </div>
+                                <div className="flex flex-col h-full min-w-0">
+                                    <div className="flex gap-4 mb-4 min-w-0">
+                                         <div className="w-20 h-20 shrink-0 bg-gray-200 rounded-lg overflow-hidden bg-[url('https://images.unsplash.com/photo-1574926053457-371804b4c10a?auto=format&fit=crop&q=80&w=200')] bg-cover bg-center"></div>
+                                         <div className="flex-grow min-w-0">
+                                             <h4 className="font-serif font-bold text-base mb-1 leading-tight dark:text-white line-clamp-3 break-words">{currentProject ? currentProject.title : "Microbial Genomics"}</h4>
+                                         </div>
+                                    </div>
+                                    <div className="mb-4">
+                                        <div className="flex justify-between text-xs mb-1">
+                                            <span className="text-gray-600 dark:text-gray-400">In Progress</span>
+                                            <span className="font-medium dark:text-white">65%</span>
+                                        </div>
+                                        <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-1.5">
+                                            <div className="bg-[#2E8B57] h-1.5 rounded-full" style={{ width: '65%' }}></div>
+                                        </div>
+                                    </div>
+                                    <p className="text-sm text-gray-600 dark:text-gray-400 mb-4 flex-grow break-words">{currentProject ? currentProject.summary : "Exploring genomic pathways for sustainable crop production."}</p>
+                                    <button className="text-[#2E8B57] text-sm font-medium hover:underline text-left flex items-center gap-1 mt-auto">View Project <span className="text-lg leading-none">&rarr;</span></button>
+                                </div>
+                            </div>
 
-                          {/* Current Project Card */}
-                          {latestProject && (
-                          <div className="snap-start shrink-0 w-[350px] md:w-[400px] bg-white dark:bg-[#1E1E1E] rounded-xl border border-gray-200 dark:border-gray-800 p-5 shadow-sm flex flex-col cursor-pointer hover:border-emerald-custom transition-colors" onClick={() => handleReadMore(latestProject)}>
-                              <div className="flex justify-between items-center mb-5 border-b border-gray-100 dark:border-gray-800 pb-3">
-                                  <div className="flex items-center gap-2 font-serif font-bold text-lg dark:text-white">
-                                      <i className="fas fa-chart-line text-gray-700 dark:text-gray-300"></i> Current Project
-                                  </div>
-                                  <button onClick={(e) => { e.stopPropagation(); setView('projects'); }} className="text-xs text-gray-500 hover:text-gray-900 dark:hover:text-white flex items-center gap-1">
-                                      View all <span>&rarr;</span>
-                                  </button>
-                              </div>
-                              <div className="flex-grow flex flex-col h-full">
-                                  <div className="flex gap-4 mb-4">
-                                       <div className="w-20 h-20 shrink-0 bg-gray-200 rounded-lg overflow-hidden bg-[url('https://images.unsplash.com/photo-1574926053457-371804b4c10a?auto=format&fit=crop&q=80&w=200')] bg-cover bg-center"></div>
-                                       <div>
-                                           <h4 className="font-serif font-bold text-base mb-1 leading-tight dark:text-white line-clamp-2">{latestProject.title}</h4>
-                                       </div>
-                                  </div>
-                                  
-                                  <div className="mb-4">
-                                      <div className="flex justify-between text-xs mb-1">
-                                          <span className="text-gray-600 dark:text-gray-400">In Progress</span>
-                                          <span className="font-medium dark:text-white">65%</span>
-                                      </div>
-                                      <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-1.5">
-                                          <div className="bg-emerald-custom h-1.5 rounded-full" style={{ width: '65%' }}></div>
-                                      </div>
-                                  </div>
-                                  <p className="text-sm text-gray-600 dark:text-gray-400 mb-4 flex-grow line-clamp-3">{latestProject.summary || latestProject.abstract}</p>
-                                  <button className="text-emerald-custom text-sm font-medium hover:underline text-left flex items-center gap-1 mt-auto">View Project <span className="text-lg leading-none">&rarr;</span></button>
-                              </div>
-                          </div>
-                          )}
-
-                      </div>
-                  </div>
-              </div>
-              
-              {/* Bottom Info Section */}
-              <div className="max-w-[1600px] mx-auto px-4 sm:px-6 lg:px-8 py-16 animate-fade-in">
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                      {/* Quote */}
-                      <div className="bg-white dark:bg-[#1E1E1E] rounded-xl border border-gray-200 dark:border-gray-800 p-8 shadow-sm relative">
-                          <div className="text-emerald-custom absolute top-6 left-6 opacity-20">
-                              <i className="fas fa-quote-left text-4xl"></i>
-                          </div>
-                          <div className="pl-8 relative z-10">
-                              <h3 className="font-serif font-bold text-lg mb-4 dark:text-white flex items-center gap-2">Quote of the Day</h3>
-                              <p className="text-gray-700 dark:text-gray-300 font-serif italic mb-4">"The beautiful thing about learning is that no one can take it away from you."</p>
-                              <div className="text-sm font-bold text-emerald-custom">- B.B. King</div>
-                          </div>
-                      </div>
-
-                      {/* Newsletter */}
-                      <div className="bg-white dark:bg-[#1E1E1E] rounded-xl border border-gray-200 dark:border-gray-800 p-8 shadow-sm">
-                          <h3 className="font-serif font-bold text-lg mb-2 dark:text-white flex items-center gap-2">
-                              <i className="fas fa-envelope text-gray-500"></i> Stay Updated
-                          </h3>
-                          <p className="text-sm text-gray-600 dark:text-gray-400 mb-6">Subscribe to my newsletter and never miss new research, books, teaching materials, and insights.</p>
-                          <form className="flex gap-2" onSubmit={(e) => e.preventDefault()}>
-                              <input type="email" placeholder="Enter your email" className="flex-1 bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg px-4 py-2 text-sm focus:outline-none focus:border-emerald-custom text-gray-900 dark:text-white" />
-                              <button className="bg-emerald-custom hover:bg-[#257348] text-white px-6 py-2 rounded-lg text-sm font-medium transition-colors">Subscribe</button>
-                          </form>
-                      </div>
-
-                      {/* Socials */}
-                      <div className="bg-white dark:bg-[#1E1E1E] rounded-xl border border-gray-200 dark:border-gray-800 p-8 shadow-sm">
-                          <h3 className="font-serif font-bold text-lg mb-2 dark:text-white flex items-center gap-2">
-                               <i className="fas fa-globe text-gray-500"></i> Let's Connect
-                          </h3>
-                          <p className="text-sm text-gray-600 dark:text-gray-400 mb-6">Join a community of learners, researchers, and dreamers building a better future through knowledge.</p>
-                          <div className="flex gap-3">
-                              <a href="#" className="w-10 h-10 rounded-full bg-[#0077b5] text-white flex items-center justify-center hover:opacity-90 transition-opacity">
-                                  <i className="fab fa-linkedin-in"></i>
-                              </a>
-                              <a href="#" className="w-10 h-10 rounded-full bg-[#1DA1F2] text-white flex items-center justify-center hover:opacity-90 transition-opacity">
-                                  <i className="fab fa-twitter"></i>
-                              </a>
-                              <a href="#" className="w-10 h-10 rounded-full bg-[#00CC99] text-white flex items-center justify-center hover:opacity-90 transition-opacity font-serif font-bold">
-                                  R<span className="text-[10px] align-top">G</span>
-                              </a>
-                              <a href="#" className="w-10 h-10 rounded-full bg-[#333] text-white flex items-center justify-center hover:opacity-90 transition-opacity">
-                                  <i className="fab fa-github"></i>
-                              </a>
-                          </div>
-                      </div>
-                  </div>
-              </div>
-            </div>
-          );
+                        </div>
+                    </div>
+                </div>
+            );
         };
 
-        const AjayiKnowledgeHub = () => {
-          const [isDarkMode, setIsDarkMode] = useState(true);
-          const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-          const [currentView, setCurrentView] = useState('home');
-          const [selectedItem, setSelectedItem] = useState(null);
-          const [dbPublications, setDbPublications] = useState([]);
+        const BottomInfo = ({ settings }) => (
+            <div className="max-w-[1600px] mx-auto px-4 sm:px-6 lg:px-8 mb-16 mt-8">
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                    {/* Quote */}
+                    <div className="bg-white dark:bg-[#1E1E1E] rounded-xl border border-gray-200 dark:border-gray-800 p-8 shadow-sm relative min-w-0">
+                        <div className="text-[#2E8B57] absolute top-6 left-6 opacity-30">
+                            <svg width="40" height="40" viewBox="0 0 24 24" fill="currentColor"><path d="M14.017 21v-7.391c0-5.704 3.731-9.57 8.983-10.609l.995 2.151c-2.432.917-3.995 3.638-3.995 5.849h4v10h-9.983zm-14.017 0v-7.391c0-5.704 3.748-9.57 9-10.609l.996 2.151c-2.433.917-3.996 3.638-3.996 5.849h3.983v10h-9.983z"/></svg>
+                        </div>
+                        <div className="pl-8 relative z-10">
+                            <h3 className="font-serif font-bold text-lg mb-4 dark:text-white flex items-center gap-2">Quote of the Day</h3>
+                            <p className="text-gray-700 dark:text-gray-300 font-serif italic mb-4">"The beautiful thing about learning is that no one can take it away from you."</p>
+                            <div className="text-sm font-bold text-[#2E8B57]">- B.B. King</div>
+                        </div>
+                    </div>
 
-          useEffect(() => {
-            if (isDarkMode) document.documentElement.classList.add('dark');
-            else document.documentElement.classList.remove('dark');
-          }, [isDarkMode]);
+                    {/* Newsletter */}
+                    <div className="bg-white dark:bg-[#1E1E1E] rounded-xl border border-gray-200 dark:border-gray-800 p-8 shadow-sm min-w-0">
+                        <h3 className="font-serif font-bold text-lg mb-2 dark:text-white flex items-center gap-2">
+                            <Icon name="pencil" size={20} className="text-gray-500" /> Stay Updated
+                        </h3>
+                        <p className="text-sm text-gray-600 dark:text-gray-400 mb-6">Subscribe to my newsletter and never miss new research, books, and insights.</p>
+                        <form className="flex gap-2 w-full" onSubmit={(e) => { e.preventDefault(); alert("Thanks for subscribing!"); }}>
+                            <input type="email" required placeholder="Email" className="w-full min-w-0 bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg px-4 py-2 text-sm focus:outline-none focus:border-[#2E8B57]" />
+                            <button className="shrink-0 bg-[#2E8B57] hover:bg-[#257348] text-white px-4 sm:px-6 py-2 rounded-lg text-sm font-medium transition-colors">Join</button>
+                        </form>
+                    </div>
 
-          useEffect(() => {
-            const fetchSupabaseData = async () => {
-              const supabaseUrl = 'https://ulqihwnzujncqpexersp.supabase.co';
-              const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InVscWlod256dWpuY3FwZXhlcnNwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODUyNDIxNjMsImV4cCI6MjEwMDgxODE2M30.vvMQLeUtjVmciJxwqVgiFVZjmHlclY0Z-oHngY3SVso';
-              
-              if (window.supabase) {
-                const supabase = window.supabase.createClient(supabaseUrl, supabaseKey);
-                try {
-                  const { data, error } = await supabase.from('publications').select('*').order('id', { ascending: false });
-                  if (error) console.error('Error fetching from Supabase:', error);
-                  else if (data) setDbPublications(data);
-                } catch (error) {
-                  console.error('Supabase connection failed:', error);
-                }
-              }
-            };
-            fetchSupabaseData();
-          }, []);
+                    {/* Socials */}
+                    <div className="bg-white dark:bg-[#1E1E1E] rounded-xl border border-gray-200 dark:border-gray-800 p-8 shadow-sm min-w-0 md:col-span-2 lg:col-span-1">
+                        <h3 className="font-serif font-bold text-lg mb-2 dark:text-white flex items-center gap-2">
+                             <Icon name="globe" size={20} className="text-gray-500" /> Let's Connect
+                        </h3>
+                        <p className="text-sm text-gray-600 dark:text-gray-400 mb-6">Join a community of learners building a better future through knowledge.</p>
+                        <div className="flex flex-wrap gap-3">
+                            {settings?.linkedin_url && (
+                                <a href={settings.linkedin_url} target="_blank" className="w-10 h-10 rounded-full bg-[#0077b5] text-white flex items-center justify-center hover:opacity-90">
+                                    <span className="font-bold text-lg">in</span>
+                                </a>
+                            )}
+                            {settings?.facebook_url && (
+                                <a href={settings.facebook_url} target="_blank" className="w-10 h-10 rounded-full bg-[#1877F2] text-white flex items-center justify-center hover:opacity-90">
+                                    <span className="font-bold text-lg text-center leading-none mt-1">f</span>
+                                </a>
+                            )}
+                            {settings?.orcid_url && (
+                                <a href={settings.orcid_url} target="_blank" className="w-10 h-10 rounded-full bg-[#A6CE39] text-white flex items-center justify-center hover:opacity-90">
+                                    <span className="font-bold text-[10px]">iD</span>
+                                </a>
+                            )}
+                            {settings?.whatsapp_number && (
+                                <a href={`https://wa.me/${settings.whatsapp_number.replace(/\D/g,'')}`} target="_blank" className="w-10 h-10 rounded-full bg-[#25D366] text-white flex items-center justify-center hover:opacity-90">
+                                    <span className="font-bold text-lg">W</span>
+                                </a>
+                            )}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        );
 
-          const combinedLibrary = [...dbPublications.filter(p => p.type === 'book'), ...mockLibrary];
-          const combinedResearch = [...dbPublications.filter(p => p.type === 'research'), ...mockResearch];
-          const combinedJournal = [...dbPublications.filter(p => p.type === 'journal'), ...mockJournal.filter(j => j.type === 'journal')];
-          const combinedBlog = [...dbPublications.filter(p => p.type === 'blog'), ...mockJournal.filter(j => j.type === 'blog')];
-
-          const latestBook = combinedLibrary[0] || null;
-          const latestResearch = combinedResearch[0] || null;
-          const latestJournal = combinedJournal[0] || null;
-          const latestBlog = combinedBlog[0] || null;
-          const latestProject = mockProjects[0] || null;
-
-          const navItems = [
-            { name: 'Home', view: 'home', icon: 'fa-home' },
-            { name: 'Library', view: 'library', icon: 'fa-book' },
-            { name: 'Research', view: 'research', icon: 'fa-microscope' },
-            { name: 'Teaching', view: 'teaching', icon: 'fa-graduation-cap' },
-            { name: 'Journal', view: 'journal', icon: 'fa-pen-nib' },
-            { name: 'Blog', view: 'blog', icon: 'fa-blog' },
-            { name: 'Projects', view: 'projects', icon: 'fa-chart-line' },
-            { name: 'About', view: 'about', icon: 'fa-users' },
-            { name: 'Contact', view: 'contact', icon: 'fa-envelope' }
-          ];
-
-          const renderGenericList = (title, data) => (
-            <div className="pt-32 pb-24 max-w-7xl mx-auto px-4 sm:px-6 relative z-10 min-h-screen animate-fade-in">
-              <h1 className="text-4xl font-bold font-serif text-navy dark:text-white capitalize mb-4">{title}</h1>
-              <p className="text-gray-500 dark:text-gray-400 mb-12 max-w-2xl">Explore the archive of {title.toLowerCase()} published by Paul Olakiitan Ajayi.</p>
-              
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 mt-12">
-                {data.map(item => (
-                  <div key={item.id} className="bg-white dark:bg-[#1E1E1E] rounded-2xl p-6 shadow-sm hover:shadow-md transition-shadow border border-gray-100 dark:border-gray-800 flex flex-col h-full relative group">
-                    <div className="flex justify-between items-start mb-2">
-                        <span className="text-xs font-bold uppercase tracking-wider text-emerald-600 dark:text-emerald-400">{item.category || 'Content'}</span>
-                        {item.file_url && <span className="text-gray-400 dark:text-gray-500 text-sm group-hover:text-emerald-500 transition-colors" title="PDF Attached"><i className="fas fa-paperclip"></i></span>}
+        const Footer = () => (
+            <footer className="bg-[#0B1423] py-8 text-gray-400 text-sm border-t border-white/10">
+                <div className="max-w-[1600px] mx-auto px-4 sm:px-6 lg:px-8 flex flex-col md:flex-row justify-between items-center gap-6 text-center md:text-left">
+                    <div className="flex items-center gap-3 justify-center md:justify-start">
+                         <div className="text-[#D4AF37]">
+                            <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+                                <path d="M4 19.5v-15A2.5 2.5 0 0 1 6.5 2H20v20H6.5a2.5 2.5 0 0 1 0-5H20"/><path d="M8 7h6"/><path d="M8 11h8"/>
+                            </svg>
+                        </div>
+                        <div>
+                            <h2 className="text-white font-serif font-bold text-lg leading-none">Ajayi Knowledge Hub</h2>
+                            <span className="text-[#D4AF37] text-[10px] tracking-wider uppercase font-medium block mt-1">Explore. Learn. Discover. Grow.</span>
+                        </div>
                     </div>
                     
-                    <h3 className="text-xl font-bold text-navy dark:text-white mb-3">{item.title}</h3>
-                    <p className="text-sm text-gray-600 dark:text-gray-400 mb-6 flex-grow">{item.summary || (item.content ? item.content.substring(0, 100) + '...' : '')}</p>
-                    <button onClick={() => { 
-                      setSelectedItem(item); 
-                      setCurrentView((item.type === 'journal' || item.type === 'blog') ? 'reading' : 'detail'); 
-                    }} className="text-emerald-custom text-sm font-semibold flex items-center hover:gap-1 transition-all mt-auto">
-                      Read More <i className="fas fa-chevron-right ml-1"></i>
-                    </button>
-                  </div>
-                ))}
-              </div>
-            </div>
-          );
+                    <div className="flex-1">
+                        <p>&copy; {new Date().getFullYear()} Paul Olakiitan Ajayi. All rights reserved.</p>
+                        <div className="flex gap-4 justify-center mt-2 text-xs">
+                            <span className="hover:text-white cursor-pointer">Privacy Policy</span>
+                            <span className="hover:text-white cursor-pointer">Terms of Use</span>
+                            <span className="hover:text-white cursor-pointer">Sitemap</span>
+                        </div>
+                    </div>
+                    
+                    <div>
+                        Built with <span className="text-red-500">♥</span> for knowledge, science, and humanity.
+                    </div>
+                </div>
+            </footer>
+        );
 
-          return (
-            <div className="min-h-screen flex flex-col overflow-x-hidden text-gray-900 dark:text-gray-100 font-sans transition-colors duration-300">
-              
-              {/* Sleek Dark Navbar (Collapsed Design) */}
-              <nav className="bg-navy text-white border-b border-white/10 w-full fixed top-0 z-50 transition-all duration-300">
-                  <div className="max-w-[1600px] mx-auto px-4 sm:px-6 lg:px-8">
-                      <div className="flex justify-between items-center h-20">
-                          {/* Logo Area */}
-                          <div className="flex items-center space-x-3 cursor-pointer group" onClick={() => setCurrentView('home')}>
-                              <div className="text-gold">
-                                  <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
-                                      <path d="M4 19.5v-15A2.5 2.5 0 0 1 6.5 2H20v20H6.5a2.5 2.5 0 0 1 0-5H20"/>
-                                      <path d="M8 7h6"/><path d="M8 11h8"/>
-                                  </svg>
-                              </div>
-                              <div className="flex flex-col">
-                                  <h1 className="font-serif font-bold text-xl leading-tight hidden sm:block">Ajayi Knowledge Hub</h1>
-                                  <span className="text-gold text-[10px] tracking-wider uppercase font-medium hidden sm:block">Explore. Learn. Discover. Grow.</span>
-                              </div>
-                          </div>
-                          
-                          {/* Collapsed Utilities & Menu Toggle */}
-                          <div className="flex items-center space-x-2 sm:space-x-4">
-                              <button onClick={() => setCurrentView('ai')} className="hidden sm:flex items-center text-sm font-bold text-emerald-custom border border-emerald-custom/50 px-4 py-2 rounded-xl hover:bg-emerald-custom hover:text-white transition-colors shadow-sm">
-                                  <i className="fas fa-magic mr-2"></i> Ask AI
-                              </button>
-                              <button className="w-10 h-10 rounded-full border border-white/20 flex items-center justify-center text-gray-300 hover:text-white hover:border-white transition-colors hidden sm:flex" title="Global Search">
-                                  <i className="fas fa-search text-sm"></i>
-                              </button>
-                              <button onClick={() => setIsDarkMode(!isDarkMode)} className="w-10 h-10 rounded-full border border-white/20 flex items-center justify-center text-gray-300 hover:text-white hover:border-white transition-colors">
-                                  <i className={`fas ${isDarkMode ? 'fa-sun' : 'fa-moon'} text-sm`}></i>
-                              </button>
-                              
-                              {/* Universal Hamburger Menu Button */}
-                              <button 
-                                  className={`w-10 h-10 rounded-xl flex items-center justify-center border transition-all ${mobileMenuOpen ? 'border-emerald-custom text-emerald-custom bg-white/10' : 'border-white/20 text-gray-300 hover:text-white hover:border-white'}`}
-                                  onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-                              >
-                                  <i className={`fas ${mobileMenuOpen ? 'fa-times' : 'fa-bars'} text-lg`}></i>
-                              </button>
-                          </div>
-                      </div>
-                  </div>
+        const App = () => {
+            const [darkMode, setDarkMode] = useState(true);
+            const [view, setView] = useState('home');
+            const [selectedItem, setSelectedItem] = useState(null);
+            const [publications, setPublications] = useState([]);
+            const [settings, setSettings] = useState(null);
 
-                  {/* Universal Dropdown Menu */}
-                  {mobileMenuOpen && (
-                      <div className="absolute top-20 right-4 sm:right-8 w-[calc(100%-2rem)] sm:w-72 bg-navy border border-white/10 shadow-2xl rounded-2xl py-3 px-3 flex flex-col space-y-1 animate-fade-in z-50">
-                          <div className="mb-2 px-3 py-2 border-b border-white/10">
-                              <p className="text-xs font-bold text-gray-400 uppercase tracking-wider">Navigation</p>
-                          </div>
-                          {navItems.map((item) => (
-                              <button 
-                                  key={item.name} 
-                                  onClick={() => { setCurrentView(item.view); setMobileMenuOpen(false); }} 
-                                  className={`w-full flex items-center px-4 py-3 rounded-xl text-sm font-medium transition-colors ${currentView === item.view ? 'text-white bg-emerald-custom' : 'text-gray-300 hover:bg-white/10 hover:text-white'}`}
-                              >
-                                  <i className={`fas ${item.icon} w-6 mr-2 opacity-70`}></i> {item.name}
-                              </button>
-                          ))}
-                          
-                          <div className="mt-2 pt-2 border-t border-white/10">
-                              <button onClick={() => { window.location.href = '/admin.html'; }} className="w-full flex items-center px-4 py-3 rounded-xl text-sm font-bold text-gold hover:bg-white/10 transition-colors">
-                                  <i className="fas fa-lock w-6 mr-2 opacity-70"></i> Admin Portal
-                              </button>
-                          </div>
-                          
-                          {/* Mobile Only Quick Actions */}
-                          <div className="mt-2 pt-2 border-t border-white/10 flex space-x-2 block sm:hidden">
-                              <button onClick={() => { setCurrentView('ai'); setMobileMenuOpen(false); }} className="flex-1 flex justify-center items-center text-sm font-bold text-white bg-emerald-custom hover:bg-[#257348] py-2.5 rounded-lg transition-colors">
-                                  <i className="fas fa-magic mr-2"></i> Ask AI
-                              </button>
-                              <button className="flex-1 flex justify-center items-center text-sm font-bold text-gray-300 bg-white/5 hover:bg-white/10 py-2.5 rounded-lg transition-colors">
-                                  <i className="fas fa-search"></i>
-                              </button>
-                          </div>
-                      </div>
-                  )}
-              </nav>
+            useEffect(() => {
+                if (darkMode) document.documentElement.classList.add('dark');
+                else document.documentElement.classList.remove('dark');
+            }, [darkMode]);
 
-              <main className="flex-grow">
-                {currentView === 'home' && (
-                  <HomeView 
-                    setView={setCurrentView} 
-                    setSelectedItem={setSelectedItem}
-                    latestBook={latestBook}
-                    latestResearch={latestResearch}
-                    latestJournal={latestJournal}
-                    latestBlog={latestBlog}
-                    latestProject={latestProject}
-                  />
-                )}
-                {currentView === 'detail' && selectedItem && <PublicationDetailView item={selectedItem} setView={setCurrentView} />}
-                {currentView === 'reading' && selectedItem && <ArticleReadingView item={selectedItem} setView={setCurrentView} />}
-                {currentView === 'about' && <AboutView />}
-                {currentView === 'contact' && <ContactView />}
-                {currentView === 'ai' && <AiAssistantView />}
-                
-                {currentView === 'library' && renderGenericList('Digital Library', combinedLibrary)}
-                {currentView === 'research' && renderGenericList('Research Archive', combinedResearch)}
-                {currentView === 'teaching' && renderGenericList('Teaching Hub', mockTeaching)}
-                {currentView === 'projects' && renderGenericList('Projects & Initiatives', mockProjects)}
-                {currentView === 'journal' && renderGenericList('Personal Journal', combinedJournal)}
-                {currentView === 'blog' && renderGenericList('Professional Blog', combinedBlog)}
-              </main>
-              
-              {/* Footer updated to match reference */}
-              <footer className="bg-navy py-8 text-gray-400 text-sm border-t border-white/10 mt-auto">
-                  <div className="max-w-[1600px] mx-auto px-4 sm:px-6 lg:px-8 flex flex-col md:flex-row justify-between items-center gap-4">
-                      <div className="flex items-center gap-3">
-                          <div className="text-gold">
-                              <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
-                                  <path d="M4 19.5v-15A2.5 2.5 0 0 1 6.5 2H20v20H6.5a2.5 2.5 0 0 1 0-5H20"/>
-                                  <path d="M8 7h6"/><path d="M8 11h8"/>
-                              </svg>
-                          </div>
-                          <div>
-                              <h2 className="text-white font-serif font-bold text-lg leading-none">Ajayi Knowledge Hub</h2>
-                              <span className="text-gold text-[10px] tracking-wider uppercase font-medium">Explore. Learn. Discover. Grow.</span>
-                          </div>
-                      </div>
-                      
-                      <div className="text-center">
-                          <p>&copy; {new Date().getFullYear()} Paul Olakiitan Ajayi. All rights reserved.</p>
-                          <div className="flex gap-4 justify-center mt-2 text-xs">
-                              <a href="#" className="hover:text-white">Privacy Policy</a>
-                              <a href="#" className="hover:text-white">Terms of Use</a>
-                              <a href="#" className="hover:text-white">Sitemap</a>
-                          </div>
-                      </div>
-                      
-                      <div>
-                          Built with <span className="text-emerald-custom">♥</span> for knowledge, science, and humanity.
-                      </div>
-                  </div>
-              </footer>
-            </div>
-          );
+            useEffect(() => {
+                const fetchData = async () => {
+                    if (!window.supabase) return;
+                    
+                    const { data: pubs } = await supabase.from('publications').select('*').order('id', { ascending: false });
+                    if (pubs) setPublications(pubs);
+
+                    const { data: sets } = await supabase.from('site_settings').select('*').eq('id', 1).single();
+                    if (sets) setSettings(sets);
+
+                    if (!sessionStorage.getItem('view_counted')) {
+                        await supabase.rpc('increment_page_view');
+                        sessionStorage.setItem('view_counted', 'true');
+                    }
+                };
+                fetchData();
+            }, []);
+
+            const navigateTo = (newView, item = null) => {
+                setView(newView);
+                setSelectedItem(item);
+                window.scrollTo(0, 0);
+                window.history.pushState({ view: newView, item }, '', `?view=${newView}`);
+            };
+
+            useEffect(() => {
+                const handlePopState = (e) => {
+                    if (e.state && e.state.view) { setView(e.state.view); setSelectedItem(e.state.item); }
+                    else setView('home');
+                };
+                window.addEventListener('popstate', handlePopState);
+                return () => window.removeEventListener('popstate', handlePopState);
+            }, []);
+
+            const books = publications.filter(p => p.type === 'book');
+            const research = publications.filter(p => p.type === 'research');
+            const journal = publications.filter(p => p.type === 'journal');
+            const blog = publications.filter(p => p.type === 'blog');
+            const teaching = publications.filter(p => p.type === 'teaching');
+            const projects = publications.filter(p => p.type === 'project');
+
+            const HomeContent = () => (
+                <div className="bg-gray-50 dark:bg-[#121212] relative z-10 pb-10">
+                    <HeroSection setView={navigateTo} isDarkMode={darkMode} />
+
+                    <div className="max-w-[1600px] mx-auto px-4 sm:px-6 lg:px-8 -mt-6 relative z-20 mb-12 animate-fade-in">
+                        <div className="bg-[#0f1b29] rounded-xl shadow-xl flex flex-wrap lg:flex-nowrap divide-y lg:divide-y-0 lg:divide-x divide-white/10 p-2">
+                            {[
+                                { count: books.length, label: "Books", icon: "book" },
+                                { count: research.length, label: "Research", icon: "microscope" },
+                                { count: journal.length, label: "Journal", icon: "layout" },
+                                { count: teaching.length, label: "Teaching", icon: "gradCap" },
+                                { count: blog.length, label: "Blog", icon: "pencil" },
+                                { count: (settings?.views_count || 0).toLocaleString(), label: "Global Readers", icon: "users" },
+                                { count: (settings?.downloads_count || 0).toLocaleString(), label: "Downloads", icon: "download" },
+                            ].map((stat, idx) => (
+                                <div key={idx} className="flex-1 min-w-[140px] p-4 flex items-center justify-center lg:justify-start gap-4">
+                                    <div className="text-[#D4AF37]"><Icon name={stat.icon} size={28} /></div>
+                                    <div className="min-w-0">
+                                        <div className="text-white font-bold text-xl leading-none mb-1 truncate">{stat.count}</div>
+                                        <div className="text-gray-400 text-xs truncate">{stat.label}</div>
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
+                    </div>
+
+                    <ContentCards navigateTo={navigateTo} books={books} research={research} journal={journal} blog={blog} projects={projects} />
+                    <BottomInfo settings={settings} />
+                </div>
+            );
+
+            const GenericList = ({ title, data }) => (
+                <div className="pt-32 pb-24 max-w-7xl mx-auto px-4 sm:px-6 relative z-10 min-h-screen animate-fade-in">
+                    <h1 className="text-4xl font-bold font-serif text-[#0B1423] dark:text-white mb-12">{title}</h1>
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+                        {data.map(item => (
+                            <div key={item.id} className="bg-white dark:bg-[#1E1E1E] rounded-2xl p-6 shadow-sm border border-gray-100 dark:border-gray-800 flex flex-col cursor-pointer min-w-0" onClick={() => navigateTo((item.type === 'journal' || item.type === 'blog') ? 'reading' : 'detail', item)}>
+                                <span className="text-xs font-bold uppercase text-[#2E8B57] mb-2 truncate">{item.category}</span>
+                                <h3 className="text-xl font-bold text-[#0B1423] dark:text-white mb-3 line-clamp-2">{item.title}</h3>
+                                {item.file_url && <Icon name="paperclip" size={16} className="text-gray-400 mb-2" />}
+                                <p className="text-sm text-gray-600 dark:text-gray-400 mb-6 flex-grow line-clamp-4 break-words">{item.summary}</p>
+                                <div className="mt-auto flex items-center text-[#2E8B57] text-sm font-semibold">Read More &rarr;</div>
+                            </div>
+                        ))}
+                    </div>
+                </div>
+            );
+
+            return (
+                <div className="min-h-screen flex flex-col selection:bg-[#2E8B57] selection:text-white">
+                    <Navbar darkMode={darkMode} setDarkMode={setDarkMode} setView={navigateTo} currentView={view} settings={settings} />
+                    <main className="flex-grow">
+                        {view === 'home' && <HomeContent />}
+                        {view === 'detail' && selectedItem && <PublicationDetailView item={selectedItem} setView={setView} />}
+                        {view === 'reading' && selectedItem && <ArticleReadingView item={selectedItem} setView={setView} />}
+                        {view === 'about' && <AboutView settings={settings} />}
+                        {view === 'contact' && <ContactView settings={settings} />}
+                        {view === 'ai' && <AiAssistantView />}
+                        {view === 'library' && <GenericList title="Library" data={books} />}
+                        {view === 'research' && <GenericList title="Research" data={research} />}
+                        {view === 'teaching' && <GenericList title="Teaching" data={teaching} />}
+                        {view === 'projects' && <GenericList title="Projects" data={projects} />}
+                        {view === 'journal' && <GenericList title="Journal" data={journal} />}
+                        {view === 'blog' && <GenericList title="Blog" data={blog} />}
+                    </main>
+                    <Footer />
+                </div>
+            );
         };
 
         const root = ReactDOM.createRoot(document.getElementById('root'));
-        root.render(<AjayiKnowledgeHub />);
+        root.render(<App />);
     </script>
 </body>
 </html>
