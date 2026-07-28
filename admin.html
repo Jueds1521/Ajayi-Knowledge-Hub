@@ -95,7 +95,7 @@
                                     value={email}
                                     onChange={(e) => setEmail(e.target.value)}
                                     className="w-full px-4 py-3 rounded-xl bg-gray-800 border border-gray-700 focus:outline-none focus:ring-2 focus:ring-emerald-custom text-white" 
-                                    placeholder="paul@example.com"
+                                    placeholder="admin@example.com"
                                 />
                             </div>
                             <div>
@@ -137,8 +137,10 @@
             const [summary, setSummary] = useState('');
             const [content, setContent] = useState('');
             const [tags, setTags] = useState('');
+            const [file, setFile] = useState(null);
             
             // App States
+            const [activeTab, setActiveTab] = useState('dashboard');
             const [publications, setPublications] = useState([]);
             const [isPublishing, setIsPublishing] = useState(false);
             const [isLoadingPosts, setIsLoadingPosts] = useState(true);
@@ -175,37 +177,55 @@
                 const tagsArray = tags.split(',').map(tag => tag.trim()).filter(tag => tag !== '');
                 
                 try {
-                    if (editingId) {
-                        // WE ARE UPDATING AN EXISTING POST
-                        const { error } = await supabase.from('publications').update({
-                            title: title,
-                            type: type,
-                            category: category,
-                            summary: summary,
-                            content: content,
-                            tags: tagsArray
-                        }).eq('id', editingId);
+                    let fileUrl = null;
+                    // Handle PDF Upload to Supabase Storage if a file was selected
+                    if (file) {
+                        const fileExt = file.name.split('.').pop();
+                        const fileName = `${Date.now()}_${Math.random().toString(36).substring(7)}.${fileExt}`;
+                        
+                        const { error: uploadError } = await supabase.storage
+                            .from('documents')
+                            .upload(fileName, file);
+                            
+                        if (uploadError) throw uploadError;
+                        
+                        const { data } = supabase.storage
+                            .from('documents')
+                            .getPublicUrl(fileName);
+                            
+                        fileUrl = data.publicUrl;
+                    }
 
+                    const payload = {
+                        title: title,
+                        type: type,
+                        category: category,
+                        summary: summary,
+                        content: content,
+                        tags: tagsArray
+                    };
+
+                    // Only update the file URL if a new file was uploaded
+                    if (fileUrl) {
+                        payload.file_url = fileUrl;
+                    }
+
+                    if (editingId) {
+                        // UPDATE EXISTING POST
+                        const { error } = await supabase.from('publications').update(payload).eq('id', editingId);
                         if (error) throw error;
                         
                         setStatusMsg({ type: 'success', text: 'Successfully updated your publication!' });
                         clearForm();
                         fetchPublications();
                     } else {
-                        // WE ARE CREATING A NEW POST
+                        // CREATE NEW POST
                         const dateOptions = { year: 'numeric', month: 'short', day: 'numeric' };
                         const publishedDate = new Date().toLocaleDateString('en-US', dateOptions);
 
-                        const { error } = await supabase.from('publications').insert([{
-                            title: title,
-                            type: type,
-                            category: category,
-                            summary: summary,
-                            content: content,
-                            tags: tagsArray,
-                            published_date: publishedDate
-                        }]);
+                        payload.published_date = publishedDate;
 
+                        const { error } = await supabase.from('publications').insert([payload]);
                         if (error) throw error;
 
                         setStatusMsg({ type: 'success', text: 'Successfully published to your Knowledge Hub!' });
@@ -227,11 +247,9 @@
                 setCategory(pub.category || '');
                 setSummary(pub.summary || '');
                 setContent(pub.content || '');
-                // Safely handle tags to prevent crashing
                 const safeTags = Array.isArray(pub.tags) ? pub.tags.join(', ') : (pub.tags || '');
                 setTags(safeTags);
                 
-                // Scroll to top of the page smoothly
                 window.scrollTo({ top: 0, behavior: 'smooth' });
                 setStatusMsg({ type: 'success', text: `Editing: ${pub.title}` });
             };
@@ -242,7 +260,7 @@
                     if (error) throw error;
                     
                     setDeletingId(null);
-                    fetchPublications(); // Refresh the list
+                    fetchPublications();
                     setStatusMsg({ type: 'success', text: 'Publication deleted successfully.' });
                     setTimeout(() => setStatusMsg({ type: '', text: '' }), 4000);
                 } catch (error) {
@@ -252,7 +270,7 @@
 
             const clearForm = () => {
                 setEditingId(null);
-                setTitle(''); setCategory(''); setSummary(''); setContent(''); setTags('');
+                setTitle(''); setCategory(''); setSummary(''); setContent(''); setTags(''); setFile(null);
             };
 
             return (
@@ -270,10 +288,10 @@
                         <div className="p-4 flex-1">
                             <h3 className="text-xs font-bold text-gray-500 uppercase tracking-wider mb-4 px-2">Menu</h3>
                             <nav className="space-y-1">
-                                <button className="w-full flex items-center px-4 py-3 text-sm font-medium rounded-xl transition-colors bg-emerald-900/20 text-emerald-400">
+                                <button onClick={() => setActiveTab('dashboard')} className={`w-full flex items-center px-4 py-3 text-sm font-medium rounded-xl transition-colors ${activeTab === 'dashboard' ? 'bg-emerald-900/20 text-emerald-400' : 'text-gray-400 hover:bg-gray-800'}`}>
                                     <i className="fas fa-chart-line mr-3"></i> Dashboard
                                 </button>
-                                <button className="w-full flex items-center px-4 py-3 text-sm font-medium rounded-xl transition-colors text-gray-400 hover:bg-gray-800">
+                                <button onClick={() => setActiveTab('settings')} className={`w-full flex items-center px-4 py-3 text-sm font-medium rounded-xl transition-colors ${activeTab === 'settings' ? 'bg-emerald-900/20 text-emerald-400' : 'text-gray-400 hover:bg-gray-800'}`}>
                                     <i className="fas fa-cog mr-3"></i> Settings
                                 </button>
                             </nav>
@@ -288,154 +306,204 @@
                     {/* Main Content Area */}
                     <div className="flex-1 p-8 overflow-y-auto">
                         <div className="max-w-5xl mx-auto">
-                            <div className="flex justify-between items-center mb-8">
-                                <h1 className="text-2xl font-bold font-serif text-white">Command Center</h1>
-                            </div>
                             
-                            {/* CMS Publishing Form */}
-                            <div className="bg-gray-900 rounded-2xl border border-gray-800 shadow-xl overflow-hidden mb-12">
-                                <div className="p-6 border-b border-gray-800 bg-gray-900/50 flex justify-between items-center">
-                                    <h3 className="text-lg font-bold text-white flex items-center">
-                                        <i className={`fas ${editingId ? 'fa-pen text-blue-500' : 'fa-edit text-emerald-500'} mr-2`}></i> 
-                                        {editingId ? 'Edit Publication' : 'Create New Post'}
-                                    </h3>
-                                    {editingId && (
-                                        <button onClick={clearForm} type="button" className="text-sm bg-gray-800 hover:bg-gray-700 px-3 py-1.5 rounded-lg text-gray-300 transition-colors">
-                                            Cancel Edit
-                                        </button>
-                                    )}
-                                </div>
-                                <div className="p-6">
-                                    {statusMsg.text && (
-                                        <div className={`mb-6 p-4 rounded-xl text-sm flex items-start ${statusMsg.type === 'error' ? 'bg-red-900/30 border border-red-800 text-red-200' : 'bg-emerald-900/30 border border-emerald-800 text-emerald-200'}`}>
-                                            <i className={`fas ${statusMsg.type === 'error' ? 'fa-exclamation-circle' : 'fa-check-circle'} mt-1 mr-2`}></i>
-                                            {statusMsg.text}
-                                        </div>
-                                    )}
-
-                                    <form onSubmit={handlePublish} className="space-y-6">
-                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            {}
+                            {activeTab === 'settings' ? (
+                                <div className="animate-fade-in">
+                                    <div className="flex justify-between items-center mb-8">
+                                        <h1 className="text-2xl font-bold font-serif text-white">Platform Settings</h1>
+                                    </div>
+                                    <div className="bg-gray-900 rounded-2xl border border-gray-800 shadow-xl p-8 mb-6">
+                                        <h3 className="text-lg font-bold text-white mb-4"><i className="fas fa-user-circle text-emerald-500 mr-2"></i> Administrator Profile</h3>
+                                        <p className="text-gray-400 mb-6 text-sm">Update your public profile and knowledge hub settings.</p>
+                                        
+                                        <div className="space-y-5 max-w-lg">
                                             <div>
-                                                <label className="block text-sm font-medium text-gray-300 mb-1">Title</label>
-                                                <input type="text" required value={title} onChange={(e) => setTitle(e.target.value)} className="w-full px-4 py-3 rounded-xl bg-gray-800 border border-gray-700 focus:outline-none focus:ring-2 focus:ring-emerald-custom text-white" placeholder="e.g., The Future of Soil Microbes" />
+                                                <label className="block text-sm font-medium text-gray-300 mb-1">Display Name</label>
+                                                <input type="text" defaultValue="Paul Olakiitan Ajayi" className="w-full px-4 py-3 rounded-xl bg-gray-800 border border-gray-700 focus:outline-none focus:ring-2 focus:ring-emerald-custom text-white" />
                                             </div>
                                             <div>
-                                                <label className="block text-sm font-medium text-gray-300 mb-1">Content Type</label>
-                                                <select value={type} onChange={(e) => setType(e.target.value)} className="w-full px-4 py-3 rounded-xl bg-gray-800 border border-gray-700 focus:outline-none focus:ring-2 focus:ring-emerald-custom text-white appearance-none">
-                                                    <option value="blog">Blog Post</option>
-                                                    <option value="journal">Personal Journal</option>
-                                                    <option value="research">Research Paper</option>
-                                                    <option value="book">Book</option>
-                                                    <option value="teaching">Teaching Material</option>
-                                                    <option value="project">Project</option>
-                                                </select>
-                                            </div>
-                                        </div>
-
-                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                                            <div>
-                                                <label className="block text-sm font-medium text-gray-300 mb-1">Category</label>
-                                                <input type="text" value={category} onChange={(e) => setCategory(e.target.value)} className="w-full px-4 py-3 rounded-xl bg-gray-800 border border-gray-700 focus:outline-none focus:ring-2 focus:ring-emerald-custom text-white" placeholder="Microbial Genomics" />
+                                                <label className="block text-sm font-medium text-gray-300 mb-1">Contact Email</label>
+                                                <input type="email" defaultValue="admin@ajayihub.com" className="w-full px-4 py-3 rounded-xl bg-gray-800 border border-gray-700 focus:outline-none focus:ring-2 focus:ring-emerald-custom text-white" />
                                             </div>
                                             <div>
-                                                <label className="block text-sm font-medium text-gray-300 mb-1">Tags (comma separated)</label>
-                                                <input type="text" value={tags} onChange={(e) => setTags(e.target.value)} className="w-full px-4 py-3 rounded-xl bg-gray-800 border border-gray-700 focus:outline-none focus:ring-2 focus:ring-emerald-custom text-white" placeholder="Soil, DNA, Agriculture" />
+                                                <label className="block text-sm font-medium text-gray-300 mb-1">Short Bio</label>
+                                                <textarea rows="3" className="w-full px-4 py-3 rounded-xl bg-gray-800 border border-gray-700 focus:outline-none focus:ring-2 focus:ring-emerald-custom text-white resize-none" defaultValue="Microbiologist · Researcher · Educator"></textarea>
                                             </div>
-                                        </div>
-
-                                        <div>
-                                            <label className="block text-sm font-medium text-gray-300 mb-1">Short Summary / Abstract</label>
-                                            <textarea rows="2" required value={summary} onChange={(e) => setSummary(e.target.value)} className="w-full px-4 py-3 rounded-xl bg-gray-800 border border-gray-700 focus:outline-none focus:ring-2 focus:ring-emerald-custom text-white resize-none" placeholder="A brief 1-2 sentence overview..."></textarea>
-                                        </div>
-
-                                        <div>
-                                            <label className="block text-sm font-medium text-gray-300 mb-1">Full Content</label>
-                                            <textarea rows="10" value={content} onChange={(e) => setContent(e.target.value)} className="w-full px-4 py-3 rounded-xl bg-gray-800 border border-gray-700 focus:outline-none focus:ring-2 focus:ring-emerald-custom text-white font-serif" placeholder="Write your full article here..."></textarea>
-                                        </div>
-
-                                        <div className="flex justify-end pt-4 border-t border-gray-800">
-                                            <button type="submit" disabled={isPublishing} className={`hover:bg-opacity-90 text-white px-8 py-3.5 rounded-xl font-medium transition-all shadow-md flex items-center ${editingId ? 'bg-blue-600' : 'bg-emerald-600'} ${isPublishing ? 'opacity-70 cursor-not-allowed' : ''}`}>
-                                                {isPublishing ? <i className="fas fa-spinner fa-spin mr-2"></i> : <i className={`fas ${editingId ? 'fa-save' : 'fa-paper-plane'} mr-2`}></i>}
-                                                {isPublishing ? 'Saving...' : (editingId ? 'Update Publication' : 'Publish to Live Site')}
+                                            <button className="bg-emerald-600 hover:bg-emerald-700 text-white px-6 py-3 rounded-xl font-medium transition-all shadow-md">
+                                                Save Settings
                                             </button>
                                         </div>
-                                    </form>
+                                    </div>
                                 </div>
-                            </div>
-
-                            {}
-                            {/* Manage Content Table */}
-                            <div className="bg-gray-900 rounded-2xl border border-gray-800 shadow-xl overflow-hidden">
-                                <div className="p-6 border-b border-gray-800 bg-gray-900/50 flex justify-between items-center">
-                                    <h3 className="text-lg font-bold text-white flex items-center">
-                                        <i className="fas fa-layer-group text-emerald-500 mr-2"></i> Manage Content
-                                    </h3>
-                                    <button onClick={fetchPublications} type="button" className="text-gray-400 hover:text-white transition-colors" title="Refresh List">
-                                        <i className="fas fa-sync-alt"></i>
-                                    </button>
-                                </div>
-                                <div className="overflow-x-auto">
-                                    {isLoadingPosts ? (
-                                        <div className="p-12 text-center text-gray-500">
-                                            <i className="fas fa-spinner fa-spin text-2xl mb-3 text-emerald-500"></i>
-                                            <p>Loading your publications...</p>
+                            ) : (
+                                <div className="animate-fade-in">
+                                    <div className="flex justify-between items-center mb-8">
+                                        <h1 className="text-2xl font-bold font-serif text-white">Command Center</h1>
+                                    </div>
+                                    
+                                    {}
+                                    <div className="bg-gray-900 rounded-2xl border border-gray-800 shadow-xl overflow-hidden mb-12">
+                                        <div className="p-6 border-b border-gray-800 bg-gray-900/50 flex justify-between items-center">
+                                            <h3 className="text-lg font-bold text-white flex items-center">
+                                                <i className="fas fa-edit text-emerald-500 mr-2"></i> 
+                                                {editingId ? 'Edit Publication' : 'Create New Publication'}
+                                            </h3>
+                                            {editingId && (
+                                                <button onClick={clearForm} type="button" className="text-sm text-gray-400 hover:text-white transition-colors">
+                                                    Cancel Edit
+                                                </button>
+                                            )}
                                         </div>
-                                    ) : publications.length === 0 ? (
-                                        <div className="p-12 text-center text-gray-500">
-                                            <i className="fas fa-folder-open text-4xl mb-3 opacity-50"></i>
-                                            <p>No publications found. Start writing above!</p>
-                                        </div>
-                                    ) : (
-                                        <table className="w-full text-left">
-                                            <thead>
-                                                <tr className="bg-gray-800/50 text-gray-400 text-sm border-b border-gray-800">
-                                                    <th className="px-6 py-4 font-medium">Title & Category</th>
-                                                    <th className="px-6 py-4 font-medium">Type</th>
-                                                    <th className="px-6 py-4 font-medium">Date</th>
-                                                    <th className="px-6 py-4 font-medium text-right">Actions</th>
-                                                </tr>
-                                            </thead>
-                                            <tbody className="divide-y divide-gray-800">
-                                                {publications.map((pub) => (
-                                                    <tr key={pub.id} className="hover:bg-gray-800/30 transition-colors group">
-                                                        <td className="px-6 py-4">
-                                                            <p className="font-medium text-white group-hover:text-emerald-400 transition-colors">{pub.title}</p>
-                                                            <p className="text-xs text-gray-500 mt-1">{pub.category || 'Uncategorized'}</p>
-                                                        </td>
-                                                        <td className="px-6 py-4">
-                                                            <span className="px-2 py-1 bg-gray-800 text-gray-300 text-xs rounded-full font-medium capitalize border border-gray-700">
-                                                                {pub.type}
-                                                            </span>
-                                                        </td>
-                                                        <td className="px-6 py-4 text-sm text-gray-400">
-                                                            {pub.published_date}
-                                                        </td>
-                                                        <td className="px-6 py-4 text-right">
-                                                            {deletingId === pub.id ? (
-                                                                <div className="flex justify-end items-center space-x-3 bg-red-900/20 px-3 py-2 rounded-lg border border-red-900/50 inline-flex">
-                                                                    <span className="text-xs text-red-200">Are you sure?</span>
-                                                                    <button onClick={() => confirmDelete(pub.id)} type="button" className="text-red-400 hover:text-red-300 font-bold text-sm bg-red-900/50 px-2 py-1 rounded">Delete</button>
-                                                                    <button onClick={() => setDeletingId(null)} type="button" className="text-gray-400 hover:text-white text-sm">Cancel</button>
-                                                                </div>
-                                                            ) : (
-                                                                <div className="flex justify-end space-x-4">
-                                                                    <button onClick={() => handleEditClick(pub)} type="button" className="text-gray-400 hover:text-blue-400 transition-colors" title="Edit">
-                                                                        <i className="fas fa-edit"></i>
-                                                                    </button>
-                                                                    <button onClick={() => setDeletingId(pub.id)} type="button" className="text-gray-400 hover:text-red-400 transition-colors" title="Delete">
-                                                                        <i className="fas fa-trash-alt"></i>
-                                                                    </button>
-                                                                </div>
-                                                            )}
-                                                        </td>
-                                                    </tr>
-                                                ))}
-                                            </tbody>
-                                        </table>
-                                    )}
-                                </div>
-                            </div>
+                                        
+                                        {statusMsg.text && (
+                                            <div className={`p-4 m-6 mb-0 rounded-xl flex items-start text-sm ${statusMsg.type === 'error' ? 'bg-red-900/30 border border-red-800 text-red-200' : 'bg-emerald-900/30 border border-emerald-800 text-emerald-200'}`}>
+                                                <i className={`fas ${statusMsg.type === 'error' ? 'fa-exclamation-circle' : 'fa-check-circle'} mt-1 mr-2`}></i>
+                                                {statusMsg.text}
+                                            </div>
+                                        )}
 
+                                        <form onSubmit={handlePublish} className="p-6 space-y-6">
+                                            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                                <div>
+                                                    <label className="block text-sm font-medium text-gray-300 mb-1">Publication Title</label>
+                                                    <input type="text" required value={title} onChange={(e) => setTitle(e.target.value)} className="w-full px-4 py-3 rounded-xl bg-gray-800 border border-gray-700 focus:outline-none focus:ring-2 focus:ring-emerald-custom text-white" placeholder="Enter title..." />
+                                                </div>
+                                                <div>
+                                                    <label className="block text-sm font-medium text-gray-300 mb-1">Content Type</label>
+                                                    <select value={type} onChange={(e) => setType(e.target.value)} className="w-full px-4 py-3 rounded-xl bg-gray-800 border border-gray-700 focus:outline-none focus:ring-2 focus:ring-emerald-custom text-white appearance-none">
+                                                        <option value="blog">Blog Post</option>
+                                                        <option value="journal">Journal Entry</option>
+                                                        <option value="research">Research Paper</option>
+                                                        <option value="book">Book</option>
+                                                        <option value="teaching">Teaching Material</option>
+                                                        <option value="project">Project</option>
+                                                    </select>
+                                                </div>
+                                            </div>
+
+                                            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                                <div>
+                                                    <label className="block text-sm font-medium text-gray-300 mb-1">Category</label>
+                                                    <input type="text" value={category} onChange={(e) => setCategory(e.target.value)} className="w-full px-4 py-3 rounded-xl bg-gray-800 border border-gray-700 focus:outline-none focus:ring-2 focus:ring-emerald-custom text-white" placeholder="Microbial Genomics" />
+                                                </div>
+                                                <div>
+                                                    <label className="block text-sm font-medium text-gray-300 mb-1">Tags (comma separated)</label>
+                                                    <input type="text" value={tags} onChange={(e) => setTags(e.target.value)} className="w-full px-4 py-3 rounded-xl bg-gray-800 border border-gray-700 focus:outline-none focus:ring-2 focus:ring-emerald-custom text-white" placeholder="Soil, PGPR, Bacteria" />
+                                                </div>
+                                            </div>
+
+                                            <div>
+                                                <label className="block text-sm font-medium text-gray-300 mb-1">Abstract / Summary</label>
+                                                <textarea required rows="2" value={summary} onChange={(e) => setSummary(e.target.value)} className="w-full px-4 py-3 rounded-xl bg-gray-800 border border-gray-700 focus:outline-none focus:ring-2 focus:ring-emerald-custom text-white resize-none" placeholder="A brief summary of the publication..."></textarea>
+                                            </div>
+
+                                            <div>
+                                                <label className="block text-sm font-medium text-gray-300 mb-1">Full Content (Optional for PDFs)</label>
+                                                <textarea rows="6" value={content} onChange={(e) => setContent(e.target.value)} className="w-full px-4 py-3 rounded-xl bg-gray-800 border border-gray-700 focus:outline-none focus:ring-2 focus:ring-emerald-custom text-white resize-none font-serif" placeholder="Write your full article here..."></textarea>
+                                            </div>
+
+                                            <div>
+                                                <label className="block text-sm font-medium text-gray-300 mb-1">Attach PDF Document (Optional)</label>
+                                                <div className="mt-1 flex justify-center px-6 pt-5 pb-6 border-2 border-gray-700 border-dashed rounded-xl bg-gray-800/50 hover:bg-gray-800 transition-colors">
+                                                    <div className="space-y-1 text-center">
+                                                        <i className="fas fa-file-pdf text-gray-400 text-3xl mb-3"></i>
+                                                        <div className="flex text-sm text-gray-400 justify-center">
+                                                            <label htmlFor="file-upload" className="relative cursor-pointer bg-gray-900 rounded-md font-medium text-emerald-500 hover:text-emerald-400 focus-within:outline-none px-2 py-1">
+                                                                <span>Upload a file</span>
+                                                                <input id="file-upload" name="file-upload" type="file" className="sr-only" onChange={(e) => setFile(e.target.files[0])} accept=".pdf" />
+                                                            </label>
+                                                            <p className="pl-1 pt-1">or drag and drop</p>
+                                                        </div>
+                                                        <p className="text-xs text-gray-500">PDF up to 10MB</p>
+                                                        {file && <p className="text-emerald-400 text-sm mt-2 font-medium"><i className="fas fa-check-circle mr-1"></i> {file.name}</p>}
+                                                    </div>
+                                                </div>
+                                            </div>
+
+                                            <div className="pt-4 border-t border-gray-800 flex justify-end">
+                                                <button type="submit" disabled={isPublishing} className={`bg-emerald-600 hover:bg-emerald-700 text-white px-8 py-3 rounded-xl font-medium transition-all shadow-md flex items-center ${isPublishing ? 'opacity-70 cursor-not-allowed' : ''}`}>
+                                                    {isPublishing ? <i className="fas fa-spinner fa-spin mr-2"></i> : <i className="fas fa-paper-plane mr-2"></i>}
+                                                    {isPublishing ? 'Saving...' : (editingId ? 'Update Publication' : 'Publish to Live Site')}
+                                                </button>
+                                            </div>
+                                        </form>
+                                    </div>
+
+                                    {}
+                                    <div className="bg-gray-900 rounded-2xl border border-gray-800 shadow-xl overflow-hidden">
+                                        <div className="p-6 border-b border-gray-800 bg-gray-900/50 flex justify-between items-center">
+                                            <h3 className="text-lg font-bold text-white flex items-center">
+                                                <i className="fas fa-layer-group text-emerald-500 mr-2"></i> Manage Content
+                                            </h3>
+                                            <button onClick={fetchPublications} type="button" className="text-gray-400 hover:text-white transition-colors" title="Refresh List">
+                                                <i className="fas fa-sync-alt"></i>
+                                            </button>
+                                        </div>
+                                        <div className="overflow-x-auto">
+                                            {isLoadingPosts ? (
+                                                <div className="p-12 text-center text-gray-500">
+                                                    <i className="fas fa-spinner fa-spin text-2xl mb-3 text-emerald-500"></i>
+                                                    <p>Loading your publications...</p>
+                                                </div>
+                                            ) : publications.length === 0 ? (
+                                                <div className="p-12 text-center text-gray-500">
+                                                    <i className="fas fa-folder-open text-4xl mb-3 opacity-50"></i>
+                                                    <p>No publications found. Start writing above!</p>
+                                                </div>
+                                            ) : (
+                                                <table className="w-full text-left">
+                                                    <thead>
+                                                        <tr className="bg-gray-800/50 text-gray-400 text-sm border-b border-gray-800">
+                                                            <th className="px-6 py-4 font-medium">Title & Category</th>
+                                                            <th className="px-6 py-4 font-medium">Type</th>
+                                                            <th className="px-6 py-4 font-medium">Date</th>
+                                                            <th className="px-6 py-4 font-medium text-right">Actions</th>
+                                                        </tr>
+                                                    </thead>
+                                                    <tbody className="divide-y divide-gray-800">
+                                                        {publications.map((pub) => (
+                                                            <tr key={pub.id} className="hover:bg-gray-800/30 transition-colors group">
+                                                                <td className="px-6 py-4">
+                                                                    <div className="flex items-center">
+                                                                        {pub.file_url && <i className="fas fa-paperclip text-emerald-500 mr-2" title="Has Attachment"></i>}
+                                                                        <div>
+                                                                            <p className="font-medium text-white group-hover:text-emerald-400 transition-colors">{pub.title}</p>
+                                                                            <p className="text-xs text-gray-500 mt-1">{pub.category || 'Uncategorized'}</p>
+                                                                        </div>
+                                                                    </div>
+                                                                </td>
+                                                                <td className="px-6 py-4">
+                                                                    <span className="px-2 py-1 bg-gray-800 text-gray-300 text-xs rounded-full font-medium capitalize border border-gray-700">
+                                                                        {pub.type}
+                                                                    </span>
+                                                                </td>
+                                                                <td className="px-6 py-4 text-sm text-gray-400">
+                                                                    {pub.published_date}
+                                                                </td>
+                                                                <td className="px-6 py-4 text-right">
+                                                                    {deletingId === pub.id ? (
+                                                                        <div className="flex justify-end items-center space-x-3 bg-red-900/20 px-3 py-2 rounded-lg border border-red-900/50 inline-flex">
+                                                                            <span className="text-xs text-red-200">Are you sure?</span>
+                                                                            <button onClick={() => confirmDelete(pub.id)} type="button" className="text-red-400 hover:text-red-300 font-bold text-sm bg-red-900/50 px-2 py-1 rounded">Delete</button>
+                                                                            <button onClick={() => setDeletingId(null)} type="button" className="text-gray-400 hover:text-white text-sm">Cancel</button>
+                                                                        </div>
+                                                                    ) : (
+                                                                        <div className="flex justify-end space-x-3 opacity-0 group-hover:opacity-100 transition-opacity">
+                                                                            <button onClick={() => handleEditClick(pub)} type="button" className="text-blue-400 hover:text-blue-300 font-medium text-sm transition-colors px-2 py-1"><i className="fas fa-pen"></i> Edit</button>
+                                                                            <button onClick={() => setDeletingId(pub.id)} type="button" className="text-red-400 hover:text-red-300 font-medium text-sm transition-colors px-2 py-1"><i className="fas fa-trash"></i> Delete</button>
+                                                                        </div>
+                                                                    )}
+                                                                </td>
+                                                            </tr>
+                                                        ))}
+                                                    </tbody>
+                                                </table>
+                                            )}
+                                        </div>
+                                    </div>
+                                </div>
+                            )}
                         </div>
                     </div>
                 </div>
