@@ -5,58 +5,33 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Ajayi Knowledge Hub</title>
     
-    <!-- Load Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
-    
-    <!-- Configure Tailwind Colors and Fonts -->
     <script>
         tailwind.config = {
             darkMode: 'class',
             theme: {
                 extend: {
-                    colors: {
-                        navy: '#0B1F3A',
-                        'emerald-custom': '#2E8B57',
-                        gold: '#D4AF37',
-                    },
-                    fontFamily: {
-                        serif: ['Merriweather', 'serif'],
-                        sans: ['Inter', 'sans-serif'],
-                    }
+                    colors: { navy: '#0B1F3A', 'emerald-custom': '#2E8B57', gold: '#D4AF37' },
+                    fontFamily: { serif: ['Merriweather', 'serif'], sans: ['Inter', 'sans-serif'] }
                 }
             }
         }
     </script>
 
-    <!-- Load Google Fonts -->
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Merriweather:wght@400;700;900&display=swap" rel="stylesheet">
-    
-    <!-- Load FontAwesome Icons -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 
-    <!-- Load React, ReactDOM, Babel, and SUPABASE -->
     <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
     <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
     <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
     
-    <!-- SUPABASE CLIENT -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
     <style>
-        body {
-            background-color: #FAFAFA;
-            color: #111827;
-            font-family: 'Inter', sans-serif;
-            transition: background-color 0.3s ease, color 0.3s ease;
-        }
-        .dark body {
-            background-color: #0a0a0a;
-            color: #F9FAFB;
-        }
+        body { background-color: #FAFAFA; color: #111827; font-family: 'Inter', sans-serif; transition: background-color 0.3s ease, color 0.3s ease; }
+        .dark body { background-color: #0a0a0a; color: #F9FAFB; }
         .hide-scrollbar::-webkit-scrollbar { display: none; }
         .hide-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
-        
-        /* Basic animations */
         @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
         @keyframes slideUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
         .animate-fade-in { animation: fadeIn 0.8s ease-out forwards; }
@@ -179,9 +154,15 @@
                     <p className="text-gray-600 dark:text-gray-300 text-lg leading-relaxed mb-8">{item.abstract || item.summary || item.content}</p>
                     
                     <div className="flex flex-wrap gap-4 mt-auto">
-                      <button className="flex items-center bg-navy hover:bg-[#1a365d] dark:bg-emerald-600 dark:hover:bg-emerald-700 text-white px-6 py-3 rounded-xl font-medium transition-all shadow-md">
-                        <i className="fas fa-download mr-2"></i> Download PDF
-                      </button>
+                      {item.file_url ? (
+                        <a href={item.file_url} target="_blank" rel="noopener noreferrer" className="flex items-center bg-navy hover:bg-[#1a365d] dark:bg-emerald-600 dark:hover:bg-emerald-700 text-white px-6 py-3 rounded-xl font-medium transition-all shadow-md">
+                          <i className="fas fa-download mr-2"></i> Download PDF
+                        </a>
+                      ) : (
+                        <button disabled className="flex items-center bg-gray-200 dark:bg-gray-800 text-gray-400 dark:text-gray-600 px-6 py-3 rounded-xl font-medium transition-all shadow-sm cursor-not-allowed">
+                          <i className="fas fa-file-pdf mr-2"></i> No PDF Attached
+                        </button>
+                      )}
                       <button onClick={() => setShowCitation(!showCitation)} className="flex items-center bg-gray-100 hover:bg-gray-200 dark:bg-gray-800 dark:hover:bg-gray-700 text-navy dark:text-white px-6 py-3 rounded-xl font-medium transition-all">
                         <i className="fas fa-quote-right mr-2"></i> Cite
                       </button>
@@ -440,7 +421,6 @@
           const [currentView, setCurrentView] = useState('home');
           const [selectedItem, setSelectedItem] = useState(null);
           
-          // SUPABASE DATABASE STATE
           const [dbPublications, setDbPublications] = useState([]);
 
           useEffect(() => {
@@ -448,7 +428,6 @@
             else document.documentElement.classList.remove('dark');
           }, [isDarkMode]);
 
-          // THE MAGIC CONNECTION TO YOUR BACKEND
           useEffect(() => {
             const fetchSupabaseData = async () => {
               const supabaseUrl = 'https://ulqihwnzujncqpexersp.supabase.co';
@@ -461,7 +440,6 @@
                   if (error) {
                     console.error('Error fetching from Supabase:', error);
                   } else if (data) {
-                    console.log("Successfully connected and fetched data from Supabase!", data);
                     setDbPublications(data);
                   }
                 } catch (error) {
@@ -473,7 +451,7 @@
             fetchSupabaseData();
           }, []);
 
-          // MERGING LIVE DATABASE WITH MOCK DATA
+          // Merging Live Data with Mock Data
           const combinedLibrary = [...dbPublications.filter(p => p.type === 'book'), ...mockLibrary];
           const combinedResearch = [...dbPublications.filter(p => p.type === 'research'), ...mockResearch];
           const combinedJournal = [...dbPublications.filter(p => p.type === 'journal'), ...mockJournal.filter(j => j.type === 'journal')];
@@ -545,7 +523,7 @@
                       <i className={`fas ${isDarkMode ? 'fa-sun' : 'fa-moon'} text-lg`}></i>
                     </button>
                     
-                    {/* THIS NOW LINKS TO THE SECURE PAGE */}
+                    {/* The Secure Admin Link */}
                     <button onClick={() => window.location.href = '/admin.html'} className="p-2 rounded-full text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors" title="Admin Dashboard">
                       <i className="fas fa-chart-line text-lg"></i>
                     </button>
@@ -556,7 +534,6 @@
                   </div>
                 </div>
 
-                {/* Mobile Dropdown Menu */}
                 {mobileMenuOpen && (
                   <div className="md:hidden absolute top-20 left-0 w-full bg-white/95 dark:bg-[#0a0a0a]/95 backdrop-blur-lg border-b border-gray-200 dark:border-gray-800 shadow-xl py-4 px-4 flex flex-col space-y-2 animate-fade-in z-50">
                     {navItems.map((item) => (
@@ -587,8 +564,6 @@
                 {currentView === 'about' && <AboutView />}
                 {currentView === 'contact' && <ContactView />}
                 {currentView === 'ai' && <AiAssistantView />}
-                
-                {/* Admin rendering removed from here */}
                 
                 {currentView === 'library' && renderGenericList('Digital Library', combinedLibrary)}
                 {currentView === 'research' && renderGenericList('Research Archive', combinedResearch)}
