@@ -69,7 +69,6 @@
     <script type="text/babel">
         const { useState, useEffect, useRef } = React;
 
-        // --- MOCK DATA ---
         const mockLibrary = [
           { id: 'm1', type: 'book', title: 'The Soil Microbiome', date: '2025', category: 'Microbial Genomics', tags: ['Soil', 'Genomics'], summary: 'An exploration of soil microbial networks.', abstract: 'This book covers the comprehensive study of soil microbiomes, focusing on the genetic interactions that drive soil health and agricultural productivity.' },
           { id: 'm2', type: 'book', title: 'Bacillus Insights', date: '2024', category: 'PGPR', tags: ['Bacillus', 'Agriculture'], summary: 'Understanding Bacillus species in crop yield.', abstract: 'A deep dive into how beneficial Bacillus species can be leveraged as Plant Growth-Promoting Rhizobacteria (PGPR) to sustainably improve crop resilience and yield.' }
@@ -94,7 +93,6 @@
           { id: 'm9', type: 'project', title: 'AI in Agriculture Initiative', date: 'Ongoing', category: 'Innovation', tags: ['AI', 'Sustainability'], summary: 'Predicting crop yields using microbial data.', abstract: 'A collaborative project utilizing machine learning models to analyze soil microbiome data and predict optimal crop yield conditions.' }
         ];
 
-        // --- COMPONENTS ---
         const ParticleBackground = ({ isDarkMode }) => {
           const canvasRef = useRef(null);
           useEffect(() => {
@@ -322,7 +320,88 @@
           </div>
         );
 
-        /* AdminDashboardView HAS BEEN REMOVED FROM HERE! */
+        const ContactView = () => (
+          <div className="max-w-5xl mx-auto px-4 sm:px-6 pt-32 pb-24 relative z-10 min-h-screen animate-fade-in">
+            <div className="text-center mb-16">
+              <h2 className="text-4xl font-bold font-serif text-navy dark:text-white mb-4">Let's Connect</h2>
+              <p className="text-gray-600 dark:text-gray-400 text-lg max-w-2xl mx-auto">Whether you're interested in research collaboration, speaking engagements, or just want to discuss microbiology, I'd love to hear from you.</p>
+            </div>
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-12">
+              <div className="bg-white dark:bg-gray-900 rounded-3xl p-8 shadow-xl border border-gray-100 dark:border-gray-800">
+                <h3 className="text-2xl font-bold font-serif text-navy dark:text-white mb-6">Send a Message</h3>
+                <form className="space-y-4">
+                  <input type="text" placeholder="Your Name" className="w-full px-4 py-3 rounded-xl bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 focus:outline-none focus:ring-2 focus:ring-emerald-custom text-gray-900 dark:text-white" />
+                  <input type="email" placeholder="Your Email" className="w-full px-4 py-3 rounded-xl bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 focus:outline-none focus:ring-2 focus:ring-emerald-custom text-gray-900 dark:text-white" />
+                  <textarea rows="5" placeholder="Your Message" className="w-full px-4 py-3 rounded-xl bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 focus:outline-none focus:ring-2 focus:ring-emerald-custom text-gray-900 dark:text-white resize-none"></textarea>
+                  <button type="button" className="w-full bg-navy dark:bg-emerald-600 hover:bg-[#1a365d] dark:hover:bg-emerald-700 text-white px-6 py-4 rounded-xl font-medium transition-all shadow-md flex justify-center items-center">
+                    <i className="fas fa-paper-plane mr-2"></i> Send Message
+                  </button>
+                </form>
+              </div>
+              <div className="space-y-8">
+                <div className="bg-gradient-to-br from-emerald-50 to-emerald-100 dark:from-emerald-900/30 dark:to-emerald-900/10 rounded-3xl p-8 border border-emerald-200 dark:border-emerald-800 shadow-md text-center">
+                  <i className="fas fa-envelope-open-text text-4xl text-emerald-600 dark:text-emerald-400 mx-auto mb-4"></i>
+                  <h3 className="text-xl font-bold font-serif text-navy dark:text-white mb-2">Subscribe to my Newsletter</h3>
+                  <p className="text-gray-600 dark:text-gray-400 mb-6 text-sm">Join the community to receive updates on my latest research, essays, and educational resources directly to your inbox.</p>
+                  <div className="flex">
+                    <input type="email" placeholder="Enter your email" className="w-full px-4 py-3 rounded-l-xl border-y border-l border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 focus:outline-none text-gray-900 dark:text-white" />
+                    <button className="bg-emerald-600 text-white px-6 py-3 rounded-r-xl font-medium hover:bg-emerald-700 transition-colors">Subscribe</button>
+                  </div>
+                </div>
+                <div className="bg-white dark:bg-gray-900 rounded-3xl p-8 shadow-xl border border-gray-100 dark:border-gray-800">
+                  <h3 className="text-lg font-bold font-serif text-navy dark:text-white mb-6 border-b border-gray-100 dark:border-gray-800 pb-2">Academic & Professional Profiles</h3>
+                  <div className="grid grid-cols-2 gap-4">
+                    {[ {name: 'Google Scholar', icon: 'fa-graduation-cap'}, {name: 'ORCID', icon: 'fa-globe'}, {name: 'ResearchGate', icon: 'fa-microscope'}, {name: 'LinkedIn', icon: 'fa-users'}, {name: 'GitHub', icon: 'fa-code'} ].map((link, i) => (
+                      <a key={i} href="#" className="flex items-center p-3 rounded-xl hover:bg-gray-50 dark:hover:bg-gray-800 text-gray-700 dark:text-gray-300 transition-colors border border-transparent hover:border-gray-200 dark:hover:border-gray-700">
+                        <span className="mr-3 text-emerald-600 dark:text-emerald-400"><i className={`fas ${link.icon}`}></i></span>
+                        <span className="font-medium text-sm">{link.name}</span>
+                      </a>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        );
+
+        const AiAssistantView = () => (
+          <div className="max-w-4xl mx-auto px-4 sm:px-6 pt-32 pb-24 relative z-10 min-h-screen animate-fade-in flex flex-col">
+            <div className="text-center mb-8">
+              <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-gradient-to-br from-emerald-400 to-emerald-600 text-white shadow-lg mb-4">
+                <i className="fas fa-magic text-2xl"></i>
+              </div>
+              <h2 className="text-3xl font-bold font-serif text-navy dark:text-white mb-2">AI Knowledge Assistant</h2>
+              <p className="text-gray-600 dark:text-gray-400">Search and summarize Paul's published research, books, and articles.</p>
+            </div>
+            <div className="flex-1 bg-white dark:bg-gray-900 rounded-3xl shadow-xl border border-gray-100 dark:border-gray-800 flex flex-col overflow-hidden min-h-[500px]">
+              <div className="p-6 overflow-y-auto flex-1 space-y-6">
+                <div className="flex items-start">
+                  <div className="w-10 h-10 rounded-full bg-emerald-100 dark:bg-emerald-900/50 flex items-center justify-center flex-shrink-0 mr-4">
+                    <i className="fas fa-robot text-emerald-600 dark:text-emerald-400"></i>
+                  </div>
+                  <div className="bg-gray-50 dark:bg-gray-800 rounded-2xl rounded-tl-none p-4 text-gray-800 dark:text-gray-200 shadow-sm border border-gray-100 dark:border-gray-700 max-w-[80%]">
+                    <p>Hello! I'm trained on Paul Olakiitan Ajayi's knowledge base. You can ask me to summarize his research, find articles on specific topics like PGPR, or explain microbiology concepts. How can I help you today?</p>
+                  </div>
+                </div>
+              </div>
+              <div className="p-4 bg-gray-50 dark:bg-gray-800 border-t border-gray-200 dark:border-gray-700">
+                <div className="flex space-x-2 overflow-x-auto pb-4 hide-scrollbar">
+                  {['Summarize Paul’s research on PGPR', 'Show work on Bacillus', 'Explain Microbial Genomics'].map((prompt, i) => (
+                    <button key={i} className="whitespace-nowrap px-4 py-2 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-full text-sm font-medium text-gray-700 dark:text-gray-300 hover:border-emerald-custom hover:text-emerald-custom transition-colors">
+                      {prompt}
+                    </button>
+                  ))}
+                </div>
+                <div className="relative">
+                  <input type="text" placeholder="Ask a question..." className="w-full pl-6 pr-14 py-4 rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 focus:outline-none focus:ring-2 focus:ring-emerald-custom text-gray-900 dark:text-white" />
+                  <button className="absolute right-3 top-1/2 transform -translate-y-1/2 p-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg transition-colors">
+                    <i className="fas fa-paper-plane"></i>
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        );
 
         const HomeView = ({ setView, setSelectedItem }) => {
           return (
