@@ -4,13 +4,19 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Admin Portal - Ajayi Knowledge Hub</title>
+    
+    <!-- React & Babel -->
     <script src="https://unpkg.com/react@18/umd/react.development.js"></script>
     <script src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
     <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    
+    <!-- Tailwind CSS & Supabase -->
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Merriweather:wght@400;700;900&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
     <script>
         tailwind.config = {
             darkMode: 'class',
@@ -24,6 +30,7 @@
 
     <script type="text/babel">
         const { useState, useEffect } = React;
+
         const supabaseUrl = 'https://ulqihwnzujncqpexersp.supabase.co';
         const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InVscWlod256dWpuY3FwZXhlcnNwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODUyNDIxNjMsImV4cCI6MjEwMDgxODE2M30.vvMQLeUtjVmciJxwqVgiFVZjmHlclY0Z-oHngY3SVso';
         const supabase = window.supabase.createClient(supabaseUrl, supabaseKey);
@@ -39,6 +46,7 @@
             // Data State
             const [publications, setPublications] = useState([]);
             const [messages, setMessages] = useState([]);
+            const [subscribers, setSubscribers] = useState([]);
             const [settings, setSettings] = useState({ display_name: '', bio: '', about_text: '', mission_text: '', profile_pic_url: '', logo_url: '', linkedin_url: '', facebook_url: '', orcid_url: '', whatsapp_number: '', views_count: 0, downloads_count: 0 });
             
             // UI State
@@ -48,8 +56,13 @@
             const fetchData = async () => {
                 const { data: pubs } = await supabase.from('publications').select('*').order('id', { ascending: false });
                 if (pubs) setPublications(pubs);
+                
                 const { data: msgs } = await supabase.from('messages').select('*').order('created_at', { ascending: false });
                 if (msgs) setMessages(msgs);
+                
+                const { data: subs } = await supabase.from('subscribers').select('*').order('created_at', { ascending: false });
+                if (subs) setSubscribers(subs);
+
                 const { data: sets } = await supabase.from('site_settings').select('*').eq('id', 1).single();
                 if (sets) setSettings(sets);
             };
@@ -117,22 +130,69 @@
 
             return (
                 <div className="min-h-screen bg-[#0a0a0a] flex animate-fade-in">
+                    {/* Sidebar Nav */}
                     <div className="w-64 bg-gray-900 border-r border-gray-800 flex flex-col">
                         <div className="p-6 border-b border-gray-800"><h2 className="font-serif font-bold text-white text-xl">Admin Portal</h2></div>
                         <nav className="p-4 space-y-2 flex-1">
+                            <button onClick={() => setActiveTab('overview')} className={`w-full text-left px-4 py-3 rounded-xl transition ${activeTab==='overview'?'bg-emerald-900/30 text-emerald-400':'text-gray-400 hover:bg-gray-800'}`}><i className="fas fa-chart-line w-6"></i> Overview</button>
                             <button onClick={() => setActiveTab('dashboard')} className={`w-full text-left px-4 py-3 rounded-xl transition ${activeTab==='dashboard'?'bg-emerald-900/30 text-emerald-400':'text-gray-400 hover:bg-gray-800'}`}><i className="fas fa-edit w-6"></i> Content CMS</button>
                             <button onClick={() => setActiveTab('inbox')} className={`w-full text-left px-4 py-3 rounded-xl transition flex justify-between items-center ${activeTab==='inbox'?'bg-emerald-900/30 text-emerald-400':'text-gray-400 hover:bg-gray-800'}`}>
                                 <span><i className="fas fa-envelope w-6"></i> Inbox</span>
                                 {messages.filter(m => !m.read_status).length > 0 && <span className="bg-emerald-500 text-white text-xs px-2 py-0.5 rounded-full">{messages.filter(m => !m.read_status).length}</span>}
                             </button>
+                            <button onClick={() => setActiveTab('subscribers')} className={`w-full text-left px-4 py-3 rounded-xl transition flex justify-between items-center ${activeTab==='subscribers'?'bg-emerald-900/30 text-emerald-400':'text-gray-400 hover:bg-gray-800'}`}>
+                                <span><i className="fas fa-users w-6"></i> Subscribers</span>
+                                <span className="bg-gray-700 text-white text-xs px-2 py-0.5 rounded-full">{subscribers.length}</span>
+                            </button>
                             <button onClick={() => setActiveTab('settings')} className={`w-full text-left px-4 py-3 rounded-xl transition ${activeTab==='settings'?'bg-emerald-900/30 text-emerald-400':'text-gray-400 hover:bg-gray-800'}`}><i className="fas fa-cog w-6"></i> Profile Settings</button>
                         </nav>
-                        <button onClick={onLogout} className="m-4 text-left px-4 py-3 text-red-400 hover:bg-red-900/20 rounded-xl"><i className="fas fa-sign-out-alt w-6"></i> Logout</button>
+                        <a href="/index.html" className="m-4 text-center px-4 py-3 bg-gray-800 text-gray-300 hover:text-white rounded-xl"><i className="fas fa-external-link-alt mr-2"></i> View Site</a>
+                        <button onClick={onLogout} className="mx-4 mb-4 text-left px-4 py-3 text-red-400 hover:bg-red-900/20 rounded-xl"><i className="fas fa-sign-out-alt w-6"></i> Logout</button>
                     </div>
 
                     <div className="flex-1 p-8 overflow-y-auto">
                         <div className="max-w-5xl mx-auto">
                             
+                            {activeTab === 'overview' && (
+                                <div>
+                                    <h1 className="text-2xl font-bold font-serif text-white mb-8">Performance Overview</h1>
+                                    <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+                                        <div className="bg-gray-900 rounded-2xl p-6 border border-gray-800">
+                                            <p className="text-sm font-medium text-gray-500 mb-1">Total Content (Database)</p>
+                                            <h3 className="text-3xl font-bold text-white">{publications.length}</h3>
+                                        </div>
+                                        <div className="bg-gray-900 rounded-2xl p-6 border border-gray-800">
+                                            <p className="text-sm font-medium text-gray-500 mb-1">Total Page Views</p>
+                                            <h3 className="text-3xl font-bold text-white">{settings.views_count}</h3>
+                                        </div>
+                                        <div className="bg-gray-900 rounded-2xl p-6 border border-gray-800">
+                                            <p className="text-sm font-medium text-gray-500 mb-1">PDF Downloads</p>
+                                            <h3 className="text-3xl font-bold text-white">{settings.downloads_count}</h3>
+                                        </div>
+                                    </div>
+                                    <div className="bg-gray-900 rounded-2xl border border-gray-800 p-6 mb-8">
+                                        <h3 className="text-lg font-bold text-white mb-6">Content Breakdown</h3>
+                                        <div className="space-y-4">
+                                            {['book', 'research', 'journal', 'blog', 'teaching'].map(type => {
+                                                const count = publications.filter(p => p.type === type).length;
+                                                const percentage = publications.length > 0 ? (count / publications.length) * 100 : 0;
+                                                return (
+                                                    <div key={type}>
+                                                        <div className="flex justify-between text-sm mb-1 text-gray-400 capitalize">
+                                                            <span>{type}</span>
+                                                            <span>{count} items</span>
+                                                        </div>
+                                                        <div className="w-full bg-gray-800 rounded-full h-2">
+                                                            <div className="bg-emerald-500 h-2 rounded-full transition-all" style={{width: `${percentage}%`}}></div>
+                                                        </div>
+                                                    </div>
+                                                );
+                                            })}
+                                        </div>
+                                    </div>
+                                </div>
+                            )}
+
                             {activeTab === 'dashboard' && (
                                 <div>
                                     <h1 className="text-2xl font-bold font-serif text-white mb-8">Content CMS</h1>
@@ -141,18 +201,21 @@
                                         {statusMsg.text && <div className="mb-4 p-3 bg-emerald-900/30 text-emerald-400 border border-emerald-800 rounded">{statusMsg.text}</div>}
                                         <form onSubmit={handlePublish} className="space-y-4">
                                             <div className="grid grid-cols-2 gap-4">
-                                                <input required type="text" placeholder="Title" value={title} onChange={e=>setTitle(e.target.value)} className="w-full px-4 py-3 rounded-xl bg-gray-800 border-none text-white" />
-                                                <select value={type} onChange={e=>setType(e.target.value)} className="w-full px-4 py-3 rounded-xl bg-gray-800 border-none text-white">
+                                                <input required type="text" placeholder="Title" value={title} onChange={e=>setTitle(e.target.value)} className="w-full px-4 py-3 rounded-xl bg-gray-800 border-none text-white focus:ring-2 focus:ring-emerald-500" />
+                                                <select value={type} onChange={e=>setType(e.target.value)} className="w-full px-4 py-3 rounded-xl bg-gray-800 border-none text-white focus:ring-2 focus:ring-emerald-500">
                                                     <option value="blog">Blog</option><option value="journal">Journal</option><option value="research">Research</option><option value="book">Book</option><option value="teaching">Teaching</option><option value="project">Project</option>
                                                 </select>
-                                                <input type="text" placeholder="Category (e.g. Microbiology)" value={category} onChange={e=>setCategory(e.target.value)} className="w-full px-4 py-3 rounded-xl bg-gray-800 border-none text-white" />
-                                                <input type="text" placeholder="Tags (comma separated)" value={tags} onChange={e=>setTags(e.target.value)} className="w-full px-4 py-3 rounded-xl bg-gray-800 border-none text-white" />
+                                                <input type="text" placeholder="Category (e.g. PGPR)" value={category} onChange={e=>setCategory(e.target.value)} className="w-full px-4 py-3 rounded-xl bg-gray-800 border-none text-white focus:ring-2 focus:ring-emerald-500" />
+                                                <input type="text" placeholder="Tags (comma separated)" value={tags} onChange={e=>setTags(e.target.value)} className="w-full px-4 py-3 rounded-xl bg-gray-800 border-none text-white focus:ring-2 focus:ring-emerald-500" />
                                             </div>
-                                            <textarea required rows="2" placeholder="Summary" value={summary} onChange={e=>setSummary(e.target.value)} className="w-full px-4 py-3 rounded-xl bg-gray-800 border-none text-white resize-none"></textarea>
-                                            <textarea rows="6" placeholder="Full Content" value={content} onChange={e=>setContent(e.target.value)} className="w-full px-4 py-3 rounded-xl bg-gray-800 border-none text-white resize-none"></textarea>
+                                            <textarea required rows="2" placeholder="Summary (Short description)" value={summary} onChange={e=>setSummary(e.target.value)} className="w-full px-4 py-3 rounded-xl bg-gray-800 border-none text-white resize-none focus:ring-2 focus:ring-emerald-500"></textarea>
+                                            <textarea rows="6" placeholder="Full Content / Abstract" value={content} onChange={e=>setContent(e.target.value)} className="w-full px-4 py-3 rounded-xl bg-gray-800 border-none text-white resize-none focus:ring-2 focus:ring-emerald-500"></textarea>
                                             <div className="flex justify-between items-center bg-gray-800 p-4 rounded-xl">
-                                                <input type="file" accept=".pdf" onChange={e=>setFile(e.target.files[0])} className="text-sm text-gray-400" />
-                                                <button type="submit" disabled={isPublishing} className="bg-emerald-600 hover:bg-emerald-700 text-white px-6 py-2 rounded-xl">{isPublishing ? 'Saving...' : 'Publish'}</button>
+                                                <div>
+                                                    <label className="text-xs text-gray-400 block mb-1">Attach PDF Document (Optional)</label>
+                                                    <input type="file" accept=".pdf" onChange={e=>setFile(e.target.files[0])} className="text-sm text-gray-300" />
+                                                </div>
+                                                <button type="submit" disabled={isPublishing} className="bg-emerald-600 hover:bg-emerald-700 text-white px-6 py-3 rounded-xl font-medium">{isPublishing ? 'Saving...' : (editingId ? 'Update Publication' : 'Publish to Live Site')}</button>
                                             </div>
                                         </form>
                                     </div>
@@ -164,7 +227,7 @@
                                             <tbody>
                                                 {publications.map(p => (
                                                     <tr key={p.id} className="border-b border-gray-800/50">
-                                                        <td className="py-3 text-white">{p.title}</td><td className="py-3 uppercase text-xs">{p.type}</td>
+                                                        <td className="py-3 text-white pr-4">{p.title}</td><td className="py-3 uppercase text-xs">{p.type}</td>
                                                         <td className="py-3 flex gap-3">
                                                             <button onClick={() => { setEditingId(p.id); setTitle(p.title); setType(p.type); setCategory(p.category); setSummary(p.summary); setContent(p.content); setTags(p.tags.join(', ')); }} className="text-blue-400 hover:text-white">Edit</button>
                                                             <button onClick={() => handleDelete(p.id)} className="text-red-400 hover:text-white">Delete</button>
@@ -200,6 +263,25 @@
                                 </div>
                             )}
 
+                            {activeTab === 'subscribers' && (
+                                <div>
+                                    <h1 className="text-2xl font-bold font-serif text-white mb-8">Newsletter Subscribers</h1>
+                                    <div className="bg-gray-900 rounded-2xl border border-gray-800 p-6">
+                                        <table className="w-full text-left text-sm text-gray-400">
+                                            <thead><tr className="border-b border-gray-800"><th className="pb-3">Email Address</th><th className="pb-3">Date Subscribed</th></tr></thead>
+                                            <tbody>
+                                                {subscribers.length === 0 ? <tr><td colSpan="2" className="py-4 text-center">No subscribers yet.</td></tr> : subscribers.map(s => (
+                                                    <tr key={s.id} className="border-b border-gray-800/50">
+                                                        <td className="py-3 text-white"><a href={`mailto:${s.email}`} className="hover:text-emerald-400">{s.email}</a></td>
+                                                        <td className="py-3">{new Date(s.created_at).toLocaleDateString()}</td>
+                                                    </tr>
+                                                ))}
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                </div>
+                            )}
+
                             {activeTab === 'settings' && (
                                 <div>
                                     <div className="flex justify-between items-center mb-8">
@@ -207,7 +289,6 @@
                                         {settingsStatus && <span className="bg-emerald-900/30 text-emerald-400 px-4 py-2 rounded-lg text-sm border border-emerald-800">{settingsStatus}</span>}
                                     </div>
                                     <form onSubmit={handleSettingsUpdate} className="space-y-8">
-                                        {/* Basic Info */}
                                         <div className="bg-gray-900 rounded-2xl border border-gray-800 p-6 space-y-4">
                                             <h3 className="text-lg font-bold text-white border-b border-gray-800 pb-2 mb-4">About You</h3>
                                             <div className="grid grid-cols-2 gap-4">
@@ -218,7 +299,6 @@
                                             <div><label className="text-xs text-gray-500">Full About Text</label><textarea rows="4" value={settings.about_text} onChange={e=>setSettings({...settings, about_text: e.target.value})} className="w-full px-4 py-2 rounded-lg bg-gray-800 border-none text-white mt-1 resize-none"></textarea></div>
                                         </div>
 
-                                        {/* Images */}
                                         <div className="bg-gray-900 rounded-2xl border border-gray-800 p-6 space-y-4">
                                             <h3 className="text-lg font-bold text-white border-b border-gray-800 pb-2 mb-4">Images</h3>
                                             <div className="grid grid-cols-2 gap-8">
@@ -235,7 +315,6 @@
                                             </div>
                                         </div>
 
-                                        {/* Social Links */}
                                         <div className="bg-gray-900 rounded-2xl border border-gray-800 p-6 space-y-4">
                                             <h3 className="text-lg font-bold text-white border-b border-gray-800 pb-2 mb-4">Social & Contact Links</h3>
                                             <div className="grid grid-cols-2 gap-4">
