@@ -22,8 +22,25 @@
             darkMode: 'class',
             theme: {
                 extend: {
-                    colors: { navy: '#0B1F3A', emerald: '#2E8B57', gold: '#D4AF37', charcoal: '#121212', cardDark: '#1E1E1E' },
-                    fontFamily: { sans: ['Inter', 'sans-serif'], serif: ['Merriweather', 'serif'] },
+                    colors: {
+                        navy: '#0B1F3A',
+                        emerald: '#2E8B57',
+                        gold: '#D4AF37',
+                        charcoal: '#121212',
+                        cardDark: '#1E1E1E'
+                    },
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif'],
+                        serif: ['Merriweather', 'serif'],
+                    },
+                    animation: {
+                        'fade-in': 'fadeIn 0.5s ease-out forwards',
+                        'slide-down': 'slideDown 0.3s ease-out forwards',
+                    },
+                    keyframes: {
+                        fadeIn: { '0%': { opacity: '0' }, '100%': { opacity: '1' } },
+                        slideDown: { '0%': { opacity: '0', transform: 'translateY(-10px)' }, '100%': { opacity: '1', transform: 'translateY(0)' } }
+                    }
                 }
             }
         }
@@ -33,31 +50,60 @@
         body::-webkit-scrollbar-track { background: transparent; }
         body::-webkit-scrollbar-thumb { background-color: #cbd5e1; border-radius: 20px; }
         .dark body::-webkit-scrollbar-thumb { background-color: #334155; }
+        
+        /* Custom horizontal scrolling hide */
         .hide-scrollbar::-webkit-scrollbar { display: none; }
         .hide-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
-        
-        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
-        @keyframes slideDown { from { opacity: 0; transform: translateY(-10px); } to { opacity: 1; transform: translateY(0); } }
-        @keyframes slideUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
-        
-        .animate-fade-in { animation: fadeIn 0.3s ease-out forwards; }
-        .animate-slide-down { animation: slideDown 0.3s ease-out forwards; }
-        .animate-slide-up { animation: slideUp 0.6s ease-out forwards; }
     </style>
 </head>
 <body class="bg-gray-50 dark:bg-charcoal text-gray-900 dark:text-gray-100 transition-colors duration-300 antialiased font-sans">
     <div id="root"></div>
 
     <script type="text/babel">
-        const { useState, useEffect, useRef, Fragment } = React;
+        const { useState, useEffect, useRef, Fragment, Component } = React;
 
+        class ErrorBoundary extends Component {
+            constructor(props) {
+                super(props);
+                this.state = { hasError: false, error: null };
+            }
+
+            static getDerivedStateFromError(error) {
+                return { hasError: true, error };
+            }
+
+            componentDidCatch(error, errorInfo) {
+                console.error("Caught by ErrorBoundary:", error, errorInfo);
+            }
+
+            render() {
+                if (this.state.hasError) {
+                    return (
+                        <div className="min-h-screen flex items-center justify-center p-6 bg-gray-50 dark:bg-[#121212]">
+                            <div className="bg-white dark:bg-[#1E1E1E] p-8 rounded-2xl shadow-xl max-w-lg w-full border border-red-100 dark:border-red-900">
+                                <h2 className="text-xl font-bold font-serif mb-2 text-red-500">Something went wrong</h2>
+                                <p className="text-sm text-gray-600 dark:text-gray-400 mb-6 bg-gray-50 dark:bg-gray-800 p-4 rounded-lg overflow-auto border border-gray-200 dark:border-gray-700">
+                                    {this.state.error && this.state.error.toString()}
+                                </p>
+                                <button onClick={() => window.location.reload()} className="px-6 py-3 bg-[#2E8B57] hover:bg-[#257348] text-white rounded-lg text-sm font-medium transition-colors">
+                                    Reload Application
+                                </button>
+                            </div>
+                        </div>
+                    );
+                }
+                return this.props.children;
+            }
+        }
+
+        // --- SUPABASE CONNECTION ---
         const supabaseUrl = 'https://ulqihwnzujncqpexersp.supabase.co';
         const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InVscWlod256dWpuY3FwZXhlcnNwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODUyNDIxNjMsImV4cCI6MjEwMDgxODE2M30.vvMQLeUtjVmciJxwqVgiFVZjmHlclY0Z-oHngY3SVso';
         const supabase = window.supabase.createClient(supabaseUrl, supabaseKey);
 
         const Icon = ({ name, size = 20, className = "" }) => {
             const icons = {
-                book: <Fragment><path d="M4 19.5v-15A2.5 2.5 0 0 1 6.5 2H20v20H6.5a2.5 2.5 0 0 1 0-5H20"/><path d="M8 7h6"/><path d="M8 11h8"/></Fragment>,
+                book: <path d="M4 19.5v-15A2.5 2.5 0 0 1 6.5 2H20v20H6.5a2.5 2.5 0 0 1 0-5H20"/>,
                 microscope: <path d="M6 18h8 M3 22h18 M14 22a7 7 0 1 0 0-14h-1 M9 14h2 M9 12a2 2 0 0 1-2-2V6h6v4a2 2 0 0 1-2 2Z M12 6V3a1 1 0 0 0-1-1H9a1 1 0 0 0-1 1v3"/>,
                 gradCap: <path d="M22 10v6M2 10l10-5 10 5-10 5z M6 12v5c3 3 9 3 12 0v-5"/>,
                 pencil: <path d="M17 3a2.828 2.828 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3z M15 5l4 4"/>,
@@ -65,100 +111,79 @@
                 x: <path d="M18 6 6 18M6 6l12 12"/>,
                 sun: <path d="M12 3v1M12 20v1M4.22 4.22l.71.71M19.07 19.07l.71.71M1 12h1M20 12h1M4.22 19.78l.71-.71M19.07 4.93l.71-.71M12 17a5 5 0 1 0 0-10 5 5 0 0 0 0 10z"/>,
                 moon: <path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z"/>,
-                download: <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4 M7 10l5 5 5-5 M12 15V3"/>,
+                search: <Fragment><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></Fragment>,
+                download: <Fragment><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></Fragment>,
                 layout: <Fragment><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><line x1="3" y1="9" x2="21" y2="9"/><line x1="9" y1="21" x2="9" y2="9"/></Fragment>,
                 users: <Fragment><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></Fragment>,
                 chart: <Fragment><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></Fragment>,
-                magic: <Fragment><path d="M20.24 12.24a6 6 0 0 0-8.49-8.49L5 10.5V19h8.5z"/><line x1="16" y1="8" x2="2" y2="22"/><line x1="17.5" y1="15" x2="9" y2="6.5"/></Fragment>,
-                search: <Fragment><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></Fragment>,
-                globe: <Fragment><circle cx="12" cy="12" r="10"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/><path d="M2 12h20"/></Fragment>,
-                envelope: <Fragment><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></Fragment>,
-                send: <Fragment><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></Fragment>,
-                facebook: <path d="M18 2h-3a5 5 0 0 0-5 5v3H7v4h3v8h4v-8h3l1-4h-4V7a1 1 0 0 1 1-1h3z"/>,
-                linkedin: <Fragment><path d="M16 8a6 6 0 0 1 6 6v7h-4v-7a2 2 0 0 0-2-2 2 2 0 0 0-2 2v7h-4v-7a6 6 0 0 1 6-6z"/><rect x="2" y="9" width="4" height="12"/><circle cx="4" cy="4" r="2"/></Fragment>,
-                whatsapp: <Fragment><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"/></Fragment>,
-                orcid: <Fragment><circle cx="12" cy="12" r="10"/><path d="M8 7h2.5v10H8V7zM12 7h2.5c2 0 3.5 1.5 3.5 3.5v3c0 2-1.5 3.5-3.5 3.5H12V7zM14 9v6h.5c1 0 1.5-.8 1.5-1.5v-3C16 9.8 15.5 9 14.5 9H14z"/></Fragment>,
-                paperclip: <path d="m21.44 11.05-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48"/>
+                sparkles: <Fragment><path d="m12 3-1.912 5.813a2 2 0 0 1-1.275 1.275L3 12l5.813 1.912a2 2 0 0 1 1.275 1.275L12 21l1.912-5.813a2 2 0 0 1 1.275-1.275L21 12l-5.813-1.912a2 2 0 0 1-1.275-1.275L12 3Z"/><path d="M5 3v4M3 5h4"/></Fragment>,
+                arrowLeft: <Fragment><line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/></Fragment>,
+                send: <Fragment><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></Fragment>
             };
-            return <svg xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}>{icons[name] || icons.book}</svg>;
+            return (
+                <svg xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}>
+                    {icons[name] || icons['book']}
+                </svg>
+            );
         };
 
         const ParticleBackground = ({ isDarkMode }) => {
             const canvasRef = useRef(null);
-            
             useEffect(() => {
                 const canvas = canvasRef.current;
                 if (!canvas) return;
                 const ctx = canvas.getContext('2d');
-                if (!ctx) return;
                 let animationFrameId;
                 let particles = [];
-                
-                const resize = () => { if(canvas) {canvas.width = window.innerWidth; canvas.height = window.innerHeight;} };
+                const resize = () => { canvas.width = window.innerWidth; canvas.height = window.innerHeight; };
                 window.addEventListener('resize', resize);
                 resize();
-                
-                class Particle {
+
+                class Microbe {
                     constructor() {
-                        this.x = Math.random() * canvas.width; 
+                        this.x = Math.random() * canvas.width;
                         this.y = Math.random() * canvas.height;
-                        this.vx = (Math.random() - 0.5) * 0.8; 
+                        this.vx = (Math.random() - 0.5) * 0.8;
                         this.vy = (Math.random() - 0.5) * 0.8;
-                        this.size = Math.random() * 6 + 3; 
-                        this.type = Math.floor(Math.random() * 3); 
+                        this.type = Math.floor(Math.random() * 3);
+                        this.size = Math.random() * 3 + 2;
                         this.angle = Math.random() * Math.PI * 2;
-                        this.va = (Math.random() - 0.5) * 0.02; 
+                        this.spin = (Math.random() - 0.5) * 0.02;
                     }
                     update() {
-                        this.x += this.vx; this.y += this.vy;
-                        this.angle += this.va;
-                        if (this.x < -50 || this.x > canvas.width + 50) this.vx = -this.vx;
-                        if (this.y < -50 || this.y > canvas.height + 50) this.vy = -this.vy;
+                        this.x += this.vx; this.y += this.vy; this.angle += this.spin;
+                        if (this.x < 0 || this.x > canvas.width) this.vx = -this.vx;
+                        if (this.y < 0 || this.y > canvas.height) this.vy = -this.vy;
                     }
                     draw() {
                         ctx.save();
                         ctx.translate(this.x, this.y);
                         ctx.rotate(this.angle);
-                        
-                        ctx.fillStyle = isDarkMode ? 'rgba(46, 139, 87, 0.45)' : 'rgba(11, 31, 58, 0.3)';
-                        ctx.strokeStyle = isDarkMode ? 'rgba(46, 139, 87, 0.65)' : 'rgba(11, 31, 58, 0.5)';
+                        ctx.fillStyle = isDarkMode ? 'rgba(46, 139, 87, 0.4)' : 'rgba(11, 31, 58, 0.15)';
+                        ctx.strokeStyle = isDarkMode ? 'rgba(46, 139, 87, 0.4)' : 'rgba(11, 31, 58, 0.15)';
                         ctx.lineWidth = 2;
-
                         ctx.beginPath();
                         if (this.type === 0) {
-                            ctx.arc(-this.size/1.5, 0, this.size/1.2, 0, Math.PI * 2);
-                            ctx.arc(this.size/1.5, 0, this.size/1.2, 0, Math.PI * 2);
-                            ctx.fill();
+                            ctx.roundRect(-this.size*2, -this.size, this.size*4, this.size*2, this.size); ctx.fill();
                         } else if (this.type === 1) {
-                            ctx.arc(-this.size, 0, this.size/1.5, Math.PI/2, Math.PI*1.5);
-                            ctx.lineTo(this.size, -this.size/1.5);
-                            ctx.arc(this.size, 0, this.size/1.5, -Math.PI/2, Math.PI/2);
-                            ctx.closePath();
-                            ctx.fill();
+                            ctx.arc(-this.size, 0, this.size, 0, Math.PI * 2); ctx.arc(this.size, 0, this.size, 0, Math.PI * 2); ctx.fill();
                         } else {
-                            ctx.moveTo(-this.size * 2, 0);
-                            ctx.bezierCurveTo(-this.size, -this.size*2, this.size, this.size*2, this.size * 2, 0);
-                            ctx.stroke();
+                            ctx.moveTo(-this.size*2, 0); ctx.quadraticCurveTo(-this.size, -this.size*2, 0, 0); ctx.quadraticCurveTo(this.size, this.size*2, this.size*2, 0); ctx.stroke();
                         }
                         ctx.restore();
                     }
                 }
-                
-                for (let i = 0; i < 35; i++) particles.push(new Particle());
-                
+                for (let i = 0; i < 35; i++) particles.push(new Microbe());
+
                 const animate = () => {
-                    if (!ctx || !canvas) return;
                     ctx.clearRect(0, 0, canvas.width, canvas.height);
-                    
                     particles.forEach(p => { p.update(); p.draw(); });
-                    
                     particles.forEach((p1, i) => {
                         particles.slice(i + 1).forEach(p2 => {
-                            const dist = Math.sqrt(Math.pow(p1.x - p2.x, 2) + Math.pow(p1.y - p2.y, 2));
-                            if (dist < 130) {
+                            const dist = Math.hypot(p1.x - p2.x, p1.y - p2.y);
+                            if (dist < 120) {
                                 ctx.beginPath(); ctx.moveTo(p1.x, p1.y); ctx.lineTo(p2.x, p2.y);
-                                ctx.strokeStyle = isDarkMode ? `rgba(46, 139, 87, ${0.4 - dist/325})` : `rgba(11, 31, 58, ${0.3 - dist/433})`; 
-                                ctx.lineWidth = 1;
+                                ctx.strokeStyle = isDarkMode ? `rgba(46, 139, 87, ${0.25 - dist/480})` : `rgba(11, 31, 58, ${0.15 - dist/800})`;
                                 ctx.stroke();
                             }
                         });
@@ -166,729 +191,604 @@
                     animationFrameId = requestAnimationFrame(animate);
                 };
                 animate();
-                return () => { window.removeEventListener('resize', resize); if (animationFrameId) cancelAnimationFrame(animationFrameId); };
+                return () => { window.removeEventListener('resize', resize); cancelAnimationFrame(animationFrameId); };
             }, [isDarkMode]);
-            
-            return <canvas ref={canvasRef} className="absolute top-0 left-0 w-full h-full pointer-events-none z-10 opacity-70" />;
+            return <canvas ref={canvasRef} className="fixed top-0 left-0 w-full h-full pointer-events-none z-0" />;
         };
-
-        const Navbar = ({ darkMode, setDarkMode, setView, currentView, settings, isSearchOpen, setIsSearchOpen }) => {
-            const [mobileMenu, setMobileMenu] = useState(false);
-            
-            useEffect(() => {
-                if (mobileMenu || isSearchOpen) document.body.style.overflow = 'hidden';
-                else document.body.style.overflow = 'unset';
-                return () => { document.body.style.overflow = 'unset'; };
-            }, [mobileMenu, isSearchOpen]);
-
-            const navLinks = [
-                { name: 'Home', id: 'home', icon: 'layout' },
-                { name: 'Library', id: 'library', icon: 'book' },
-                { name: 'Research', id: 'research', icon: 'microscope' },
-                { name: 'Journal', id: 'journal', icon: 'layout' },
-                { name: 'Teaching', id: 'teaching', icon: 'gradCap' },
-                { name: 'Blog', id: 'blog', icon: 'pencil' },
-                { name: 'Projects', id: 'projects', icon: 'chart' },
-                { name: 'About', id: 'about', icon: 'users' },
-                { name: 'Contact', id: 'contact', icon: 'envelope' },
-            ];
-
-            return (
-                <nav className="bg-[#0B1423] text-white border-b border-white/10 w-full fixed top-0 z-50">
-                    <div className="max-w-[1600px] mx-auto px-4 sm:px-6 lg:px-8">
-                        <div className="flex justify-between items-center h-20">
-                            
-                            {/* Logo synced exactly with footer colors */}
-                            <div className="flex-shrink-0 cursor-pointer flex items-center gap-3" onClick={() => { setView('home'); setMobileMenu(false); }}>
-                                {settings?.logo_url ? (
-                                    <img src={settings.logo_url} alt="Logo" className="w-10 h-10 rounded-lg object-cover shadow-sm" />
-                                ) : (
-                                    <div className="text-[#D4AF37]">
-                                        <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
-                                            <path d="M4 19.5v-15A2.5 2.5 0 0 1 6.5 2H20v20H6.5a2.5 2.5 0 0 1 0-5H20"/><path d="M8 7h6"/><path d="M8 11h8"/>
-                                        </svg>
-                                    </div>
-                                )}
-                                <div className="flex flex-col hidden sm:block">
-                                    <h1 className="font-serif font-bold text-xl leading-tight text-white">Ajayi Knowledge Hub</h1>
-                                    <span className="text-[#D4AF37] text-[10px] tracking-wider uppercase font-medium">Explore. Learn. Discover. Grow.</span>
-                                </div>
-                            </div>
-                            
-                            {/* Actions (Solid buttons to pop out) */}
-                            <div className="flex items-center space-x-2 sm:space-x-3">
-                                <button onClick={() => setView('ai')} className="hidden sm:flex items-center px-4 py-2 rounded-xl bg-white dark:bg-[#1E1E1E] text-[#2E8B57] border border-[#2E8B57]/30 dark:border-[#2E8B57]/50 hover:bg-[#2E8B57] hover:text-white text-sm font-bold transition-all shadow-sm">
-                                    <Icon name="magic" size={16} className="mr-2" /> Ask AI
-                                </button>
-                                <button onClick={() => setIsSearchOpen(true)} className="w-10 h-10 rounded-xl bg-white dark:bg-[#1E1E1E] border border-gray-200 dark:border-white/10 flex items-center justify-center text-gray-600 dark:text-gray-300 hover:text-[#2E8B57] dark:hover:text-[#2E8B57] transition-all shadow-sm">
-                                    <Icon name="search" size={18} />
-                                </button>
-                                <button onClick={() => setDarkMode(!darkMode)} className="w-10 h-10 rounded-xl bg-white dark:bg-[#1E1E1E] border border-gray-200 dark:border-white/10 flex items-center justify-center text-gray-600 dark:text-gray-300 hover:text-[#2E8B57] dark:hover:text-[#2E8B57] transition-all shadow-sm">
-                                    {darkMode ? <Icon name="sun" size={18} /> : <Icon name="moon" size={18} />}
-                                </button>
-                                
-                                <button onClick={() => setMobileMenu(!mobileMenu)} className="w-12 h-12 rounded-xl bg-white dark:bg-[#1E1E1E] border border-gray-200 dark:border-white/20 flex items-center justify-center text-gray-800 dark:text-white hover:text-[#2E8B57] dark:hover:text-[#2E8B57] hover:border-[#2E8B57] transition-all shadow-md relative z-50">
-                                    <Icon name={mobileMenu ? "x" : "menu"} size={26} />
-                                </button>
-                            </div>
-                        </div>
-                    </div>
-
-                    {/* Dark Background Overlay */}
-                    {mobileMenu && (
-                        <div className="fixed inset-0 top-20 bg-black/60 backdrop-blur-sm z-30" onClick={() => setMobileMenu(false)}></div>
-                    )}
-
-                    {/* Dropdown Menu */}
-                    {mobileMenu && (
-                        <div className="absolute top-full left-0 w-full bg-white dark:bg-[#0B1423] z-40 overflow-y-auto max-h-[80vh] px-4 py-8 animate-slide-down flex flex-col shadow-2xl border-t border-gray-200 dark:border-white/10">
-                            <div className="max-w-3xl mx-auto w-full grid grid-cols-1 sm:grid-cols-2 gap-3">
-                                {navLinks.map(link => (
-                                    <button 
-                                        key={link.id} 
-                                        onClick={() => { setView(link.id); setMobileMenu(false); }}
-                                        className={`flex items-center w-full text-left px-6 py-4 rounded-xl text-lg font-bold transition-all shadow-sm ${currentView === link.id ? 'bg-[#2E8B57] text-white' : 'bg-gray-50 dark:bg-gray-800 text-gray-800 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700 hover:text-gray-900 dark:hover:text-white border border-gray-200 dark:border-gray-700'}`}
-                                    >
-                                        <Icon name={link.icon} size={20} className="mr-4 opacity-70" />
-                                        {link.name}
-                                    </button>
-                                ))}
-                            </div>
-                            <div className="max-w-3xl mx-auto w-full mt-8 pt-8 border-t border-gray-200 dark:border-gray-800">
-                                <a href="/admin.html" className="flex justify-center items-center px-6 py-4 rounded-xl bg-gray-100 dark:bg-[#D4AF37]/10 text-gray-800 dark:text-[#D4AF37] border border-gray-200 dark:border-[#D4AF37]/30 hover:bg-gray-200 dark:hover:bg-[#D4AF37]/20 font-bold transition-colors w-full shadow-sm">
-                                    <Icon name="users" size={20} className="mr-3" /> Login to Admin Portal
-                                </a>
-                            </div>
-                        </div>
-                    )}
-                </nav>
-            );
-        };
-
-        const SearchOverlay = ({ isOpen, setIsOpen, publications, navigateTo }) => {
-            const [query, setQuery] = useState('');
-            
-            if (!isOpen) return null;
-            
-            const results = query.trim() === '' ? [] : publications.filter(p => 
-                p.title.toLowerCase().includes(query.toLowerCase()) || 
-                p.summary.toLowerCase().includes(query.toLowerCase()) ||
-                (p.tags && p.tags.join(' ').toLowerCase().includes(query.toLowerCase())) ||
-                p.category.toLowerCase().includes(query.toLowerCase())
-            );
-
-            return (
-                <div className="fixed inset-0 z-[100] bg-white/95 dark:bg-[#0a0a0a]/95 backdrop-blur-md animate-fade-in flex flex-col">
-                    <div className="max-w-4xl mx-auto w-full p-6 pt-12 flex-1 flex flex-col">
-                        <div className="flex justify-between items-center mb-8">
-                            <h2 className="text-2xl font-bold font-serif text-[#0B1423] dark:text-white">Search Hub</h2>
-                            <button onClick={() => { setIsOpen(false); setQuery(''); }} className="p-2 bg-gray-100 dark:bg-gray-800 rounded-full text-gray-600 dark:text-gray-300 hover:text-red-500">
-                                <Icon name="x" size={24} />
-                            </button>
-                        </div>
-                        
-                        <div className="relative mb-8">
-                            <Icon name="search" size={24} className="absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400" />
-                            <input 
-                                autoFocus
-                                type="text" 
-                                placeholder="Search by title, topic, or tag..." 
-                                value={query}
-                                onChange={(e) => setQuery(e.target.value)}
-                                className="w-full pl-12 pr-4 py-4 text-xl rounded-2xl bg-gray-100 dark:bg-[#1a1a1a] border border-gray-200 dark:border-gray-800 focus:outline-none focus:border-[#2E8B57] focus:ring-2 focus:ring-[#2E8B57]/20 text-gray-900 dark:text-white" 
-                            />
-                        </div>
-
-                        <div className="flex-1 overflow-y-auto hide-scrollbar space-y-4">
-                            {query && results.length === 0 && (
-                                <div className="text-center text-gray-500 mt-12 font-medium">No results found for "{query}"</div>
-                            )}
-                            {results.map(item => (
-                                <div 
-                                    key={item.id} 
-                                    onClick={() => {
-                                        setIsOpen(false);
-                                        setQuery('');
-                                        navigateTo((item.type === 'journal' || item.type === 'blog') ? 'reading' : 'detail', item);
-                                    }}
-                                    className="p-5 bg-white dark:bg-[#1E1E1E] rounded-xl border border-gray-200 dark:border-gray-800 shadow-sm hover:border-[#2E8B57] dark:hover:border-[#2E8B57] cursor-pointer transition-colors"
-                                >
-                                    <div className="text-xs font-bold uppercase text-[#2E8B57] mb-1">{item.type} • {item.category}</div>
-                                    <h4 className="text-lg font-bold text-[#0B1423] dark:text-white mb-2">{item.title}</h4>
-                                    <p className="text-sm text-gray-600 dark:text-gray-400 line-clamp-2">{item.summary}</p>
-                                </div>
-                            ))}
-                        </div>
-                    </div>
-                </div>
-            );
-        };
-
-        const PublicationDetailView = ({ item, setView }) => {
-            const [showCitation, setShowCitation] = useState(false);
-            const handleDownload = async (url) => { if(window.supabase) await window.supabase.rpc('increment_download'); window.open(url, '_blank'); };
-            return (
-                <div className="max-w-5xl mx-auto px-4 sm:px-6 pt-32 pb-24 relative z-10 min-h-screen animate-fade-in">
-                    <button onClick={() => window.history.back()} className="flex items-center text-[#2E8B57] hover:opacity-80 transition-opacity mb-8 font-medium">
-                        &larr; Back
-                    </button>
-                    <div className="bg-white dark:bg-[#1E1E1E] rounded-3xl p-8 shadow-xl border border-gray-100 dark:border-gray-800 mb-12">
-                        <div className="flex flex-col md:flex-row gap-10">
-                            <div className="w-full md:w-1/3 flex-shrink-0">
-                                <div className="aspect-[3/4] bg-gradient-to-br from-[#0B1423] to-[#1a365d] dark:from-gray-800 dark:to-gray-950 rounded-2xl shadow-lg flex flex-col items-center justify-center p-6 text-center border border-gray-200 dark:border-gray-700 relative overflow-hidden">
-                                    <Icon name={item.type === 'book' ? 'book' : 'microscope'} size={80} className="text-[#2E8B57] opacity-20 absolute" />
-                                    <h3 className="text-white font-serif font-bold text-xl leading-tight z-10">{item.title}</h3>
-                                </div>
-                            </div>
-                            <div className="w-full md:w-2/3 flex flex-col justify-center min-w-0">
-                                <div className="flex items-center space-x-3 mb-4 flex-wrap">
-                                    <span className="px-3 py-1 bg-[#2E8B57]/10 text-[#2E8B57] rounded-full text-xs font-bold uppercase tracking-wider mb-2 sm:mb-0">{item.category}</span>
-                                    <span className="text-gray-500 dark:text-gray-400 text-sm font-medium">{item.published_date}</span>
-                                </div>
-                                <h1 className="text-3xl md:text-5xl font-bold font-serif text-[#0B1423] dark:text-white mb-6 leading-tight break-words">{item.title}</h1>
-                                <div className="flex flex-wrap gap-2 mb-6">
-                                    {(item.tags || []).map(tag => (
-                                        <span key={tag} className="text-xs text-gray-500 bg-gray-100 dark:bg-gray-800 px-2 py-1 rounded-md">#{tag}</span>
-                                    ))}
-                                </div>
-                                <p className="text-gray-600 dark:text-gray-300 text-lg leading-relaxed mb-8">{item.summary}</p>
-                                <div className="flex flex-wrap gap-4 mt-auto">
-                                    {item.file_url ? (
-                                        <button onClick={() => handleDownload(item.file_url)} className="flex items-center bg-[#2E8B57] hover:bg-[#257348] text-white px-6 py-3 rounded-xl font-medium transition-all shadow-md">
-                                            <Icon name="download" size={18} className="mr-2" /> Download PDF
-                                        </button>
-                                    ) : (
-                                        <button disabled className="flex items-center bg-gray-200 dark:bg-gray-800 text-gray-400 px-6 py-3 rounded-xl font-medium cursor-not-allowed">
-                                            No PDF Attached
-                                        </button>
-                                    )}
-                                    <button onClick={() => setShowCitation(!showCitation)} className="flex items-center bg-gray-100 dark:bg-gray-800 text-[#0B1423] dark:text-white px-6 py-3 rounded-xl font-medium transition-all">
-                                        Cite
-                                    </button>
-                                </div>
-                                {showCitation && (
-                                    <div className="mt-4 p-4 bg-gray-50 dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 animate-fade-in text-sm font-serif break-words">
-                                        Ajayi, P. O. ({item.published_date}). <i>{item.title}</i>.
-                                    </div>
-                                )}
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            );
-        };
-
-        const ArticleReadingView = ({ item, setView }) => {
-            const handleDownload = async (url) => { if(window.supabase) await window.supabase.rpc('increment_download'); window.open(url, '_blank'); };
-            return (
-                <div className="max-w-3xl mx-auto px-4 sm:px-6 pt-32 pb-24 relative z-10 min-h-screen animate-fade-in">
-                    <button onClick={() => window.history.back()} className="flex items-center text-[#2E8B57] hover:opacity-80 transition-opacity mb-8 font-medium">
-                        &larr; Back
-                    </button>
-                    <article className="max-w-none break-words">
-                        <div className="text-center mb-12">
-                            <span className="px-3 py-1 bg-[#2E8B57]/10 text-[#2E8B57] rounded-full text-xs font-bold uppercase tracking-wider inline-block mb-4">{item.category}</span>
-                            <h1 className="text-4xl md:text-5xl font-bold font-serif text-[#0B1423] dark:text-white mb-6 leading-tight">{item.title}</h1>
-                            <div className="text-gray-500 font-medium text-sm">By Paul O. Ajayi &bull; {item.published_date}</div>
-                        </div>
-                        <div className="text-gray-800 dark:text-gray-200 leading-relaxed font-serif whitespace-pre-wrap text-xl">
-                            {item.content || item.summary}
-                        </div>
-                    </article>
-                    {item.file_url && (
-                        <div className="mt-12 p-6 bg-[#2E8B57]/10 rounded-2xl border border-[#2E8B57]/30 flex flex-col sm:flex-row items-center justify-between">
-                            <div className="flex items-center mb-4 sm:mb-0">
-                                <div className="w-12 h-12 bg-white dark:bg-gray-800 rounded-full flex items-center justify-center shadow-sm mr-4 text-[#2E8B57]">
-                                    <Icon name="download" size={20} />
-                                </div>
-                                <div className="text-left">
-                                    <h4 className="font-bold text-[#0B1423] dark:text-white">Attached Document</h4>
-                                    <p className="text-sm text-gray-600 dark:text-gray-400">Download the full PDF for this post</p>
-                                </div>
-                            </div>
-                            <button onClick={() => handleDownload(item.file_url)} className="px-6 py-3 bg-[#2E8B57] hover:bg-[#257348] text-white rounded-xl font-medium transition-all shadow-md w-full sm:w-auto">
-                                Download PDF
-                            </button>
-                        </div>
-                    )}
-                </div>
-            );
-        };
-
-        const AboutView = ({ settings }) => (
-            <div className="max-w-5xl mx-auto px-4 sm:px-6 pt-32 pb-24 relative z-10 min-h-screen animate-fade-in">
-                <div className="flex flex-col md:flex-row gap-12 items-start">
-                    <div className="w-full md:w-1/3 flex-shrink-0 md:sticky md:top-32">
-                        <div className="aspect-square rounded-3xl bg-gradient-to-br from-[#0B1423] to-[#1a365d] p-1 shadow-lg border border-gray-100 dark:border-gray-800 relative overflow-hidden">
-                            {settings?.profile_pic_url ? (
-                                <img src={settings.profile_pic_url} alt="Profile" className="w-full h-full object-cover rounded-[22px]" />
-                            ) : (
-                                <div className="w-full h-full bg-gray-50 dark:bg-[#111] rounded-[22px] flex items-center justify-center text-[#0B1423] dark:text-[#2E8B57]">
-                                    <Icon name="users" size={80} className="opacity-50" />
-                                </div>
-                            )}
-                        </div>
-                    </div>
-                    <div className="w-full md:w-2/3 min-w-0">
-                        <h1 className="text-4xl md:text-5xl font-bold font-serif text-[#0B1423] dark:text-white mb-2 break-words">{settings?.display_name || 'Paul Olakiitan Ajayi'}</h1>
-                        <p className="text-xl text-[#2E8B57] font-medium mb-8 break-words">{settings?.bio || 'Microbiologist · Researcher · Educator'}</p>
-                        <div className="p-6 bg-[#2E8B57]/10 rounded-2xl border border-[#2E8B57]/30 mb-8 shadow-sm">
-                            <h3 className="text-xl font-bold text-[#0B1423] dark:text-white mb-3 mt-0 flex items-center">Mission</h3>
-                            <p className="m-0 text-gray-800 dark:text-gray-200 font-medium">{settings?.mission_text || 'To advance science through research.'}</p>
-                        </div>
-                        <div className="text-gray-700 dark:text-gray-300 leading-relaxed font-serif text-lg whitespace-pre-wrap break-words">
-                            {settings?.about_text || 'Loading about text...'}
-                        </div>
-                    </div>
-                </div>
-            </div>
-        );
-
-        const ContactView = ({ settings }) => {
-            const [formData, setFormData] = useState({ name: '', email: '', message: '' });
-            const [status, setStatus] = useState('');
-
-            const handleSubmit = async (e) => {
-                e.preventDefault();
-                setStatus('Sending...');
-                const { error } = await supabase.from('messages').insert([formData]);
-                if (error) setStatus('Error sending message. Please try again.');
-                else { setStatus('Message sent successfully!'); setFormData({ name: '', email: '', message: '' }); }
-                setTimeout(() => setStatus(''), 5000);
-            };
-
-            return (
-                <div className="max-w-5xl mx-auto px-4 sm:px-6 pt-32 pb-24 relative z-10 min-h-screen animate-fade-in">
-                    <div className="text-center mb-16">
-                        <h2 className="text-4xl font-bold font-serif text-[#0B1423] dark:text-white mb-4">Let's Connect</h2>
-                        <p className="text-gray-600 dark:text-gray-400 text-lg max-w-2xl mx-auto">Interested in collaboration or have a question? Send me a message below.</p>
-                    </div>
-                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-12">
-                        <div className="bg-white dark:bg-[#1E1E1E] rounded-3xl p-8 shadow-xl border border-gray-100 dark:border-gray-800 min-w-0">
-                            <h3 className="text-2xl font-bold font-serif text-[#0B1423] dark:text-white mb-6">Send a Message</h3>
-                            {status && <div className={`p-4 mb-4 rounded-xl text-sm font-medium ${status.includes('Error') ? 'bg-red-100 text-red-700' : 'bg-green-100 text-green-700'}`}>{status}</div>}
-                            <form onSubmit={handleSubmit} className="space-y-4">
-                                <input required type="text" placeholder="Your Name" value={formData.name} onChange={e => setFormData({...formData, name: e.target.value})} className="w-full px-4 py-3 rounded-xl bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 focus:outline-none focus:ring-2 focus:ring-[#2E8B57] text-gray-900 dark:text-white" />
-                                <input required type="email" placeholder="Your Email" value={formData.email} onChange={e => setFormData({...formData, email: e.target.value})} className="w-full px-4 py-3 rounded-xl bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 focus:outline-none focus:ring-2 focus:ring-[#2E8B57] text-gray-900 dark:text-white" />
-                                <textarea required rows="5" placeholder="Your Message" value={formData.message} onChange={e => setFormData({...formData, message: e.target.value})} className="w-full px-4 py-3 rounded-xl bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 focus:outline-none focus:ring-2 focus:ring-[#2E8B57] text-gray-900 dark:text-white resize-none"></textarea>
-                                <button type="submit" className="w-full bg-[#0B1423] dark:bg-[#2E8B57] text-white px-6 py-4 rounded-xl font-medium transition-all shadow-md flex justify-center items-center hover:opacity-90">
-                                    <Icon name="send" size={18} className="mr-2" /> Send Message
-                                </button>
-                            </form>
-                        </div>
-                        <div className="space-y-8 min-w-0">
-                            <div className="bg-white dark:bg-[#1E1E1E] rounded-3xl p-8 shadow-xl border border-gray-100 dark:border-gray-800">
-                                <h3 className="text-lg font-bold font-serif text-[#0B1423] dark:text-white mb-6 border-b border-gray-100 dark:border-gray-800 pb-2">Professional Profiles</h3>
-                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                                    {settings?.linkedin_url && <a href={settings.linkedin_url} target="_blank" className="flex items-center p-3 rounded-xl hover:bg-gray-50 dark:hover:bg-gray-800 border border-transparent hover:border-gray-200 dark:hover:border-gray-700 break-words"><Icon name="linkedin" className="text-[#0077b5] mr-3 shrink-0"/> LinkedIn</a>}
-                                    {settings?.orcid_url && <a href={settings.orcid_url} target="_blank" className="flex items-center p-3 rounded-xl hover:bg-gray-50 dark:hover:bg-gray-800 border border-transparent hover:border-gray-200 dark:hover:border-gray-700 break-words"><Icon name="orcid" className="text-[#A6CE39] mr-3 shrink-0"/> ORCID</a>}
-                                    {settings?.facebook_url && <a href={settings.facebook_url} target="_blank" className="flex items-center p-3 rounded-xl hover:bg-gray-50 dark:hover:bg-gray-800 border border-transparent hover:border-gray-200 dark:hover:border-gray-700 break-words"><Icon name="facebook" className="text-[#1877F2] mr-3 shrink-0"/> Facebook</a>}
-                                    {settings?.whatsapp_number && <a href={`https://wa.me/${settings.whatsapp_number.replace(/\D/g,'')}`} target="_blank" className="flex items-center p-3 rounded-xl hover:bg-gray-50 dark:hover:bg-gray-800 border border-transparent hover:border-gray-200 dark:hover:border-gray-700 break-words"><Icon name="whatsapp" className="text-[#25D366] mr-3 shrink-0"/> WhatsApp</a>}
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            );
-        };
-
-        const AiAssistantView = () => (
-            <div className="max-w-4xl mx-auto px-4 sm:px-6 pt-32 pb-24 relative z-10 min-h-screen animate-fade-in flex flex-col">
-                <div className="text-center mb-8">
-                    <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-[#2E8B57] text-white shadow-lg mb-4">
-                        <Icon name="magic" size={32} />
-                    </div>
-                    <h2 className="text-3xl font-bold font-serif text-[#0B1423] dark:text-white mb-2">AI Knowledge Assistant</h2>
-                    <p className="text-gray-600 dark:text-gray-400">Search and summarize Paul's published research and articles.</p>
-                </div>
-                <div className="flex-1 bg-white dark:bg-[#1E1E1E] rounded-3xl shadow-xl border border-gray-100 dark:border-gray-800 flex flex-col overflow-hidden min-h-[500px]">
-                    <div className="p-6 overflow-y-auto flex-1 space-y-6">
-                        <div className="flex items-start">
-                            <div className="w-10 h-10 rounded-full bg-[#2E8B57]/20 flex items-center justify-center flex-shrink-0 mr-4 text-[#2E8B57]">
-                                <Icon name="magic" size={20} />
-                            </div>
-                            <div className="bg-gray-50 dark:bg-gray-800 rounded-2xl rounded-tl-none p-4 text-gray-800 dark:text-gray-200 shadow-sm border border-gray-100 dark:border-gray-700 max-w-[80%]">
-                                <p>Hello! I'm trained on Paul Olakiitan Ajayi's knowledge base. How can I help you today?</p>
-                            </div>
-                        </div>
-                    </div>
-                    <div className="p-4 bg-gray-50 dark:bg-gray-800 border-t border-gray-200 dark:border-gray-700">
-                        <div className="relative">
-                            <input type="text" placeholder="Ask a question..." className="w-full pl-6 pr-14 py-4 rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 focus:outline-none focus:ring-2 focus:ring-[#2E8B57] text-gray-900 dark:text-white" />
-                            <button className="absolute right-3 top-1/2 transform -translate-y-1/2 p-2 bg-[#2E8B57] text-white rounded-lg"><Icon name="send" size={18} /></button>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        );
-
-        const HeroSection = ({ setView, isDarkMode }) => (
-            <section className="relative pt-32 pb-24 flex items-center justify-center bg-[#0B1423] text-white overflow-hidden min-h-[80vh]">
-                <ParticleBackground isDarkMode={isDarkMode} />
-                <div className="absolute inset-0 z-0 bg-[url('https://images.unsplash.com/photo-1532094349884-543bc11b234d?auto=format&fit=crop&q=80')] bg-cover bg-center opacity-20 mix-blend-overlay"></div>
-                <div className="absolute inset-0 z-0 bg-gradient-to-b from-[#0B1423]/80 via-[#0B1423]/60 to-[#0B1423]"></div>
-                
-                <div className="relative z-10 container mx-auto px-6 text-center max-w-5xl animate-slide-up">
-                    <h1 className="font-serif text-5xl md:text-7xl font-bold mb-6 leading-tight tracking-tight">
-                        Knowledge that <span className="text-[#2E8B57]">grows</span>.<br />
-                        Research that <span className="text-[#D4AF37]">matters</span>.<br />
-                        Ideas that <span className="text-[#8B9C2A]">inspire</span>.
-                    </h1>
-                    <h2 className="text-xl md:text-2xl text-[#D4AF37] font-medium mb-6 font-serif">Welcome to my digital knowledge hub.</h2>
-                    <p className="text-base md:text-lg text-gray-300 mb-12 max-w-3xl mx-auto font-light leading-relaxed">Here I share my books, scientific research, teaching materials, journals, articles, and ideas as I pursue a lifelong mission of learning, discovery, and service.</p>
-                    
-                    <div className="flex flex-wrap items-center justify-center gap-4">
-                        <button onClick={() => setView('library')} className="px-8 py-3.5 bg-[#2E8B57] hover:bg-[#257348] text-white text-sm font-semibold rounded-lg flex items-center justify-center gap-2 border border-[#2E8B57] transition-colors"><Icon name="book" size={18} /> Explore Library</button>
-                        <button onClick={() => setView('research')} className="px-8 py-3.5 bg-transparent hover:bg-white/5 text-white text-sm font-semibold rounded-lg flex items-center justify-center gap-2 border border-blue-400/30 transition-colors"><Icon name="microscope" size={18} /> Research Archive</button>
-                        <button onClick={() => setView('teaching')} className="px-8 py-3.5 bg-[#3B7A57]/80 hover:bg-[#3B7A57] text-white text-sm font-semibold rounded-lg flex items-center justify-center gap-2 border border-[#3B7A57] transition-colors"><Icon name="gradCap" size={18} /> Teaching Hub</button>
-                        <button onClick={() => setView('about')} className="px-8 py-3.5 bg-transparent hover:bg-white/5 text-white text-sm font-semibold rounded-lg flex items-center justify-center gap-2 border border-white/20 transition-colors"><Icon name="users" size={18} /> About Me</button>
-                    </div>
-                </div>
-            </section>
-        );
-
-        const ContentCards = ({ navigateTo, books, research, journal, blog, projects }) => {
-            const featuredBook = books[0];
-            const latestResearch = research[0];
-            const latestJournal = journal[0];
-            const latestBlog = blog[0];
-            const currentProject = projects[0];
-
-            return (
-                <div className="py-8 bg-gray-50 dark:bg-[#121212]">
-                    <div className="max-w-[1600px] mx-auto px-4 sm:px-6 lg:px-8">
-                        <div className="flex flex-nowrap overflow-x-auto pb-6 gap-6 snap-x snap-mandatory hide-scrollbar">
-                            
-                            {/* Featured Book */}
-                            <div className="snap-start shrink-0 w-[350px] md:w-[400px] bg-white dark:bg-[#1E1E1E] rounded-xl border border-gray-200 dark:border-gray-800 p-5 shadow-sm flex flex-col cursor-pointer" onClick={() => featuredBook && navigateTo('detail', featuredBook)}>
-                                <div className="flex justify-between items-center mb-5 border-b border-gray-100 dark:border-gray-800 pb-3">
-                                    <div className="flex items-center gap-2 font-serif font-bold text-lg dark:text-white"><Icon name="book" size={20} className="text-gray-700 dark:text-gray-300" /> Featured Book</div>
-                                </div>
-                                <div className="flex gap-4 flex-grow min-w-0">
-                                    <div className="w-[100px] shrink-0">
-                                        <div className="bg-[#112435] p-2 rounded shadow-md aspect-[2/3] flex items-center justify-center text-center border-l-4 border-[#2E8B57] w-full">
-                                            <div className="text-white min-w-0 w-full px-1">
-                                                <div className="text-[10px] uppercase mb-1 truncate">The</div>
-                                                <div className="text-xs font-serif font-bold leading-tight mb-2 line-clamp-3">{featuredBook ? featuredBook.title : "Microbes"}</div>
-                                                <div className="w-6 h-[1px] bg-[#2E8B57] mx-auto mb-2"></div>
-                                                <div className="text-[8px] text-gray-400 truncate">Paul Ajayi</div>
-                                            </div>
-                                        </div>
-                                    </div>
-                                    <div className="flex flex-col justify-between flex-grow min-w-0">
-                                        <div>
-                                            <h4 className="font-serif font-bold text-lg mb-2 leading-tight dark:text-white line-clamp-2">{featuredBook ? featuredBook.title : "The Hidden World of Microbes"}</h4>
-                                            <p className="text-sm text-gray-600 dark:text-gray-400 mb-2 line-clamp-3 break-words">{featuredBook ? featuredBook.summary : "Explore the invisible world of microorganisms."}</p>
-                                        </div>
-                                        <button className="mt-2 px-4 py-1.5 border border-gray-300 dark:border-gray-600 rounded text-sm font-medium hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors w-max dark:text-white">View Book</button>
-                                    </div>
-                                </div>
-                            </div>
-
-                            {/* Latest Research */}
-                            <div className="snap-start shrink-0 w-[350px] md:w-[400px] bg-white dark:bg-[#1E1E1E] rounded-xl border border-gray-200 dark:border-gray-800 p-5 shadow-sm flex flex-col cursor-pointer" onClick={() => latestResearch && navigateTo('detail', latestResearch)}>
-                                <div className="flex justify-between items-center mb-5 border-b border-gray-100 dark:border-gray-800 pb-3">
-                                    <div className="flex items-center gap-2 font-serif font-bold text-lg dark:text-white"><Icon name="microscope" size={20} className="text-gray-700 dark:text-gray-300" /> Latest Research</div>
-                                </div>
-                                <div className="flex flex-col h-full min-w-0">
-                                    <div className="h-32 shrink-0 bg-gray-200 dark:bg-gray-700 rounded-lg mb-4 overflow-hidden bg-[url('https://images.unsplash.com/photo-1576086213369-97a306d36557?auto=format&fit=crop&q=80&w=400')] bg-cover bg-center"></div>
-                                    <h4 className="font-serif font-bold text-base mb-1 leading-tight dark:text-white truncate">{latestResearch ? latestResearch.title : "Plant Growth Bacillus"}</h4>
-                                    <p className="text-sm text-gray-600 dark:text-gray-400 mb-4 line-clamp-3 flex-grow break-words">{latestResearch ? latestResearch.summary : "Whole genome analysis of Bacillus strains."}</p>
-                                    <button className="text-[#2E8B57] text-sm font-medium hover:underline text-left flex items-center gap-1 mt-auto">Read Now <span className="text-lg leading-none">&rarr;</span></button>
-                                </div>
-                            </div>
-
-                            {/* Latest Journal */}
-                            <div className="snap-start shrink-0 w-[350px] md:w-[400px] bg-white dark:bg-[#1E1E1E] rounded-xl border border-gray-200 dark:border-gray-800 p-5 shadow-sm flex flex-col cursor-pointer" onClick={() => latestJournal && navigateTo('reading', latestJournal)}>
-                                <div className="flex justify-between items-center mb-5 border-b border-gray-100 dark:border-gray-800 pb-3">
-                                    <div className="flex items-center gap-2 font-serif font-bold text-lg dark:text-white"><Icon name="layout" size={20} className="text-gray-700 dark:text-gray-300" /> Latest Journal</div>
-                                </div>
-                                <div className="flex gap-4 h-full min-w-0">
-                                    <div className="w-[120px] shrink-0 h-full min-h-[140px] bg-gray-200 rounded-lg overflow-hidden bg-[url('https://images.unsplash.com/photo-1464822759023-fed622ff2c3b?auto=format&fit=crop&q=80&w=400')] bg-cover bg-center"></div>
-                                    <div className="flex flex-col flex-grow min-w-0">
-                                        <h4 className="font-serif font-bold text-base mb-1 leading-tight dark:text-white line-clamp-2">{latestJournal ? latestJournal.title : "Reflections on Growth"}</h4>
-                                        <p className="text-sm text-gray-600 dark:text-gray-400 mb-4 line-clamp-4 flex-grow break-words">{latestJournal ? latestJournal.summary : "A personal reflection on the journey of becoming."}</p>
-                                        <button className="text-[#2E8B57] text-sm font-medium hover:underline text-left flex items-center gap-1 mt-auto">Read Entry <span className="text-lg leading-none">&rarr;</span></button>
-                                    </div>
-                                </div>
-                            </div>
-
-                            {/* Latest Blog */}
-                            <div className="snap-start shrink-0 w-[350px] md:w-[400px] bg-white dark:bg-[#1E1E1E] rounded-xl border border-gray-200 dark:border-gray-800 p-5 shadow-sm flex flex-col cursor-pointer" onClick={() => latestBlog && navigateTo('reading', latestBlog)}>
-                                <div className="flex justify-between items-center mb-5 border-b border-gray-100 dark:border-gray-800 pb-3">
-                                    <div className="flex items-center gap-2 font-serif font-bold text-lg dark:text-white"><Icon name="pencil" size={20} className="text-gray-700 dark:text-gray-300" /> Latest Blog</div>
-                                </div>
-                                <div className="flex gap-4 h-full min-w-0">
-                                    <div className="w-[120px] shrink-0 h-full min-h-[140px] bg-gray-200 rounded-lg overflow-hidden bg-[url('https://images.unsplash.com/photo-1581093458791-9f3c3900df4b?auto=format&fit=crop&q=80&w=400')] bg-cover bg-center"></div>
-                                    <div className="flex flex-col flex-grow min-w-0">
-                                        <h4 className="font-serif font-bold text-base mb-1 leading-tight dark:text-white line-clamp-2">{latestBlog ? latestBlog.title : "Why Microbes Matter"}</h4>
-                                        <p className="text-sm text-gray-600 dark:text-gray-400 mb-4 line-clamp-4 flex-grow break-words">{latestBlog ? latestBlog.summary : "Microorganisms are the unseen engineers of life."}</p>
-                                        <button className="text-[#2E8B57] text-sm font-medium hover:underline text-left flex items-center gap-1 mt-auto">Read Article <span className="text-lg leading-none">&rarr;</span></button>
-                                    </div>
-                                </div>
-                            </div>
-
-                            {/* Current Project */}
-                            <div className="snap-start shrink-0 w-[350px] md:w-[400px] bg-white dark:bg-[#1E1E1E] rounded-xl border border-gray-200 dark:border-gray-800 p-5 shadow-sm flex flex-col cursor-pointer" onClick={() => currentProject && navigateTo('detail', currentProject)}>
-                                <div className="flex justify-between items-center mb-5 border-b border-gray-100 dark:border-gray-800 pb-3">
-                                    <div className="flex items-center gap-2 font-serif font-bold text-lg dark:text-white"><Icon name="chart" size={20} className="text-gray-700 dark:text-gray-300" /> Current Project</div>
-                                </div>
-                                <div className="flex flex-col h-full min-w-0">
-                                    <div className="flex gap-4 mb-4 min-w-0">
-                                         <div className="w-20 h-20 shrink-0 bg-gray-200 rounded-lg overflow-hidden bg-[url('https://images.unsplash.com/photo-1574926053457-371804b4c10a?auto=format&fit=crop&q=80&w=200')] bg-cover bg-center"></div>
-                                         <div className="flex-grow min-w-0">
-                                             <h4 className="font-serif font-bold text-base mb-1 leading-tight dark:text-white line-clamp-3 break-words">{currentProject ? currentProject.title : "Microbial Genomics"}</h4>
-                                         </div>
-                                    </div>
-                                    <div className="mb-4">
-                                        <div className="flex justify-between text-xs mb-1">
-                                            <span className="text-gray-600 dark:text-gray-400">In Progress</span>
-                                            <span className="font-medium dark:text-white">65%</span>
-                                        </div>
-                                        <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-1.5">
-                                            <div className="bg-[#2E8B57] h-1.5 rounded-full" style={{ width: '65%' }}></div>
-                                        </div>
-                                    </div>
-                                    <p className="text-sm text-gray-600 dark:text-gray-400 mb-4 flex-grow break-words">{currentProject ? currentProject.summary : "Exploring genomic pathways for sustainable crop production."}</p>
-                                    <button className="text-[#2E8B57] text-sm font-medium hover:underline text-left flex items-center gap-1 mt-auto">View Project <span className="text-lg leading-none">&rarr;</span></button>
-                                </div>
-                            </div>
-
-                        </div>
-                    </div>
-                </div>
-            );
-        };
-
-        const BottomInfo = ({ settings }) => {
-            const [email, setEmail] = useState('');
-            const [status, setStatus] = useState('');
-
-            const handleSubscribe = async (e) => {
-                e.preventDefault();
-                setStatus('Joining...');
-                if (window.supabase) {
-                    const { error } = await supabase.from('subscribers').insert([{ email }]);
-                    if (error) {
-                        setStatus(error.code === '23505' ? 'Already subscribed!' : 'Error subscribing.');
-                    } else {
-                        setStatus('Success! Thank you.');
-                        setEmail('');
-                    }
-                    setTimeout(() => setStatus(''), 5000);
-                }
-            };
-
-            return (
-                <div className="max-w-[1600px] mx-auto px-4 sm:px-6 lg:px-8 mb-16 mt-8">
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                        {/* Quote */}
-                        <div className="bg-white dark:bg-[#1E1E1E] rounded-xl border border-gray-200 dark:border-gray-800 p-8 shadow-sm relative min-w-0">
-                            <div className="text-[#2E8B57] absolute top-6 left-6 opacity-30">
-                                <svg width="40" height="40" viewBox="0 0 24 24" fill="currentColor"><path d="M14.017 21v-7.391c0-5.704 3.731-9.57 8.983-10.609l.995 2.151c-2.432.917-3.995 3.638-3.995 5.849h4v10h-9.983zm-14.017 0v-7.391c0-5.704 3.748-9.57 9-10.609l.996 2.151c-2.433.917-3.996 3.638-3.996 5.849h3.983v10h-9.983z"/></svg>
-                            </div>
-                            <div className="pl-8 relative z-10">
-                                <h3 className="font-serif font-bold text-lg mb-4 dark:text-white flex items-center gap-2">Quote of the Day</h3>
-                                <p className="text-gray-700 dark:text-gray-300 font-serif italic mb-4">"The beautiful thing about learning is that no one can take it away from you."</p>
-                                <div className="text-sm font-bold text-[#2E8B57]">- B.B. King</div>
-                            </div>
-                        </div>
-
-                        {/* Newsletter */}
-                        <div className="bg-white dark:bg-[#1E1E1E] rounded-xl border border-gray-200 dark:border-gray-800 p-8 shadow-sm min-w-0">
-                            <h3 className="font-serif font-bold text-lg mb-2 dark:text-white flex items-center gap-2">
-                                <Icon name="pencil" size={20} className="text-gray-500" /> Stay Updated
-                            </h3>
-                            <p className="text-sm text-gray-600 dark:text-gray-400 mb-6">Subscribe to my newsletter and never miss new research, books, and insights.</p>
-                            <form className="flex gap-2 w-full" onSubmit={handleSubscribe}>
-                                <input type="email" required placeholder="Email address" value={email} onChange={e => setEmail(e.target.value)} className="w-full min-w-0 bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg px-4 py-2 text-sm focus:outline-none focus:border-[#2E8B57]" />
-                                <button type="submit" disabled={!!status} className="shrink-0 bg-[#2E8B57] hover:bg-[#257348] text-white px-4 sm:px-6 py-2 rounded-lg text-sm font-medium transition-colors">{status || 'Join'}</button>
-                            </form>
-                        </div>
-
-                        {/* Socials */}
-                        <div className="bg-white dark:bg-[#1E1E1E] rounded-xl border border-gray-200 dark:border-gray-800 p-8 shadow-sm min-w-0 md:col-span-2 lg:col-span-1">
-                            <h3 className="font-serif font-bold text-lg mb-2 dark:text-white flex items-center gap-2">
-                                 <Icon name="globe" size={20} className="text-gray-500" /> Let's Connect
-                            </h3>
-                            <p className="text-sm text-gray-600 dark:text-gray-400 mb-6">Join a community of learners building a better future through knowledge.</p>
-                            <div className="flex flex-wrap gap-3">
-                                {settings?.linkedin_url && (
-                                    <a href={settings.linkedin_url} target="_blank" className="w-10 h-10 rounded-full bg-[#0077b5] text-white flex items-center justify-center hover:opacity-90"><span className="font-bold text-lg">in</span></a>
-                                )}
-                                {settings?.facebook_url && (
-                                    <a href={settings.facebook_url} target="_blank" className="w-10 h-10 rounded-full bg-[#1877F2] text-white flex items-center justify-center hover:opacity-90"><span className="font-bold text-lg text-center leading-none mt-1">f</span></a>
-                                )}
-                                {settings?.orcid_url && (
-                                    <a href={settings.orcid_url} target="_blank" className="w-10 h-10 rounded-full bg-[#A6CE39] text-white flex items-center justify-center hover:opacity-90"><span className="font-bold text-[10px]">iD</span></a>
-                                )}
-                                {settings?.whatsapp_number && (
-                                    <a href={`https://wa.me/${settings.whatsapp_number.replace(/\D/g,'')}`} target="_blank" className="w-10 h-10 rounded-full bg-[#25D366] text-white flex items-center justify-center hover:opacity-90"><span className="font-bold text-lg">W</span></a>
-                                )}
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            );
-        };
-
-        const Footer = () => (
-            <footer className="bg-[#0B1423] py-8 text-gray-400 text-sm border-t border-white/10">
-                <div className="max-w-[1600px] mx-auto px-4 sm:px-6 lg:px-8 flex flex-col md:flex-row justify-between items-center gap-6 text-center md:text-left">
-                    <div className="flex items-center gap-3 justify-center md:justify-start">
-                         <div className="text-[#D4AF37]">
-                            <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
-                                <path d="M4 19.5v-15A2.5 2.5 0 0 1 6.5 2H20v20H6.5a2.5 2.5 0 0 1 0-5H20"/><path d="M8 7h6"/><path d="M8 11h8"/>
-                            </svg>
-                        </div>
-                        <div>
-                            <h2 className="text-white font-serif font-bold text-lg leading-none">Ajayi Knowledge Hub</h2>
-                            <span className="text-[#D4AF37] text-[10px] tracking-wider uppercase font-medium block mt-1">Explore. Learn. Discover. Grow.</span>
-                        </div>
-                    </div>
-                    <div className="flex-1">
-                        <p>&copy; {new Date().getFullYear()} Paul Olakiitan Ajayi. All rights reserved.</p>
-                        <div className="flex gap-4 justify-center mt-2 text-xs">
-                            <span className="hover:text-white cursor-pointer">Privacy Policy</span>
-                            <span className="hover:text-white cursor-pointer">Terms of Use</span>
-                            <span className="hover:text-white cursor-pointer">Sitemap</span>
-                        </div>
-                    </div>
-                    <div>Built with <span className="text-red-500">♥</span> for knowledge, science, and humanity.</div>
-                </div>
-            </footer>
-        );
 
         const App = () => {
             const [darkMode, setDarkMode] = useState(true);
             const [view, setView] = useState('home');
             const [selectedItem, setSelectedItem] = useState(null);
+            
+            // State
             const [publications, setPublications] = useState([]);
-            const [settings, setSettings] = useState(null);
+            const [settings, setSettings] = useState({});
             const [isSearchOpen, setIsSearchOpen] = useState(false);
+            const [searchQuery, setSearchQuery] = useState('');
+            const [mobileMenu, setMobileMenu] = useState(false);
+            const [subscribeEmail, setSubscribeEmail] = useState('');
+            const [subStatus, setSubStatus] = useState('');
+
+            // Initialization
+            useEffect(() => {
+                const loadData = async () => {
+                    const { data: pubs } = await supabase.from('publications').select('*').order('id', { ascending: false });
+                    if (pubs) setPublications(pubs);
+                    const { data: sets } = await supabase.from('site_settings').select('*').eq('id', 1).single();
+                    if (sets) setSettings(sets);
+                    await supabase.rpc('increment_page_view'); // Real-time counter
+                };
+                loadData();
+            }, []);
 
             useEffect(() => {
                 if (darkMode) document.documentElement.classList.add('dark');
                 else document.documentElement.classList.remove('dark');
             }, [darkMode]);
 
-            useEffect(() => {
-                const fetchData = async () => {
-                    if (!window.supabase) return;
-                    const { data: pubs } = await supabase.from('publications').select('*').order('id', { ascending: false });
-                    if (pubs) setPublications(pubs);
-                    const { data: sets } = await supabase.from('site_settings').select('*').eq('id', 1).single();
-                    if (sets) setSettings(sets);
-                    if (!sessionStorage.getItem('view_counted')) {
-                        await supabase.rpc('increment_page_view');
-                        sessionStorage.setItem('view_counted', 'true');
-                    }
-                };
-                fetchData();
-            }, []);
-
+            // Handlers
             const navigateTo = (newView, item = null) => {
-                setView(newView);
+                try { window.history.pushState(null, '', `#${newView}`); } catch (e) { console.log('Preview routing blocked, ignoring.'); }
                 setSelectedItem(item);
-                window.scrollTo(0, 0);
-                try {
-                    window.history.pushState({ view: newView, item }, '', `?view=${newView}`);
-                } catch (error) { console.warn("Navigation handled locally."); }
+                setView(newView);
+                setMobileMenu(false);
+                setIsSearchOpen(false);
+                setSearchQuery('');
+                window.scrollTo({ top: 0, behavior: 'smooth' });
             };
 
-            useEffect(() => {
-                const handlePopState = (e) => {
-                    if (e.state && e.state.view) { setView(e.state.view); setSelectedItem(e.state.item); }
-                    else setView('home');
-                };
-                window.addEventListener('popstate', handlePopState);
-                return () => window.removeEventListener('popstate', handlePopState);
-            }, []);
+            const handleSubscribe = async (e) => {
+                e.preventDefault();
+                if (!subscribeEmail) return;
+                setSubStatus('Subscribing...');
+                try {
+                    const { error } = await supabase.from('subscribers').insert([{ email: subscribeEmail }]);
+                    if (error && error.code !== '23505') throw error;
+                    setSubStatus('Success! Thank you.');
+                    setSubscribeEmail('');
+                } catch (err) { setSubStatus('Failed to subscribe.'); }
+                setTimeout(() => setSubStatus(''), 3000);
+            };
 
-            const books = publications.filter(p => p.type === 'book');
-            const research = publications.filter(p => p.type === 'research');
-            const journal = publications.filter(p => p.type === 'journal');
-            const blog = publications.filter(p => p.type === 'blog');
-            const teaching = publications.filter(p => p.type === 'teaching');
-            const projects = publications.filter(p => p.type === 'project');
+            const handleDownload = async (url) => {
+                await supabase.rpc('increment_download');
+                window.open(url, '_blank');
+            };
 
-            const HomeContent = () => (
-                <div className="bg-gray-50 dark:bg-[#121212] relative z-10 pb-10">
-                    <HeroSection setView={navigateTo} isDarkMode={darkMode} />
+            const searchResults = publications.filter(p => 
+                (p.title && p.title.toLowerCase().includes(searchQuery.toLowerCase())) ||
+                (p.summary && p.summary.toLowerCase().includes(searchQuery.toLowerCase())) ||
+                (p.tags && p.tags.some(tag => tag.toLowerCase().includes(searchQuery.toLowerCase())))
+            );
 
-                    <div className="max-w-[1600px] mx-auto px-4 sm:px-6 lg:px-8 -mt-6 relative z-20 mb-12 animate-fade-in">
-                        <div className="bg-[#0f1b29] rounded-xl shadow-xl flex flex-wrap lg:flex-nowrap divide-y lg:divide-y-0 lg:divide-x divide-white/10 p-2">
-                            {[
-                                { count: books.length, label: "Books", icon: "book" },
-                                { count: research.length, label: "Research", icon: "microscope" },
-                                { count: journal.length, label: "Journal", icon: "layout" },
-                                { count: teaching.length, label: "Teaching", icon: "gradCap" },
-                                { count: blog.length, label: "Blog", icon: "pencil" },
-                                { count: (settings?.views_count || 0).toLocaleString(), label: "Global Readers", icon: "users" },
-                                { count: (settings?.downloads_count || 0).toLocaleString(), label: "Downloads", icon: "download" },
-                            ].map((stat, idx) => (
-                                <div key={idx} className="flex-1 min-w-[140px] p-4 flex items-center justify-center lg:justify-start gap-4">
-                                    <div className="text-[#D4AF37]"><Icon name={stat.icon} size={28} /></div>
-                                    <div className="min-w-0">
-                                        <div className="text-white font-bold text-xl leading-none mb-1 truncate">{stat.count}</div>
-                                        <div className="text-gray-400 text-xs truncate">{stat.label}</div>
-                                    </div>
+            const navLinks = [
+                { name: 'Home', id: 'home' }, { name: 'Library', id: 'library' },
+                { name: 'Research', id: 'research' }, { name: 'Journal', id: 'journal' },
+                { name: 'Teaching', id: 'teaching' }, { name: 'Blog', id: 'blog' },
+                { name: 'Projects', id: 'projects' }, { name: 'About', id: 'about' },
+                { name: 'Contact', id: 'contact' },
+            ];
+
+            const Navbar = () => (
+                <nav className="bg-[#0B1423] text-white w-full fixed top-0 z-50 shadow-lg">
+                    <div className="max-w-[1600px] mx-auto px-4 sm:px-6 lg:px-8">
+                        <div className="flex justify-between items-center h-20">
+                            {/* Logo (Exact match to Footer styling) */}
+                            <div className="flex-shrink-0 cursor-pointer flex items-center gap-3 group" onClick={() => navigateTo('home')}>
+                                <div className="text-[#D4AF37] group-hover:scale-105 transition-transform">
+                                    <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+                                        <path d="M4 19.5v-15A2.5 2.5 0 0 1 6.5 2H20v20H6.5a2.5 2.5 0 0 1 0-5H20"/><path d="M8 7h6"/><path d="M8 11h8"/>
+                                    </svg>
                                 </div>
-                            ))}
+                                <div className="flex flex-col">
+                                    <h1 className="font-serif font-bold text-lg leading-none text-white">Ajayi Knowledge Hub</h1>
+                                    <span className="text-[#D4AF37] text-[10px] tracking-wider uppercase font-medium mt-1">Explore. Learn. Discover. Grow.</span>
+                                </div>
+                            </div>
+                            
+                            {/* Action Buttons */}
+                            <div className="flex items-center gap-3">
+                                {/* Desktop AI Button */}
+                                <button onClick={() => navigateTo('ai')} className="hidden sm:flex items-center gap-2 px-4 py-2 bg-[#2E8B57]/20 text-[#2E8B57] hover:bg-[#2E8B57]/30 rounded-lg font-medium text-sm transition-colors border border-[#2E8B57]/50">
+                                    <Icon name="sparkles" size={16} /> Ask AI
+                                </button>
+                                
+                                <button onClick={() => setIsSearchOpen(true)} className="w-10 h-10 rounded-lg bg-white/10 border border-white/20 flex items-center justify-center text-gray-300 hover:text-white hover:bg-white/20 transition-colors shadow-sm">
+                                    <Icon name="search" size={18} />
+                                </button>
+                                
+                                <button onClick={() => setDarkMode(!darkMode)} className="w-10 h-10 rounded-lg bg-white/10 border border-white/20 flex items-center justify-center text-gray-300 hover:text-white hover:bg-white/20 transition-colors shadow-sm">
+                                    {darkMode ? <Icon name="sun" size={18} /> : <Icon name="moon" size={18} />}
+                                </button>
+                                
+                                <button onClick={() => setMobileMenu(!mobileMenu)} className="w-10 h-10 rounded-lg bg-[#2E8B57] text-white border border-[#2E8B57] flex items-center justify-center hover:bg-[#257348] transition-colors shadow-md">
+                                    <Icon name={mobileMenu ? "x" : "menu"} size={20} />
+                                </button>
+                            </div>
                         </div>
                     </div>
 
-                    <ContentCards navigateTo={navigateTo} books={books} research={research} journal={journal} blog={blog} projects={projects} />
-                    <BottomInfo settings={settings} />
-                </div>
+                    {/* Collapsed Dropdown Menu */}
+                    {mobileMenu && (
+                        <div className="absolute top-20 left-0 w-full bg-[#0B1423] border-t border-white/10 shadow-2xl py-4 px-6 animate-slide-down border-b border-gray-800">
+                            <div className="max-w-[1600px] mx-auto grid grid-cols-2 md:grid-cols-4 gap-4">
+                                {navLinks.map(link => (
+                                    <button key={link.id} onClick={() => navigateTo(link.id)} className={`text-left px-4 py-3 rounded-xl text-sm font-medium transition-colors ${view === link.id ? 'bg-[#2E8B57]/20 text-[#2E8B57]' : 'text-gray-300 hover:bg-white/10 hover:text-white'}`}>
+                                        {link.name}
+                                    </button>
+                                ))}
+                                {/* Add an Admin link for easy access */}
+                                <button onClick={() => { window.location.href='admin.html'; }} className="text-left px-4 py-3 rounded-xl text-sm font-bold text-gray-400 hover:bg-white/10 hover:text-white border border-gray-700">
+                                    Admin Login
+                                </button>
+                            </div>
+                        </div>
+                    )}
+                </nav>
             );
 
-            const GenericList = ({ title, data }) => (
-                <div className="pt-32 pb-24 max-w-7xl mx-auto px-4 sm:px-6 relative z-10 min-h-screen animate-fade-in">
-                    <button onClick={() => navigateTo('home')} className="flex items-center text-[#2E8B57] hover:opacity-80 transition-opacity mb-8 font-medium">
-                        &larr; Back to Home
-                    </button>
-                    <h1 className="text-4xl font-bold font-serif text-[#0B1423] dark:text-white mb-12">{title}</h1>
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-                        {data.map(item => (
-                            <div key={item.id} className="bg-white dark:bg-[#1E1E1E] rounded-2xl p-6 shadow-sm border border-gray-100 dark:border-gray-800 flex flex-col cursor-pointer min-w-0" onClick={() => navigateTo((item.type === 'journal' || item.type === 'blog') ? 'reading' : 'detail', item)}>
-                                <span className="text-xs font-bold uppercase text-[#2E8B57] mb-2 truncate">{item.category}</span>
-                                <h3 className="text-xl font-bold text-[#0B1423] dark:text-white mb-3 line-clamp-2">{item.title}</h3>
-                                {item.file_url && <Icon name="paperclip" size={16} className="text-gray-400 mb-2" />}
-                                <p className="text-sm text-gray-600 dark:text-gray-400 mb-6 flex-grow line-clamp-4 break-words">{item.summary}</p>
-                                <div className="mt-auto flex items-center text-[#2E8B57] text-sm font-semibold">Read More &rarr;</div>
+            const SearchOverlay = () => {
+                if (!isSearchOpen) return null;
+                return (
+                    <div className="fixed inset-0 z-[100] bg-white/95 dark:bg-[#0a0a0a]/95 backdrop-blur-md overflow-y-auto animate-fade-in p-4 sm:p-8">
+                        <div className="max-w-4xl mx-auto pt-20">
+                            <div className="flex justify-between items-center mb-8">
+                                <h2 className="text-3xl font-serif font-bold text-navy dark:text-white">Search Knowledge Base</h2>
+                                <button onClick={() => setIsSearchOpen(false)} className="p-2 bg-gray-100 dark:bg-gray-800 rounded-full text-gray-500 hover:text-gray-900 dark:hover:text-white transition-colors">
+                                    <Icon name="x" size={24} />
+                                </button>
                             </div>
-                        ))}
+                            <div className="relative mb-12">
+                                <Icon name="search" size={24} className="absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400" />
+                                <input type="text" autoFocus placeholder="Search publications, research, articles..." value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} className="w-full pl-14 pr-6 py-5 rounded-2xl bg-gray-100 dark:bg-gray-900 border border-gray-200 dark:border-gray-800 text-xl focus:outline-none focus:border-emerald-500 text-gray-900 dark:text-white" />
+                            </div>
+                            
+                            {searchQuery && (
+                                <div className="space-y-4">
+                                    <h3 className="text-sm font-bold text-gray-500 uppercase tracking-wider mb-4">Results ({searchResults.length})</h3>
+                                    {searchResults.map(item => (
+                                        <div key={item.id} onClick={() => navigateTo(item.type === 'blog' || item.type === 'journal' ? 'reading' : 'detail', item)} className="bg-white dark:bg-gray-900 p-6 rounded-2xl border border-gray-200 dark:border-gray-800 shadow-sm cursor-pointer hover:border-[#2E8B57] transition-colors">
+                                            <span className="text-xs font-bold uppercase tracking-wider text-[#2E8B57] mb-2 block">{item.category || item.type}</span>
+                                            <h4 className="text-xl font-bold text-navy dark:text-white mb-2">{item.title}</h4>
+                                            <p className="text-gray-600 dark:text-gray-400 text-sm line-clamp-2">{item.summary}</p>
+                                        </div>
+                                    ))}
+                                    {searchResults.length === 0 && <p className="text-gray-500 text-center py-8">No results found.</p>}
+                                </div>
+                            )}
+                        </div>
+                    </div>
+                );
+            };
+
+            const HomeContent = () => {
+                const latestBook = publications.find(p => p.type === 'book');
+                const latestResearch = publications.find(p => p.type === 'research');
+                const latestJournal = publications.find(p => p.type === 'journal');
+                const latestBlog = publications.find(p => p.type === 'blog');
+                const latestProject = publications.find(p => p.type === 'project');
+
+                return (
+                    <div className="bg-transparent relative z-10">
+                        {/* HERO SECTION EXACTLY AS REQUESTED */}
+                        <section className="relative pt-32 pb-24 flex items-center justify-center bg-[#0B1423] text-white overflow-hidden min-h-[80vh]">
+                            <div className="absolute inset-0 z-0 bg-[url('https://images.unsplash.com/photo-1532094349884-543bc11b234d?auto=format&fit=crop&q=80')] bg-cover bg-center opacity-20 mix-blend-overlay"></div>
+                            <div className="absolute inset-0 z-0 bg-gradient-to-b from-[#0B1423]/80 via-[#0B1423]/60 to-[#0B1423]"></div>
+                            
+                            <div className="relative z-10 container mx-auto px-6 text-center max-w-5xl animate-fade-in">
+                                <h1 className="font-serif text-5xl md:text-7xl font-bold mb-6 leading-tight tracking-tight">
+                                    Knowledge that <span className="text-[#2E8B57]">grows</span>.<br />
+                                    Research that <span className="text-[#D4AF37]">matters</span>.<br />
+                                    Ideas that <span className="text-[#8B9C2A]">inspire</span>.
+                                </h1>
+                                
+                                <h2 className="text-xl md:text-2xl text-[#D4AF37] font-medium mb-6 font-serif">
+                                    {settings?.hero_subtitle || 'Welcome to my digital knowledge hub.'}
+                                </h2>
+                                
+                                <p className="text-base md:text-lg text-gray-300 mb-12 max-w-3xl mx-auto font-light leading-relaxed">
+                                    {settings?.mission_text || 'Here I share my books, scientific research, teaching materials, journals, articles, and ideas as I pursue a lifelong mission of learning, discovery, and service.'}
+                                </p>
+                                
+                                <div className="flex flex-wrap items-center justify-center gap-4">
+                                    <button onClick={() => navigateTo('library')} className="px-8 py-3.5 bg-[#2E8B57] hover:bg-[#257348] text-white text-sm font-semibold rounded-lg transition-all flex items-center justify-center gap-2 border border-[#2E8B57]">
+                                        <Icon name="book" size={18} /> Explore Library
+                                    </button>
+                                    <button onClick={() => navigateTo('research')} className="px-8 py-3.5 bg-transparent hover:bg-white/5 text-white text-sm font-semibold rounded-lg transition-all border border-blue-400/30 flex items-center justify-center gap-2">
+                                        <Icon name="microscope" size={18} /> Research Archive
+                                    </button>
+                                    <button onClick={() => navigateTo('teaching')} className="px-8 py-3.5 bg-[#3B7A57]/80 hover:bg-[#3B7A57] text-white text-sm font-semibold rounded-lg transition-all border border-[#3B7A57] flex items-center justify-center gap-2">
+                                        <Icon name="gradCap" size={18} /> Teaching Hub
+                                    </button>
+                                </div>
+                            </div>
+                        </section>
+
+                        {/* STATS BANNER EXACTLY AS REQUESTED */}
+                        <div className="max-w-[1600px] mx-auto px-4 sm:px-6 lg:px-8 -mt-6 relative z-20 mb-12">
+                            <div className="bg-[#0f1b29] rounded-xl shadow-xl flex flex-wrap lg:flex-nowrap divide-y lg:divide-y-0 lg:divide-x divide-white/10 p-2">
+                                {[
+                                    { count: publications.filter(p=>p.type==='book').length || 0, label: "Books", icon: "book" },
+                                    { count: publications.filter(p=>p.type==='research').length || 0, label: "Research", icon: "microscope" },
+                                    { count: publications.filter(p=>p.type==='journal').length || 0, label: "Journals", icon: "layout" },
+                                    { count: settings?.views_count || 0, label: "Page Views", icon: "users" },
+                                    { count: settings?.downloads_count || 0, label: "Downloads", icon: "download" }
+                                ].map((stat, idx) => (
+                                    <div key={idx} className="flex-1 min-w-[140px] p-4 flex items-center justify-center lg:justify-start gap-4">
+                                        <div className="text-[#D4AF37]"><Icon name={stat.icon} size={28} /></div>
+                                        <div>
+                                            <div className="text-white font-bold text-xl leading-none mb-1">{stat.count}</div>
+                                            <div className="text-gray-400 text-xs">{stat.label}</div>
+                                        </div>
+                                    </div>
+                                ))}
+                            </div>
+                        </div>
+
+                        {/* HORIZONTAL SCROLL CARDS EXACTLY AS REQUESTED */}
+                        <div className="max-w-[1600px] mx-auto px-4 sm:px-6 lg:px-8 pb-16">
+                            <div className="flex flex-nowrap overflow-x-auto pb-6 gap-6 snap-x snap-mandatory hide-scrollbar">
+                                
+                                {/* Featured Book */}
+                                {latestBook && (
+                                <div className="snap-start shrink-0 w-[350px] md:w-[400px] bg-white dark:bg-[#1E1E1E] rounded-xl border border-gray-200 dark:border-gray-800 p-5 shadow-sm flex flex-col">
+                                    <div className="flex justify-between items-center mb-5 border-b border-gray-100 dark:border-gray-800 pb-3">
+                                        <div className="flex items-center gap-2 font-serif font-bold text-lg dark:text-white"><Icon name="book" size={20} className="text-gray-700 dark:text-gray-300" /> Featured Book</div>
+                                        <button onClick={()=>navigateTo('library')} className="text-xs text-gray-500 hover:text-gray-900 dark:hover:text-white flex items-center gap-1">View all &rarr;</button>
+                                    </div>
+                                    <div className="flex gap-4 flex-grow min-w-0">
+                                        <div className="w-1/3 shrink-0 h-40">
+                                            {latestBook.thumbnail_url ? (
+                                                <img src={latestBook.thumbnail_url} className="w-full h-full object-cover object-center rounded shadow-md border border-gray-200 dark:border-gray-700" alt="Cover"/>
+                                            ) : (
+                                                <div className="bg-[#112435] p-2 rounded shadow-md w-full h-full flex flex-col items-center justify-center text-center border-l-4 border-[#2E8B57]">
+                                                    <div className="text-[10px] text-white uppercase mb-1 line-clamp-4 font-serif font-bold">{latestBook.title}</div>
+                                                </div>
+                                            )}
+                                        </div>
+                                        <div className="flex flex-col flex-grow min-w-0">
+                                            <h4 className="font-serif font-bold text-lg mb-2 leading-tight dark:text-white truncate">{latestBook.title}</h4>
+                                            <p className="text-sm text-gray-600 dark:text-gray-400 mb-2 line-clamp-3">{latestBook.summary}</p>
+                                            <div className="text-xs text-[#2E8B57] font-medium">{latestBook.category || 'Science'}</div>
+                                            <button onClick={()=>navigateTo('detail', latestBook)} className="mt-auto px-4 py-1.5 border border-gray-300 dark:border-gray-600 rounded text-sm font-medium hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors w-max dark:text-white">View Book</button>
+                                        </div>
+                                    </div>
+                                </div>
+                                )}
+
+                                {/* Latest Research */}
+                                {latestResearch && (
+                                <div className="snap-start shrink-0 w-[350px] md:w-[400px] bg-white dark:bg-[#1E1E1E] rounded-xl border border-gray-200 dark:border-gray-800 p-5 shadow-sm flex flex-col">
+                                    <div className="flex justify-between items-center mb-5 border-b border-gray-100 dark:border-gray-800 pb-3">
+                                        <div className="flex items-center gap-2 font-serif font-bold text-lg dark:text-white"><Icon name="microscope" size={20} className="text-gray-700 dark:text-gray-300" /> Latest Research</div>
+                                        <button onClick={()=>navigateTo('research')} className="text-xs text-gray-500 hover:text-gray-900 dark:hover:text-white flex items-center gap-1">View all &rarr;</button>
+                                    </div>
+                                    <div className="flex flex-col flex-grow min-w-0">
+                                        <div className="h-32 shrink-0 bg-gray-200 dark:bg-gray-700 rounded-lg mb-4 overflow-hidden">
+                                            <img src={latestResearch.thumbnail_url || "https://images.unsplash.com/photo-1576086213369-97a306d36557?auto=format&fit=crop&q=80&w=400"} className="w-full h-full object-cover object-center" alt="Research"/>
+                                        </div>
+                                        <h4 className="font-serif font-bold text-base mb-1 leading-tight dark:text-white truncate">{latestResearch.title}</h4>
+                                        <p className="text-sm text-gray-600 dark:text-gray-400 mb-4 line-clamp-2 flex-grow">{latestResearch.summary}</p>
+                                        <button onClick={()=>navigateTo('detail', latestResearch)} className="text-[#2E8B57] text-sm font-medium hover:underline text-left mt-auto">Read Now &rarr;</button>
+                                    </div>
+                                </div>
+                                )}
+                                
+                                {/* Latest Journal */}
+                                {latestJournal && (
+                                <div className="snap-start shrink-0 w-[350px] md:w-[400px] bg-white dark:bg-[#1E1E1E] rounded-xl border border-gray-200 dark:border-gray-800 p-5 shadow-sm flex flex-col">
+                                    <div className="flex justify-between items-center mb-5 border-b border-gray-100 dark:border-gray-800 pb-3">
+                                        <div className="flex items-center gap-2 font-serif font-bold text-lg dark:text-white"><Icon name="layout" size={20} className="text-gray-700 dark:text-gray-300" /> Latest Journal</div>
+                                        <button onClick={()=>navigateTo('journal')} className="text-xs text-gray-500 hover:text-gray-900 dark:hover:text-white flex items-center gap-1">View all &rarr;</button>
+                                    </div>
+                                    <div className="flex gap-4 flex-grow min-w-0 h-32">
+                                        <div className="w-2/5 shrink-0 h-full rounded-lg overflow-hidden">
+                                            <img src={latestJournal.thumbnail_url || "https://images.unsplash.com/photo-1464822759023-fed622ff2c3b?auto=format&fit=crop&q=80&w=400"} className="w-full h-full object-cover object-center" alt="Journal"/>
+                                        </div>
+                                        <div className="flex flex-col flex-grow min-w-0">
+                                            <h4 className="font-serif font-bold text-base mb-1 leading-tight dark:text-white line-clamp-2">{latestJournal.title}</h4>
+                                            <p className="text-sm text-gray-600 dark:text-gray-400 mb-2 line-clamp-2 flex-grow">{latestJournal.summary}</p>
+                                            <button onClick={()=>navigateTo('reading', latestJournal)} className="text-[#2E8B57] text-sm font-medium hover:underline text-left mt-auto">Read Entry &rarr;</button>
+                                        </div>
+                                    </div>
+                                </div>
+                                )}
+
+                                {/* Latest Blog */}
+                                {latestBlog && (
+                                <div className="snap-start shrink-0 w-[350px] md:w-[400px] bg-white dark:bg-[#1E1E1E] rounded-xl border border-gray-200 dark:border-gray-800 p-5 shadow-sm flex flex-col">
+                                    <div className="flex justify-between items-center mb-5 border-b border-gray-100 dark:border-gray-800 pb-3">
+                                        <div className="flex items-center gap-2 font-serif font-bold text-lg dark:text-white"><Icon name="pencil" size={20} className="text-gray-700 dark:text-gray-300" /> Latest Blog</div>
+                                        <button onClick={()=>navigateTo('blog')} className="text-xs text-gray-500 hover:text-gray-900 dark:hover:text-white flex items-center gap-1">View all &rarr;</button>
+                                    </div>
+                                    <div className="flex gap-4 flex-grow min-w-0 h-32">
+                                        <div className="w-2/5 shrink-0 h-full rounded-lg overflow-hidden">
+                                            <img src={latestBlog.thumbnail_url || "https://images.unsplash.com/photo-1581093458791-9f3c3900df4b?auto=format&fit=crop&q=80&w=400"} className="w-full h-full object-cover object-center" alt="Blog"/>
+                                        </div>
+                                        <div className="flex flex-col flex-grow min-w-0">
+                                            <h4 className="font-serif font-bold text-base mb-1 leading-tight dark:text-white line-clamp-2">{latestBlog.title}</h4>
+                                            <p className="text-sm text-gray-600 dark:text-gray-400 mb-2 line-clamp-2 flex-grow">{latestBlog.summary}</p>
+                                            <button onClick={()=>navigateTo('reading', latestBlog)} className="text-[#2E8B57] text-sm font-medium hover:underline text-left mt-auto">Read Article &rarr;</button>
+                                        </div>
+                                    </div>
+                                </div>
+                                )}
+                            </div>
+                        </div>
+
+                        {/* BOTTOM INFO EXACTLY AS REQUESTED */}
+                        <div className="max-w-[1600px] mx-auto px-4 sm:px-6 lg:px-8 pb-20">
+                            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                                <div className="bg-white dark:bg-[#1E1E1E] rounded-xl border border-gray-200 dark:border-gray-800 p-8 shadow-sm relative overflow-hidden">
+                                    <div className="text-[#2E8B57] absolute top-6 left-6 opacity-10">
+                                        <svg width="60" height="60" viewBox="0 0 24 24" fill="currentColor"><path d="M14.017 21v-7.391c0-5.704 3.731-9.57 8.983-10.609l.995 2.151c-2.432.917-3.995 3.638-3.995 5.849h4v10h-9.983zm-14.017 0v-7.391c0-5.704 3.748-9.57 9-10.609l.996 2.151c-2.433.917-3.996 3.638-3.996 5.849h3.983v10h-9.983z"/></svg>
+                                    </div>
+                                    <div className="relative z-10">
+                                        <h3 className="font-serif font-bold text-lg mb-4 dark:text-white">Quote of the Day</h3>
+                                        <p className="text-gray-700 dark:text-gray-300 font-serif italic mb-4 text-lg">"{settings?.daily_quote || 'The beautiful thing about learning is that no one can take it away from you.'}"</p>
+                                        <div className="text-sm font-bold text-[#2E8B57]">- {settings?.quote_author || 'B.B. King'}</div>
+                                    </div>
+                                </div>
+                                <div className="bg-white dark:bg-[#1E1E1E] rounded-xl border border-gray-200 dark:border-gray-800 p-8 shadow-sm">
+                                    <h3 className="font-serif font-bold text-lg mb-2 dark:text-white flex items-center gap-2"><Icon name="pencil" size={20} className="text-gray-500" /> Stay Updated</h3>
+                                    <p className="text-sm text-gray-600 dark:text-gray-400 mb-6">Subscribe to receive new research, books, and insights.</p>
+                                    <form className="flex flex-col gap-2" onSubmit={handleSubscribe}>
+                                        <input type="email" required value={subscribeEmail} onChange={e=>setSubscribeEmail(e.target.value)} placeholder="Enter your email" className="w-full bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg px-4 py-3 text-sm focus:outline-none focus:border-[#2E8B57] text-gray-900 dark:text-white" />
+                                        <button type="submit" className="w-full bg-[#2E8B57] hover:bg-[#257348] text-white px-6 py-3 rounded-lg text-sm font-medium transition-colors">Subscribe</button>
+                                        {subStatus && <p className="text-xs font-bold text-[#2E8B57] mt-1">{subStatus}</p>}
+                                    </form>
+                                </div>
+                                <div className="bg-white dark:bg-[#1E1E1E] rounded-xl border border-gray-200 dark:border-gray-800 p-8 shadow-sm">
+                                    <h3 className="font-serif font-bold text-lg mb-2 dark:text-white flex items-center gap-2">Let's Connect</h3>
+                                    <p className="text-sm text-gray-600 dark:text-gray-400 mb-6">Join the network across academic and social platforms.</p>
+                                    <div className="flex flex-wrap gap-3">
+                                        {settings?.linkedin_url && <a href={settings.linkedin_url} target="_blank" className="w-10 h-10 rounded-full bg-[#0077b5] text-white flex items-center justify-center font-bold">in</a>}
+                                        {settings?.orcid_url && <a href={settings.orcid_url} target="_blank" className="w-10 h-10 rounded-full bg-[#A6CE39] text-white flex items-center justify-center font-bold text-xs">iD</a>}
+                                        {settings?.facebook_url && <a href={settings.facebook_url} target="_blank" className="w-10 h-10 rounded-full bg-[#1877F2] text-white flex items-center justify-center font-bold">f</a>}
+                                        {settings?.whatsapp_number && <a href={`https://wa.me/${settings.whatsapp_number}`} target="_blank" className="w-10 h-10 rounded-full bg-[#25D366] text-white flex items-center justify-center font-bold text-lg"><Icon name="users" size={16}/></a>}
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                );
+            };
+
+            const DetailView = ({ item }) => (
+                <div className="max-w-4xl mx-auto px-4 pt-32 pb-24 min-h-screen relative z-10 animate-fade-in">
+                    <button onClick={() => navigateTo(item.type === 'book' ? 'library' : item.type)} className="flex items-center text-[#2E8B57] hover:underline mb-8 font-medium">
+                        <Icon name="arrowLeft" size={16} className="mr-2" /> Back to {item.type}s
+                    </button>
+                    <div className="bg-white dark:bg-[#1E1E1E] rounded-3xl p-8 shadow-xl border border-gray-200 dark:border-gray-800 flex flex-col md:flex-row gap-8">
+                        <div className="w-full md:w-1/3 shrink-0 h-64 md:h-auto">
+                            {item.thumbnail_url ? (
+                                <img src={item.thumbnail_url} className="w-full h-full object-cover object-center rounded-xl shadow-md border border-gray-200 dark:border-gray-700" alt="Cover"/>
+                            ) : (
+                                <div className="w-full h-full bg-[#0B1423] rounded-xl flex items-center justify-center border border-gray-800">
+                                    <Icon name={item.type === 'book' ? 'book' : 'microscope'} size={60} className="text-[#2E8B57] opacity-50" />
+                                </div>
+                            )}
+                        </div>
+                        <div className="w-full md:w-2/3 flex flex-col">
+                            <span className="px-3 py-1 bg-emerald-50 dark:bg-emerald-900/30 text-[#2E8B57] rounded w-max text-xs font-bold uppercase mb-4">{item.category || item.type}</span>
+                            <h1 className="text-3xl md:text-4xl font-bold font-serif text-navy dark:text-white mb-2 leading-tight">{item.title}</h1>
+                            <p className="text-sm text-gray-500 dark:text-gray-400 mb-6">Published: {item.published_date || 'Recently'}</p>
+                            <h3 className="font-bold text-lg text-navy dark:text-white mb-2">Abstract / Summary</h3>
+                            <p className="text-gray-700 dark:text-gray-300 whitespace-pre-wrap leading-relaxed mb-8">{item.content || item.summary}</p>
+                            
+                            {item.file_url && (
+                                <button onClick={() => handleDownload(item.file_url)} className="mt-auto inline-flex items-center justify-center bg-[#2E8B57] hover:bg-[#257348] text-white px-6 py-4 rounded-xl font-bold shadow-md transition-colors w-full sm:w-auto">
+                                    <Icon name="download" size={20} className="mr-2" /> Download Document
+                                </button>
+                            )}
+                        </div>
                     </div>
                 </div>
             );
 
+            const ReadingView = ({ item }) => (
+                <div className="max-w-3xl mx-auto px-4 pt-32 pb-24 min-h-screen relative z-10 animate-fade-in">
+                    <button onClick={() => navigateTo(item.type)} className="flex items-center text-[#2E8B57] hover:underline mb-8 font-medium">
+                        <Icon name="arrowLeft" size={16} className="mr-2" /> Back to {item.type}s
+                    </button>
+                    {item.thumbnail_url && (
+                        <div className="w-full h-[300px] md:h-[400px] mb-8 rounded-2xl overflow-hidden shadow-lg">
+                            <img src={item.thumbnail_url} className="w-full h-full object-cover object-center" alt="Cover" />
+                        </div>
+                    )}
+                    <div className="text-center mb-12">
+                        <span className="px-3 py-1 bg-emerald-50 dark:bg-emerald-900/30 text-[#2E8B57] rounded text-xs font-bold uppercase mb-4 inline-block">{item.category || item.type}</span>
+                        <h1 className="text-4xl font-bold font-serif text-navy dark:text-white mb-4 leading-tight">{item.title}</h1>
+                        <p className="text-gray-500 text-sm">{item.published_date || 'Recent Post'}</p>
+                    </div>
+                    <div className="prose prose-lg dark:prose-invert max-w-none font-serif text-gray-800 dark:text-gray-200 leading-relaxed whitespace-pre-wrap">
+                        {item.content}
+                    </div>
+                    {item.file_url && (
+                        <div className="mt-12 p-6 bg-gray-50 dark:bg-[#1E1E1E] rounded-xl border border-gray-200 dark:border-gray-800 text-center">
+                            <h3 className="font-bold text-navy dark:text-white mb-2">Attached Document</h3>
+                            <button onClick={() => handleDownload(item.file_url)} className="mt-2 inline-flex items-center bg-[#2E8B57] text-white px-6 py-3 rounded-lg font-bold hover:bg-[#257348]">
+                                <Icon name="download" size={18} className="mr-2" /> Download PDF
+                            </button>
+                        </div>
+                    )}
+                </div>
+            );
+
+            const ListView = ({ title, type }) => {
+                const items = publications.filter(p => type === 'library' ? p.type === 'book' : p.type === type);
+                return (
+                    <div className="max-w-[1600px] mx-auto px-4 sm:px-6 lg:px-8 pt-32 pb-24 min-h-screen relative z-10 animate-fade-in">
+                        <button onClick={() => navigateTo('home')} className="flex items-center text-[#2E8B57] hover:underline mb-8 font-medium">
+                            <Icon name="arrowLeft" size={16} className="mr-2" /> Back to Home
+                        </button>
+                        <h1 className="text-4xl font-bold font-serif text-navy dark:text-white mb-2">{title}</h1>
+                        <p className="text-gray-500 dark:text-gray-400 mb-10">Archive of published {type}s.</p>
+                        
+                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+                            {items.map(item => (
+                                <div key={item.id} onClick={() => navigateTo(['blog','journal'].includes(item.type) ? 'reading' : 'detail', item)} className="bg-white dark:bg-[#1E1E1E] p-5 rounded-xl border border-gray-200 dark:border-gray-800 shadow-sm cursor-pointer hover:border-[#2E8B57] transition-colors flex flex-col h-full">
+                                    {item.thumbnail_url && (
+                                        <div className="w-full h-48 mb-4 rounded-lg overflow-hidden bg-gray-100 dark:bg-gray-800 shrink-0">
+                                            <img src={item.thumbnail_url} className="w-full h-full object-cover object-center" alt="Thumb" />
+                                        </div>
+                                    )}
+                                    <span className="text-[10px] font-bold uppercase text-[#2E8B57] mb-2">{item.category || item.type}</span>
+                                    <h3 className="text-lg font-bold text-navy dark:text-white mb-2 line-clamp-2">{item.title}</h3>
+                                    <p className="text-sm text-gray-600 dark:text-gray-400 line-clamp-3 mb-4 flex-grow">{item.summary}</p>
+                                    <span className="text-sm font-bold text-[#2E8B57] mt-auto">Read &rarr;</span>
+                                </div>
+                            ))}
+                            {items.length === 0 && <p className="text-gray-500 col-span-full py-8">No content published in this section yet.</p>}
+                        </div>
+                    </div>
+                );
+            };
+
+            const AboutView = () => (
+                <div className="max-w-5xl mx-auto px-4 pt-32 pb-24 min-h-screen relative z-10 animate-fade-in">
+                    <button onClick={() => navigateTo('home')} className="flex items-center text-[#2E8B57] hover:underline mb-8 font-medium">
+                        <Icon name="arrowLeft" size={16} className="mr-2" /> Back to Home
+                    </button>
+                    <div className="flex flex-col md:flex-row gap-12 items-start">
+                        <div className="w-full md:w-1/3 shrink-0">
+                            {settings?.profile_pic_url ? (
+                                <img src={settings.profile_pic_url} className="w-full aspect-square object-cover object-center rounded-3xl shadow-xl border-4 border-white dark:border-gray-800" alt="Profile" />
+                            ) : (
+                                <div className="w-full aspect-square bg-gray-200 dark:bg-gray-800 rounded-3xl flex items-center justify-center shadow-xl">
+                                    <Icon name="users" size={80} className="text-gray-400" />
+                                </div>
+                            )}
+                        </div>
+                        <div className="w-full md:w-2/3">
+                            <h1 className="text-4xl md:text-5xl font-bold font-serif text-navy dark:text-white mb-2">{settings?.display_name || 'Paul Olakiitan Ajayi'}</h1>
+                            <p className="text-xl text-[#2E8B57] dark:text-[#D4AF37] font-medium mb-8">{settings?.bio || 'Microbiologist · Researcher'}</p>
+                            
+                            <div className="bg-emerald-50 dark:bg-emerald-900/20 p-6 rounded-2xl border border-emerald-100 dark:border-emerald-900/50 mb-8">
+                                <h3 className="font-bold text-navy dark:text-white mb-2 flex items-center gap-2"><Icon name="sparkles" size={18} className="text-[#2E8B57]"/> Mission</h3>
+                                <p className="text-gray-800 dark:text-gray-200 italic font-serif leading-relaxed">{settings?.mission_text || 'To advance science through research and education.'}</p>
+                            </div>
+                            
+                            <h3 className="text-2xl font-bold text-navy dark:text-white mb-4 font-serif">About Me</h3>
+                            <div className="prose prose-lg dark:prose-invert max-w-none text-gray-700 dark:text-gray-300 font-serif whitespace-pre-wrap leading-relaxed">
+                                {settings?.about_text || 'Welcome to my digital hub.'}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            );
+
+            const ContactView = () => {
+                const [form, setForm] = useState({ name: '', email: '', message: '' });
+                const [status, setStatus] = useState('');
+                const handleSubmit = async (e) => {
+                    e.preventDefault();
+                    setStatus('Sending...');
+                    try {
+                        const { error } = await supabase.from('messages').insert([form]);
+                        if (error) throw error;
+                        setStatus('Message sent successfully!');
+                        setForm({ name: '', email: '', message: '' });
+                    } catch (err) { setStatus('Failed to send message.'); }
+                    setTimeout(() => setStatus(''), 4000);
+                };
+                return (
+                    <div className="max-w-3xl mx-auto px-4 pt-32 pb-24 min-h-screen relative z-10 animate-fade-in text-center">
+                        <button onClick={() => navigateTo('home')} className="flex items-center text-[#2E8B57] hover:underline mb-8 font-medium mx-auto">
+                            <Icon name="arrowLeft" size={16} className="mr-2" /> Back to Home
+                        </button>
+                        <h1 className="text-4xl font-bold font-serif text-navy dark:text-white mb-4">Let's Connect</h1>
+                        <p className="text-gray-600 dark:text-gray-400 mb-12">Interested in research collaboration or speaking engagements? Send a message.</p>
+                        
+                        <form onSubmit={handleSubmit} className="bg-white dark:bg-[#1E1E1E] p-8 rounded-2xl shadow-xl border border-gray-200 dark:border-gray-800 text-left space-y-4">
+                            <input required type="text" placeholder="Your Name" value={form.name} onChange={e=>setForm({...form, name:e.target.value})} className="w-full px-4 py-3 rounded-lg bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-700 text-gray-900 dark:text-white focus:outline-none focus:border-[#2E8B57]" />
+                            <input required type="email" placeholder="Your Email" value={form.email} onChange={e=>setForm({...form, email:e.target.value})} className="w-full px-4 py-3 rounded-lg bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-700 text-gray-900 dark:text-white focus:outline-none focus:border-[#2E8B57]" />
+                            <textarea required rows="5" placeholder="Your Message" value={form.message} onChange={e=>setForm({...form, message:e.target.value})} className="w-full px-4 py-3 rounded-lg bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-700 text-gray-900 dark:text-white focus:outline-none focus:border-[#2E8B57] resize-none"></textarea>
+                            <button type="submit" className="w-full bg-[#2E8B57] hover:bg-[#257348] text-white font-bold py-4 rounded-lg flex items-center justify-center gap-2 transition-colors">
+                                <Icon name="send" size={18} /> Send Message
+                            </button>
+                            {status && <p className="text-center font-bold text-[#2E8B57] mt-2">{status}</p>}
+                        </form>
+                    </div>
+                );
+            };
+
+            const AIView = () => (
+                <div className="max-w-2xl mx-auto px-4 pt-32 pb-24 min-h-screen relative z-10 text-center animate-fade-in">
+                    <button onClick={() => navigateTo('home')} className="flex items-center text-[#2E8B57] hover:underline mb-8 font-medium mx-auto">
+                        <Icon name="arrowLeft" size={16} className="mr-2" /> Back to Home
+                    </button>
+                    <div className="w-20 h-20 bg-emerald-100 dark:bg-emerald-900/30 text-[#2E8B57] rounded-full flex items-center justify-center mx-auto mb-6"><Icon name="sparkles" size={40} /></div>
+                    <h1 className="text-3xl font-bold font-serif text-navy dark:text-white mb-4">AI Knowledge Assistant</h1>
+                    <p className="text-gray-600 dark:text-gray-400 bg-white dark:bg-[#1E1E1E] p-8 rounded-2xl shadow-sm border border-gray-200 dark:border-gray-800">
+                        The AI assistant is preparing to index the knowledge base.
+                    </p>
+                </div>
+            );
+
+            // Floating AI Button for Mobile only
+            const FloatingAI = () => (
+                <button onClick={() => navigateTo('ai')} className="sm:hidden fixed bottom-6 right-6 z-40 w-14 h-14 bg-[#2E8B57] text-white rounded-full shadow-lg flex items-center justify-center hover:scale-105 transition-transform border-2 border-white dark:border-gray-800">
+                    <Icon name="sparkles" size={24} />
+                </button>
+            );
+
             return (
-                <div className="min-h-screen flex flex-col selection:bg-[#2E8B57] selection:text-white">
-                    <Navbar darkMode={darkMode} setDarkMode={setDarkMode} setView={navigateTo} currentView={view} settings={settings} isSearchOpen={isSearchOpen} setIsSearchOpen={setIsSearchOpen} />
-                    <SearchOverlay isOpen={isSearchOpen} setIsOpen={setIsSearchOpen} publications={publications} navigateTo={navigateTo} />
+                <div className="relative min-h-screen flex flex-col">
+                    <ParticleBackground isDarkMode={darkMode} />
+                    <Navbar />
+                    <SearchOverlay />
                     
                     <main className="flex-grow">
                         {view === 'home' && <HomeContent />}
-                        {view === 'detail' && selectedItem && <PublicationDetailView item={selectedItem} setView={setView} />}
-                        {view === 'reading' && selectedItem && <ArticleReadingView item={selectedItem} setView={setView} />}
-                        {view === 'about' && <AboutView settings={settings} />}
-                        {view === 'contact' && <ContactView settings={settings} />}
-                        {view === 'ai' && <AiAssistantView />}
-                        {view === 'library' && <GenericList title="Library" data={books} />}
-                        {view === 'research' && <GenericList title="Research" data={research} />}
-                        {view === 'teaching' && <GenericList title="Teaching" data={teaching} />}
-                        {view === 'projects' && <GenericList title="Projects" data={projects} />}
-                        {view === 'journal' && <GenericList title="Journal" data={journal} />}
-                        {view === 'blog' && <GenericList title="Blog" data={blog} />}
+                        {view === 'library' && <ListView title="Digital Library" type="library" />}
+                        {view === 'research' && <ListView title="Research Archive" type="research" />}
+                        {view === 'teaching' && <ListView title="Teaching Hub" type="teaching" />}
+                        {view === 'projects' && <ListView title="Current Projects" type="project" />}
+                        {view === 'journal' && <ListView title="Personal Journal" type="journal" />}
+                        {view === 'blog' && <ListView title="Professional Blog" type="blog" />}
+                        {view === 'detail' && selectedItem && <DetailView item={selectedItem} />}
+                        {view === 'reading' && selectedItem && <ReadingView item={selectedItem} />}
+                        {view === 'about' && <AboutView />}
+                        {view === 'contact' && <ContactView />}
+                        {view === 'ai' && <AIView />}
                     </main>
-                    <Footer />
+
+                    <FloatingAI />
+
+                    {/* Footer exactly as requested */}
+                    <footer className="bg-[#0B1423] py-12 text-gray-400 text-sm border-t border-white/10 relative z-10 transition-colors duration-300">
+                        <div className="max-w-[1600px] mx-auto px-4 sm:px-6 lg:px-8 flex flex-col md:flex-row justify-between items-center gap-6 text-center md:text-left">
+                            <div className="flex items-center gap-3">
+                                 <div className="text-[#D4AF37]">
+                                    <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><path d="M4 19.5v-15A2.5 2.5 0 0 1 6.5 2H20v20H6.5a2.5 2.5 0 0 1 0-5H20"/><path d="M8 7h6"/><path d="M8 11h8"/></svg>
+                                </div>
+                                <div>
+                                    <h2 className="text-white font-serif font-bold text-lg leading-none">Ajayi Knowledge Hub</h2>
+                                    <span className="text-[#D4AF37] text-[10px] tracking-wider uppercase font-medium mt-1 inline-block">Explore. Learn. Discover. Grow.</span>
+                                </div>
+                            </div>
+                            
+                            <div className="text-center md:text-left">
+                                <p>&copy; {new Date().getFullYear()} {settings?.display_name || 'Paul Olakiitan Ajayi'}. All rights reserved.</p>
+                                <div className="flex gap-4 justify-center md:justify-start mt-2 text-xs">
+                                    <a href="#" className="hover:text-white transition-colors">Privacy Policy</a>
+                                    <a href="#" className="hover:text-white transition-colors">Terms of Use</a>
+                                </div>
+                            </div>
+                            
+                            <div>
+                                {settings?.footer_text || "Built with ♥ for knowledge, science, and humanity."}
+                            </div>
+                        </div>
+                    </footer>
                 </div>
             );
         };
 
         const root = ReactDOM.createRoot(document.getElementById('root'));
-        root.render(<App />);
+        root.render(<ErrorBoundary><App /></ErrorBoundary>);
     </script>
 </body>
 </html>
