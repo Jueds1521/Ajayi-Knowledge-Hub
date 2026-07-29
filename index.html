@@ -52,6 +52,33 @@
   </script>
 
   <style>
+    /* Content cards: horizontal scrolling works with mouse wheel, trackpad,
+       touch/swipe, scrollbar, and keyboard arrow keys. */
+    .content-cards-scroll {
+      -webkit-overflow-scrolling: touch;
+      overscroll-behavior-x: contain;
+      scrollbar-width: thin;
+      scroll-behavior: smooth;
+      cursor: grab;
+    }
+    .content-cards-scroll:active { cursor: grabbing; }
+    .content-cards-scroll:focus-visible {
+      outline: 2px solid #2E8B57;
+      outline-offset: 3px;
+      border-radius: 8px;
+    }
+    .content-cards-scroll::-webkit-scrollbar { height: 8px; }
+    .content-cards-scroll::-webkit-scrollbar-track {
+      background: #e5e7eb;
+      border-radius: 999px;
+    }
+    .content-cards-scroll::-webkit-scrollbar-thumb {
+      background: #94a3b8;
+      border-radius: 999px;
+    }
+    .dark .content-cards-scroll::-webkit-scrollbar-track { background: #1f2937; }
+    .dark .content-cards-scroll::-webkit-scrollbar-thumb { background: #64748b; }
+
     html { scroll-behavior: smooth; }
     body { margin: 0; font-family: Inter, sans-serif; }
     body::-webkit-scrollbar { width: 8px; }
@@ -581,31 +608,76 @@
        CONTENT CARDS
        ============================================================ */
     const ContentCards = ({ publications, navigateTo, setSelectedItem }) => {
-      const latest = (type) =>
-        publications.find(p => normalizeType(p.type) === type);
+      // Always keep the four original homepage cards in this order.
+      const latest = (...types) =>
+        publications.find(p => types.includes(normalizeType(p.type)));
 
-      const handleRead = (item) => {
+      const handleRead = (item, fallbackView) => {
         if (!item) return;
         setSelectedItem(item);
-        navigateTo(contentViewFor(item));
+        navigateTo(contentViewFor(item) || fallbackView);
       };
 
       const latestBook = latest('book');
-      const latestResearch = latest('research');
-      const latestBlog = latest('blog');
+      const latestJournal = latest('journal');
+      const latestBlog = latest('blog', 'article');
+      const currentProject = latest('project', 'projects');
 
-      if (!latestBook && !latestResearch && !latestBlog) return null;
+      const Card = ({ children }) => (
+        <div className="content-card snap-start shrink-0 w-[340px] md:w-[400px] bg-white dark:bg-[#1E1E1E] rounded-xl border border-gray-200 dark:border-gray-800 p-5 shadow-sm flex flex-col">
+          {children}
+        </div>
+      );
+
+      const Heading = ({ icon, children }) => (
+        <div className="flex items-center gap-2 font-serif font-bold text-lg dark:text-white mb-5 border-b border-gray-100 dark:border-gray-800 pb-3">
+          <Icon name={icon} size={20} /> {children}
+        </div>
+      );
+
+      const EmptyCard = ({ icon, title, message }) => (
+        <Card>
+          <Heading icon={icon}>{title}</Heading>
+          <div className="flex-1 flex items-center justify-center text-sm text-gray-500 dark:text-gray-400 text-center py-10">
+            {message}
+          </div>
+        </Card>
+      );
 
       return (
-        <div className="bg-gray-50 dark:bg-[#121212] py-8 border-b border-gray-200 dark:border-gray-800">
+        <section className="bg-gray-50 dark:bg-[#121212] py-8 border-b border-gray-200 dark:border-gray-800">
           <div className="max-w-[1600px] mx-auto px-4 sm:px-6 lg:px-8">
-            <div className="flex flex-nowrap overflow-x-auto pb-6 gap-6 snap-x snap-mandatory hide-scrollbar">
-
-              {latestBook && (
-                <div className="snap-start shrink-0 w-[340px] md:w-[400px] bg-white dark:bg-[#1E1E1E] rounded-xl border border-gray-200 dark:border-gray-800 p-5 shadow-sm flex flex-col">
-                  <div className="flex items-center gap-2 font-serif font-bold text-lg dark:text-white mb-5 border-b border-gray-100 dark:border-gray-800 pb-3">
-                    <Icon name="book" size={20} /> Featured Book
-                  </div>
+            <div
+              className="content-cards-scroll flex flex-nowrap overflow-x-auto overflow-y-hidden gap-6 pb-6 snap-x snap-mandatory"
+              role="region"
+              aria-label="Featured content"
+              tabIndex={0}
+              style={{
+                WebkitOverflowScrolling: 'touch',
+                scrollbarWidth: 'auto',
+                overscrollBehaviorX: 'contain'
+              }}
+              onWheel={(e) => {
+                const el = e.currentTarget;
+                if (Math.abs(e.deltaY) > Math.abs(e.deltaX)) {
+                  e.preventDefault();
+                  el.scrollBy({ left: e.deltaY, behavior: 'auto' });
+                }
+              }}
+              onKeyDown={(e) => {
+                if (e.key === 'ArrowRight') {
+                  e.preventDefault();
+                  e.currentTarget.scrollBy({ left: 420, behavior: 'smooth' });
+                } else if (e.key === 'ArrowLeft') {
+                  e.preventDefault();
+                  e.currentTarget.scrollBy({ left: -420, behavior: 'smooth' });
+                }
+              }}
+            >
+              {/* 1. FEATURED BOOK */}
+              {latestBook ? (
+                <Card>
+                  <Heading icon="book">Featured Book</Heading>
                   <div className="flex gap-4 flex-grow">
                     <div className="w-1/3 shrink-0">
                       {latestBook.thumbnail_url ? (
@@ -636,60 +708,66 @@
                         </div>
                       </div>
                       <button
-                        onClick={() => handleRead(latestBook)}
+                        onClick={() => handleRead(latestBook, 'library')}
                         className="mt-4 px-4 py-1.5 border border-gray-300 dark:border-gray-600 rounded text-sm font-medium hover:bg-gray-50 dark:hover:bg-gray-800 w-max dark:text-white"
                       >
                         View Book
                       </button>
                     </div>
                   </div>
-                </div>
+                </Card>
+              ) : (
+                <EmptyCard icon="book" title="Featured Book" message="No featured book available yet." />
               )}
 
-              {latestResearch && (
-                <div className="snap-start shrink-0 w-[340px] md:w-[400px] bg-white dark:bg-[#1E1E1E] rounded-xl border border-gray-200 dark:border-gray-800 p-5 shadow-sm flex flex-col">
-                  <div className="flex items-center gap-2 font-serif font-bold text-lg dark:text-white mb-5 border-b border-gray-100 dark:border-gray-800 pb-3">
-                    <Icon name="microscope" size={20} /> Latest Research
-                  </div>
+              {/* 2. LATEST JOURNAL */}
+              {latestJournal ? (
+                <Card>
+                  <Heading icon="journal">Latest Journal</Heading>
                   <div className="h-32 bg-gray-200 dark:bg-gray-700 rounded-lg mb-4 overflow-hidden">
-                    <img
-                      src={latestResearch.thumbnail_url || 'https://images.unsplash.com/photo-1576086213369-97a306d36557?auto=format&fit=crop&q=80'}
-                      alt=""
-                      loading="lazy"
-                      className="w-full h-full object-cover"
-                    />
-                  </div>
-                  <h4 className="font-serif font-bold text-base mb-1 dark:text-white">
-                    {latestResearch.title}
-                  </h4>
-                  <div className="text-xs text-gray-500 mb-2">
-                    {latestResearch.published_date}
-                  </div>
-                  <p className="text-sm text-gray-600 dark:text-gray-400 mb-4 line-clamp-2 flex-grow">
-                    {latestResearch.summary}
-                  </p>
-                  <button
-                    onClick={() => handleRead(latestResearch)}
-                    className="text-[#2E8B57] text-sm font-medium hover:underline text-left"
-                  >
-                    Read Now →
-                  </button>
-                </div>
-              )}
-
-              {latestBlog && (
-                <div className="snap-start shrink-0 w-[340px] md:w-[400px] bg-white dark:bg-[#1E1E1E] rounded-xl border border-gray-200 dark:border-gray-800 p-5 shadow-sm flex flex-col">
-                  <div className="flex items-center gap-2 font-serif font-bold text-lg dark:text-white mb-5 border-b border-gray-100 dark:border-gray-800 pb-3">
-                    <Icon name="pencil" size={20} /> Latest Article
-                  </div>
-                  <div className="flex gap-4 h-full">
-                    <div className="w-2/5 shrink-0 min-h-[140px] bg-gray-200 rounded-lg overflow-hidden">
+                    {latestJournal.thumbnail_url && (
                       <img
-                        src={latestBlog.thumbnail_url || 'https://images.unsplash.com/photo-1581093458791-9f3c3900df4b?auto=format&fit=crop&q=80'}
+                        src={latestJournal.thumbnail_url}
                         alt=""
                         loading="lazy"
                         className="w-full h-full object-cover"
                       />
+                    )}
+                  </div>
+                  <h4 className="font-serif font-bold text-base mb-1 dark:text-white">
+                    {latestJournal.title}
+                  </h4>
+                  <div className="text-xs text-gray-500 mb-2">
+                    {latestJournal.published_date}
+                  </div>
+                  <p className="text-sm text-gray-600 dark:text-gray-400 mb-4 line-clamp-3 flex-grow">
+                    {latestJournal.summary}
+                  </p>
+                  <button
+                    onClick={() => handleRead(latestJournal, 'journal')}
+                    className="text-[#2E8B57] text-sm font-medium hover:underline text-left"
+                  >
+                    Read Journal →
+                  </button>
+                </Card>
+              ) : (
+                <EmptyCard icon="journal" title="Latest Journal" message="No journal entry available yet." />
+              )}
+
+              {/* 3. LATEST BLOG */}
+              {latestBlog ? (
+                <Card>
+                  <Heading icon="pencil">Latest Blog</Heading>
+                  <div className="flex gap-4 h-full">
+                    <div className="w-2/5 shrink-0 min-h-[140px] bg-gray-200 dark:bg-gray-700 rounded-lg overflow-hidden">
+                      {latestBlog.thumbnail_url && (
+                        <img
+                          src={latestBlog.thumbnail_url}
+                          alt=""
+                          loading="lazy"
+                          className="w-full h-full object-cover"
+                        />
+                      )}
                     </div>
                     <div className="flex flex-col min-w-0">
                       <h4 className="font-serif font-bold text-base mb-1 dark:text-white line-clamp-2">
@@ -702,18 +780,51 @@
                         {latestBlog.summary}
                       </p>
                       <button
-                        onClick={() => handleRead(latestBlog)}
+                        onClick={() => handleRead(latestBlog, 'blog')}
                         className="text-[#2E8B57] text-sm font-medium hover:underline text-left"
                       >
-                        Read Article →
+                        Read Blog →
                       </button>
                     </div>
                   </div>
-                </div>
+                </Card>
+              ) : (
+                <EmptyCard icon="pencil" title="Latest Blog" message="No blog post available yet." />
+              )}
+
+              {/* 4. CURRENT PROJECT */}
+              {currentProject ? (
+                <Card>
+                  <Heading icon="folder">Current Project</Heading>
+                  <div className="h-32 bg-gray-200 dark:bg-gray-700 rounded-lg mb-4 overflow-hidden">
+                    {currentProject.thumbnail_url && (
+                      <img
+                        src={currentProject.thumbnail_url}
+                        alt=""
+                        loading="lazy"
+                        className="w-full h-full object-cover"
+                      />
+                    )}
+                  </div>
+                  <h4 className="font-serif font-bold text-base mb-2 dark:text-white line-clamp-2">
+                    {currentProject.title}
+                  </h4>
+                  <p className="text-sm text-gray-600 dark:text-gray-400 mb-4 line-clamp-3 flex-grow">
+                    {currentProject.summary}
+                  </p>
+                  <button
+                    onClick={() => handleRead(currentProject, 'projects')}
+                    className="text-[#2E8B57] text-sm font-medium hover:underline text-left"
+                  >
+                    View Project →
+                  </button>
+                </Card>
+              ) : (
+                <EmptyCard icon="folder" title="Current Project" message="No current project available yet." />
               )}
             </div>
           </div>
-        </div>
+        </section>
       );
     };
 
