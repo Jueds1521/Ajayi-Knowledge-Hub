@@ -486,62 +486,97 @@
     /* ============================================================
        HERO
        ============================================================ */
-    const HeroSection = ({ settings, navigateTo }) => {
-      const title = safeText(settings?.hero_title).trim();
+   const HeroSection = ({ settings, navigateTo }) => (
+    <section className="relative pt-32 pb-24 flex items-center justify-center bg-[#0B1423] text-white overflow-hidden min-h-[80vh]">
+        <ParticleBackground />
 
-      return (
-        <section className="relative pt-32 pb-24 flex items-center justify-center bg-[#0B1423] text-white overflow-hidden min-h-[80vh]">
-          <ParticleBackground />
-          <div
+        {/* Background image */}
+        <div
             className="absolute inset-0 z-0 bg-cover bg-center opacity-20 mix-blend-overlay"
             style={{
-              backgroundImage:
-                "url('https://images.unsplash.com/photo-1532094349884-543bc11b234d?auto=format&fit=crop&q=80')"
+                backgroundImage:
+                    "url('https://images.unsplash.com/photo-1532094349884-543bc11b234d?auto=format&fit=crop&q=80')"
             }}
-          />
-          <div className="absolute inset-0 z-0 bg-gradient-to-b from-[#0B1423]/80 via-[#0B1423]/60 to-[#0B1423]" />
+        ></div>
 
-          <div className="relative z-10 container mx-auto px-6 text-center max-w-5xl animate-fade-in">
-            <h1 className="font-serif text-4xl sm:text-5xl md:text-7xl font-bold mb-6 leading-tight tracking-tight">
-              {title ? (
-                <span>{title}</span>
-              ) : (
-                <>
-                  Knowledge that <span className="text-[#2E8B57]">grows</span>.<br />
-                  Research that <span className="text-[#D4AF37]">matters</span>.<br />
-                  Ideas that <span className="text-[#8B9C2A]">inspire</span>.
-                </>
-              )}
+        {/* Dark overlay */}
+        <div className="absolute inset-0 z-0 bg-gradient-to-b from-[#0B1423]/80 via-[#0B1423]/60 to-[#0B1423]"></div>
+
+        <div className="relative z-10 container mx-auto px-6 text-center max-w-7xl animate-fade-in">
+
+            {/* ORIGINAL HEADLINE */}
+            <h1 className="font-serif text-5xl md:text-6xl lg:text-7xl xl:text-8xl font-bold mb-8 leading-[0.98] tracking-tight">
+                <span className="block">
+                    Knowledge that{" "}
+                    <span className="text-[#2E8B57]">grows</span>.
+                </span>
+
+                <span className="block">
+                    Research that{" "}
+                    <span className="text-[#D4AF37]">matters</span>.
+                </span>
+
+                <span className="block">
+                    Ideas that{" "}
+                    <span className="text-[#8B9C2A]">inspire</span>.
+                </span>
             </h1>
 
-            <h2 className="text-lg md:text-2xl text-[#D4AF37] font-medium mb-6 font-serif">
-              {settings?.hero_subtitle || 'Welcome to my digital knowledge hub.'}
+            {/* Subtitle */}
+            <h2 className="text-xl md:text-2xl text-[#D4AF37] font-medium mb-6 font-serif">
+                {settings?.hero_subtitle ||
+                    "Welcome to my digital knowledge hub."}
             </h2>
 
-            <p className="text-base md:text-lg text-gray-300 mb-12 max-w-3xl mx-auto font-light leading-relaxed">
-              {settings?.mission_text ||
-                'Here I share my books, scientific research, teaching materials, journals, articles, and ideas as I pursue a lifelong mission of learning, discovery, and service.'}
+            {/* Description */}
+            <p className="text-base md:text-lg text-gray-300 mb-12 max-w-4xl mx-auto font-light leading-relaxed">
+                {settings?.mission_text ||
+                    "Here I share my books, scientific research, teaching materials, journals, articles, and ideas as I pursue a lifelong mission of learning, discovery, and service."}
             </p>
 
+            {/* FOUR ORIGINAL BUTTONS */}
             <div className="flex flex-wrap items-center justify-center gap-4">
-              <button
-                onClick={() => navigateTo('library')}
-                className="px-8 py-3.5 bg-[#2E8B57] hover:bg-[#257348] text-white text-sm font-semibold rounded-lg transition-all flex items-center gap-2 shadow-lg"
-              >
-                <Icon name="book" size={18} /> Explore Library
-              </button>
-              <button
-                onClick={() => navigateTo('research')}
-                className="px-8 py-3.5 bg-transparent hover:bg-white/5 text-white text-sm font-semibold rounded-lg transition-all border border-blue-400/30 flex items-center gap-2"
-              >
-                <Icon name="microscope" size={18} /> Research Archive
-              </button>
-            </div>
-          </div>
-        </section>
-      );
-    };
 
+                {/* Library */}
+                <button
+                    onClick={() => navigateTo("library")}
+                    className="min-w-[240px] px-8 py-4 bg-[#2E8B57] hover:bg-[#257348] text-white text-base font-semibold rounded-lg transition-all flex items-center justify-center gap-3 border border-[#2E8B57] shadow-lg"
+                >
+                    <Icon name="book" size={20} />
+                    Explore Library
+                </button>
+
+                {/* Research */}
+                <button
+                    onClick={() => navigateTo("research")}
+                    className="min-w-[240px] px-8 py-4 bg-transparent hover:bg-white/5 text-white text-base font-semibold rounded-lg transition-all border border-blue-400/30 flex items-center justify-center gap-3"
+                >
+                    <Icon name="microscope" size={20} />
+                    Research Archive
+                </button>
+
+                {/* Teaching */}
+                <button
+                    onClick={() => navigateTo("teaching")}
+                    className="min-w-[240px] px-8 py-4 bg-[#2E8B57] hover:bg-[#257348] text-white text-base font-semibold rounded-lg transition-all flex items-center justify-center gap-3 border border-[#2E8B57] shadow-lg"
+                >
+                    <Icon name="gradCap" size={20} />
+                    Teaching Hub
+                </button>
+
+                {/* About */}
+                <button
+                    onClick={() => navigateTo("about")}
+                    className="min-w-[240px] px-8 py-4 bg-transparent hover:bg-white/5 text-white text-base font-semibold rounded-lg transition-all border border-gray-500/50 flex items-center justify-center gap-3"
+                >
+                    <Icon name="users" size={20} />
+                    About Me
+                </button>
+
+            </div>
+        </div>
+    </section>
+);
     /* ============================================================
        CONTENT CARDS
        ============================================================ */
