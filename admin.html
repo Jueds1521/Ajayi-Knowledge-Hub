@@ -46,6 +46,8 @@
             const [content, setContent] = useState(''); 
             const [tags, setTags] = useState('');
             const [file, setFile] = useState(null); 
+            const [thumbnailFile, setThumbnailFile] = useState(null);
+            const [thumbnailUrl, setThumbnailUrl] = useState('');
             const [isPublishing, setIsPublishing] = useState(false); 
             const [editingId, setEditingId] = useState(null);
             
@@ -57,7 +59,8 @@
                 display_name: '', bio: '', about_text: '', mission_text: '', 
                 hero_title: '', hero_subtitle: '', footer_text: '',
                 profile_pic_url: '', logo_url: '', linkedin_url: '', 
-                facebook_url: '', orcid_url: '', whatsapp_number: '' 
+                facebook_url: '', orcid_url: '', whatsapp_number: '',
+                daily_quote: '', quote_author: ''
             });
             
             // UI State
@@ -96,11 +99,21 @@
                         fileUrl = supabase.storage.from('documents').getPublicUrl(fileName).data.publicUrl;
                     }
                     
+                    let finalThumbUrl = thumbnailUrl;
+                    if (thumbnailFile) {
+                        const cleanThumb = thumbnailFile.name.replace(/[^a-zA-Z0-9.\-_]/g, '');
+                        const thumbName = `thumb_${Date.now()}_${cleanThumb}`;
+                        const { error: thumbUploadError } = await supabase.storage.from('images').upload(thumbName, thumbnailFile);
+                        if (thumbUploadError) throw thumbUploadError;
+                        finalThumbUrl = supabase.storage.from('images').getPublicUrl(thumbName).data.publicUrl;
+                    }
+                    
                     const payload = { 
                         title, type, category, summary, content, 
                         tags: tags.split(',').map(t => t.trim()).filter(Boolean) 
                     };
                     if (fileUrl) payload.file_url = fileUrl;
+                    if (finalThumbUrl) payload.thumbnail_url = finalThumbUrl;
                     
                     if (editingId) {
                         const { error } = await supabase.from('publications').update(payload).eq('id', editingId);
@@ -114,7 +127,7 @@
                     }
                     
                     // Reset Form
-                    setEditingId(null); setTitle(''); setCategory(''); setSummary(''); setContent(''); setTags(''); setFile(null);
+                    setEditingId(null); setTitle(''); setCategory(''); setSummary(''); setContent(''); setTags(''); setFile(null); setThumbnailFile(null); setThumbnailUrl('');
                     fetchData();
                 } catch (error) { 
                     setStatusMsg({ type: 'error', text: 'Error: ' + error.message }); 
@@ -131,6 +144,7 @@
                 setSummary(pub.summary || '');
                 setContent(pub.content || '');
                 setTags((pub.tags || []).join(', '));
+                setThumbnailUrl(pub.thumbnail_url || '');
                 window.scrollTo({ top: 0, behavior: 'smooth' });
                 setStatusMsg({ type: 'success', text: `Editing: ${pub.title}` });
             };
@@ -149,7 +163,7 @@
             };
 
             const cancelEdit = () => {
-                setEditingId(null); setTitle(''); setCategory(''); setSummary(''); setContent(''); setTags(''); setFile(null);
+                setEditingId(null); setTitle(''); setCategory(''); setSummary(''); setContent(''); setTags(''); setFile(null); setThumbnailFile(null); setThumbnailUrl('');
                 setStatusMsg({ type: '', text: '' });
             };
 
@@ -176,16 +190,26 @@
                     const fileName = `${Date.now()}_${cleanName}`;
                     const { error: uploadError } = await supabase.storage.from('images').upload(fileName, img);
                     
-                    if (uploadError) {
-                        console.error("Supabase Upload Error Details:", uploadError);
-                        throw new Error(uploadError.message || "Failed to upload image. Check security rules.");
-                    }
+                    if (uploadError) throw new Error(uploadError.message || "Failed to upload image.");
                     
                     const url = supabase.storage.from('images').getPublicUrl(fileName).data.publicUrl;
                     setSettings(prev => ({ ...prev, [fieldName]: url }));
                     setSettingsStatus({ type: 'success', text: 'Image uploaded! Now click "Save All Settings" at the bottom.' });
                 } catch (error) { 
                     setSettingsStatus({ type: 'error', text: 'Upload Error: ' + error.message }); 
+                }
+            };
+
+            // Fetch a random quote from a free public API
+            const handleGenerateQuote = async () => {
+                setSettingsStatus({ type: 'success', text: 'Fetching inspiring quote...' });
+                try {
+                    const res = await fetch('https://dummyjson.com/quotes/random');
+                    const data = await res.json();
+                    setSettings(prev => ({ ...prev, daily_quote: data.quote, quote_author: data.author }));
+                    setSettingsStatus({ type: 'success', text: 'Quote updated! You can edit it below, then click "Save All Settings".' });
+                } catch (error) {
+                    setSettingsStatus({ type: 'error', text: 'Failed to fetch online quote. Please type one manually.' });
                 }
             };
 
@@ -261,6 +285,12 @@
                                                     <label className="text-xs text-gray-400 mb-1 block">Attach PDF Document (Optional)</label>
                                                     <input type="file" accept=".pdf,.doc,.docx" onChange={e=>setFile(e.target.files[0])} className="w-full px-4 py-2.5 rounded-xl bg-gray-800 border-none text-gray-400 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-emerald-900/30 file:text-emerald-400 hover:file:bg-emerald-900/50" />
                                                 </div>
+                                            </div>
+                                            <div>
+                                                <label className="text-xs text-gray-400 mb-1 block">Upload Cover / Thumbnail Image (Optional)</label>
+                                                {thumbnailUrl && <div className="mb-2"><img src={thumbnailUrl} alt="Thumbnail preview" className="h-20 w-auto rounded-lg border border-gray-700 object-cover"/></div>}
+                                                <input type="file" accept="image/*" onChange={e=>setThumbnailFile(e.target.files[0])} className="w-full px-4 py-2.5 rounded-xl bg-gray-800 border-none text-gray-400 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-blue-900/30 file:text-blue-400 hover:file:bg-blue-900/50" />
+                                                <p className="text-gray-500 text-xs mt-1">Upload a custom image to replace the default background on the main website cards.</p>
                                             </div>
                                             <button type="submit" disabled={isPublishing} className="w-full bg-emerald-600 hover:bg-emerald-700 text-white px-6 py-4 rounded-xl font-bold transition-colors disabled:opacity-50 mt-4">
                                                 {isPublishing ? 'Saving...' : (editingId ? 'Update Publication' : 'Publish to Live Site')}
@@ -351,14 +381,28 @@
                                             </div>
                                         </div>
 
+                                        {/* Dynamic Quotes Section */}
+                                        <div className="bg-gray-900 rounded-2xl border border-gray-800 p-6 shadow-lg">
+                                            <div className="flex justify-between items-center mb-4 border-b border-gray-800 pb-2">
+                                                <h3 className="text-lg font-bold text-white">Quote of the Day</h3>
+                                                <button type="button" onClick={handleGenerateQuote} className="px-4 py-1.5 bg-blue-900/30 text-blue-400 hover:bg-blue-900/50 rounded-lg text-xs font-bold transition-colors">
+                                                    <i className="fas fa-magic mr-1"></i> Generate Random Quote
+                                                </button>
+                                            </div>
+                                            <div className="space-y-4">
+                                                <div><label className="text-xs text-gray-400 mb-1 block">Inspiring Quote Text</label><textarea rows="2" value={settings.daily_quote || ''} onChange={e=>setSettings({...settings, daily_quote: e.target.value})} className="w-full px-4 py-3 rounded-xl bg-gray-800 border-none text-white focus:ring-2 focus:ring-emerald-500" placeholder="Type a quote or generate one..."></textarea></div>
+                                                <div><label className="text-xs text-gray-400 mb-1 block">Quote Author</label><input type="text" value={settings.quote_author || ''} onChange={e=>setSettings({...settings, quote_author: e.target.value})} className="w-full px-4 py-3 rounded-xl bg-gray-800 border-none text-white focus:ring-2 focus:ring-emerald-500" placeholder="Who said it?" /></div>
+                                            </div>
+                                        </div>
+
                                         {/* Social Links */}
                                         <div className="bg-gray-900 rounded-2xl border border-gray-800 p-6 shadow-lg">
                                             <h3 className="text-lg font-bold text-white mb-4 border-b border-gray-800 pb-2">Social & Connect Links</h3>
                                             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                                <div><label className="text-xs text-gray-400 mb-1 block">LinkedIn URL</label><input type="url" placeholder="https://linkedin.com/in/..." value={settings.linkedin_url} onChange={e=>setSettings({...settings, linkedin_url: e.target.value})} className="w-full px-4 py-3 rounded-xl bg-gray-800 border-none text-white focus:ring-2 focus:ring-emerald-500" /></div>
-                                                <div><label className="text-xs text-gray-400 mb-1 block">Facebook URL</label><input type="url" placeholder="https://facebook.com/..." value={settings.facebook_url} onChange={e=>setSettings({...settings, facebook_url: e.target.value})} className="w-full px-4 py-3 rounded-xl bg-gray-800 border-none text-white focus:ring-2 focus:ring-emerald-500" /></div>
-                                                <div><label className="text-xs text-gray-400 mb-1 block">ORCID Profile URL</label><input type="url" placeholder="https://orcid.org/..." value={settings.orcid_url} onChange={e=>setSettings({...settings, orcid_url: e.target.value})} className="w-full px-4 py-3 rounded-xl bg-gray-800 border-none text-white focus:ring-2 focus:ring-emerald-500" /></div>
-                                                <div><label className="text-xs text-gray-400 mb-1 block">WhatsApp Number (inc. country code)</label><input type="text" placeholder="e.g. 2348012345678" value={settings.whatsapp_number} onChange={e=>setSettings({...settings, whatsapp_number: e.target.value})} className="w-full px-4 py-3 rounded-xl bg-gray-800 border-none text-white focus:ring-2 focus:ring-emerald-500" /></div>
+                                                <div><label className="text-xs text-gray-400 mb-1 block">LinkedIn URL</label><input type="url" placeholder="https://linkedin.com/in/..." value={settings.linkedin_url || ''} onChange={e=>setSettings({...settings, linkedin_url: e.target.value})} className="w-full px-4 py-3 rounded-xl bg-gray-800 border-none text-white focus:ring-2 focus:ring-emerald-500" /></div>
+                                                <div><label className="text-xs text-gray-400 mb-1 block">Facebook URL</label><input type="url" placeholder="https://facebook.com/..." value={settings.facebook_url || ''} onChange={e=>setSettings({...settings, facebook_url: e.target.value})} className="w-full px-4 py-3 rounded-xl bg-gray-800 border-none text-white focus:ring-2 focus:ring-emerald-500" /></div>
+                                                <div><label className="text-xs text-gray-400 mb-1 block">ORCID Profile URL</label><input type="url" placeholder="https://orcid.org/..." value={settings.orcid_url || ''} onChange={e=>setSettings({...settings, orcid_url: e.target.value})} className="w-full px-4 py-3 rounded-xl bg-gray-800 border-none text-white focus:ring-2 focus:ring-emerald-500" /></div>
+                                                <div><label className="text-xs text-gray-400 mb-1 block">WhatsApp Number (inc. country code)</label><input type="text" placeholder="e.g. 2348012345678" value={settings.whatsapp_number || ''} onChange={e=>setSettings({...settings, whatsapp_number: e.target.value})} className="w-full px-4 py-3 rounded-xl bg-gray-800 border-none text-white focus:ring-2 focus:ring-emerald-500" /></div>
                                             </div>
                                         </div>
 
