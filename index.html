@@ -524,8 +524,9 @@
                 setLoading(true);
 
                 try {
-                    const apiKey = "AQ.Ab8RN6IldjSaVWI-DFOKeypexneKZeGmpP32V-ePaOm3S2iLvw"; 
-                    const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-3-flash-preview:generateContent?key=${apiKey}`;
+                    // Gemini is called through our secure Vercel API route.
+                    // The API key is never exposed in the browser.
+                    const apiUrl = '/api/chat';
 
                     const systemPrompt = `You are Juedsola, the official AI Assistant for Paul Olakiitan Ajayi's Knowledge Hub. You speak on behalf of Paul.
                     Paul is a Microbiologist, Researcher, and Educator.
@@ -549,10 +550,13 @@
                     const res = await fetch(apiUrl, {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify(payload)
+                        body: JSON.stringify({ contents: historyForApi, systemInstruction: payload.systemInstruction })
                     });
 
                     const data = await res.json();
+                    if (!res.ok) {
+                        throw new Error(data?.error || `Chat API request failed (${res.status})`);
+                    }
                     const aiText = data.candidates?.[0]?.content?.parts?.[0]?.text || "I am currently disconnected from my knowledge base. Please try again later, or use the Direct Inbox to message Paul.";
 
                     setMessages(prev => [...prev, {role: 'ai', text: aiText}]);
