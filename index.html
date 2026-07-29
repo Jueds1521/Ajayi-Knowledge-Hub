@@ -1,898 +1,1842 @@
-<!DOCTYPE html>
-<html lang="en" class="scroll-smooth">
+<!doctype html>
+<html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Ajayi Knowledge Hub</title>
-    
-    <!-- React & Babel -->
-    <script src="https://unpkg.com/react@18/umd/react.development.js"></script>
-    <script src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
-    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
-    
-    <!-- Tailwind CSS & Supabase -->
-    <script src="https://cdn.tailwindcss.com"></script>
-    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-    
-    <!-- Google Fonts -->
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Merriweather:wght@300;400;700;900&display=swap" rel="stylesheet">
-    
-    <script>
-        tailwind.config = {
-            darkMode: 'class',
-            theme: {
-                extend: {
-                    colors: {
-                        navy: '#0B1F3A',
-                        emerald: '#2E8B57',
-                        gold: '#D4AF37',
-                        charcoal: '#121212',
-                        cardDark: '#1E1E1E'
-                    },
-                    fontFamily: {
-                        sans: ['Inter', 'sans-serif'],
-                        serif: ['Merriweather', 'serif'],
-                    },
-                    animation: {
-                        'fade-in': 'fadeIn 0.5s ease-out forwards',
-                        'slide-down': 'slideDown 0.3s ease-out forwards',
-                        'pulse-slow': 'pulse 4s cubic-bezier(0.4, 0, 0.6, 1) infinite',
-                    },
-                    keyframes: {
-                        fadeIn: {
-                            '0%': { opacity: '0' },
-                            '100%': { opacity: '1' },
-                        },
-                        slideDown: {
-                            '0%': { opacity: '0', transform: 'translateY(-10px)' },
-                            '100%': { opacity: '1', transform: 'translateY(0)' },
-                        }
-                    }
-                }
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="description" content="Ajayi Knowledge Hub — research, books, teaching, journals and ideas." />
+  <title>Ajayi Knowledge Hub</title>
+
+  <script src="https://unpkg.com/react@18/umd/react.development.js"></script>
+  <script src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
+  <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Merriweather:wght@300;400;700;900&display=swap" rel="stylesheet">
+
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          colors: {
+            navy: '#0B1F3A',
+            emerald: '#2E8B57',
+            gold: '#D4AF37',
+            charcoal: '#121212',
+            cardDark: '#1E1E1E'
+          },
+          fontFamily: {
+            sans: ['Inter', 'sans-serif'],
+            serif: ['Merriweather', 'serif']
+          },
+          animation: {
+            'fade-in': 'fadeIn .45s ease-out forwards',
+            'slide-down': 'slideDown .25s ease-out forwards'
+          },
+          keyframes: {
+            fadeIn: {
+              '0%': { opacity: '0' },
+              '100%': { opacity: '1' }
+            },
+            slideDown: {
+              '0%': { opacity: '0', transform: 'translateY(-8px)' },
+              '100%': { opacity: '1', transform: 'translateY(0)' }
             }
+          }
         }
-    </script>
-    <style>
-        body::-webkit-scrollbar { width: 8px; }
-        body::-webkit-scrollbar-track { background: transparent; }
-        body::-webkit-scrollbar-thumb { background-color: #cbd5e1; border-radius: 20px; }
-        .dark body::-webkit-scrollbar-thumb { background-color: #334155; }
-        .hide-scrollbar::-webkit-scrollbar { display: none; }
-        .hide-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
-    </style>
+      }
+    };
+  </script>
+
+  <style>
+    html { scroll-behavior: smooth; }
+    body { margin: 0; font-family: Inter, sans-serif; }
+    body::-webkit-scrollbar { width: 8px; }
+    body::-webkit-scrollbar-track { background: transparent; }
+    body::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 20px; }
+    .dark body::-webkit-scrollbar-thumb { background: #334155; }
+    .hide-scrollbar::-webkit-scrollbar { display: none; }
+    .hide-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+  </style>
 </head>
-<body class="bg-gray-50 dark:bg-charcoal text-gray-900 dark:text-gray-100 transition-colors duration-300 antialiased font-sans">
-    <div id="root"></div>
 
-    <script type="text/babel">
-        const { useState, useEffect, useRef, Fragment, Component } = React;
+<body class="bg-gray-50 text-gray-900 dark:bg-[#121212] dark:text-gray-100">
+  <div id="root"></div>
 
-        // --- SUPABASE CONFIGURATION ---
-        const supabaseUrl = 'https://ulqihwnzujncqpexersp.supabase.co';
-        const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InVscWlod256dWpuY3FwZXhlcnNwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODUyNDIxNjMsImV4cCI6MjEwMDgxODE2M30.vvMQLeUtjVmciJxwqVgiFVZjmHlclY0Z-oHngY3SVso';
-        const supabase = window.supabase.createClient(supabaseUrl, supabaseKey);
+  <script type="text/babel">
+    const {
+      useState,
+      useEffect,
+      useRef,
+      Fragment,
+      Component
+    } = React;
 
-        // --- ERROR BOUNDARY ---
-        class ErrorBoundary extends Component {
-            constructor(props) {
-                super(props);
-                this.state = { hasError: false, error: null };
+    /* ============================================================
+       SUPABASE
+       ============================================================ */
+    const SUPABASE_URL = 'https://ulqihwnzujncqpexersp.supabase.co';
+    const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InVscWlod256d3WpuY3FwZXhlcnNwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODUyNDIxNjMsImV4cCI6MjEwMDgxODE2M30.vvMQLeUtjVmciJxwqVgiFVZjmHlclY0Z-oHngY3SVso';
+
+    const supabaseClient =
+      window.supabase && typeof window.supabase.createClient === 'function'
+        ? window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY)
+        : null;
+
+    /* ============================================================
+       HELPERS
+       ============================================================ */
+    const safeText = (value, fallback = '') =>
+      value === null || value === undefined ? fallback : String(value);
+
+    const normalizeType = (type) => {
+      const value = safeText(type).toLowerCase().trim();
+      const aliases = {
+        books: 'book',
+        ebooks: 'book',
+        'e-books': 'book',
+        articles: 'blog',
+        blogs: 'blog',
+        journals: 'journal',
+        research_notes: 'research',
+        'research notes': 'research'
+      };
+      return aliases[value] || value;
+    };
+
+    const contentViewFor = (item) => {
+      const type = normalizeType(item?.type);
+      return ['blog', 'journal'].includes(type) ? 'reading' : 'detail';
+    };
+
+    const navigateHash = (view) => {
+      try {
+        window.history.pushState({ view }, '', `#${view}`);
+      } catch (_) {}
+    };
+
+    const initialViewFromHash = () => {
+      const hash = window.location.hash.replace('#', '').trim();
+      const valid = [
+        'home', 'library', 'research', 'journal', 'teaching',
+        'blog', 'projects', 'about', 'contact', 'ai',
+        'detail', 'reading'
+      ];
+      return valid.includes(hash) ? hash : 'home';
+    };
+
+    /* ============================================================
+       ERROR BOUNDARY
+       ============================================================ */
+    class ErrorBoundary extends Component {
+      constructor(props) {
+        super(props);
+        this.state = { hasError: false, error: null };
+      }
+
+      static getDerivedStateFromError(error) {
+        return { hasError: true, error };
+      }
+
+      componentDidCatch(error, info) {
+        console.error('Ajayi Knowledge Hub error:', error, info);
+      }
+
+      render() {
+        if (!this.state.hasError) return this.props.children;
+
+        return (
+          <div className="min-h-screen flex items-center justify-center bg-gray-50 dark:bg-charcoal p-6">
+            <div className="w-full max-w-lg rounded-3xl bg-white dark:bg-cardDark p-8 shadow-2xl border border-gray-200 dark:border-gray-800 text-center">
+              <div className="mx-auto mb-4 w-14 h-14 rounded-full bg-red-100 text-red-600 flex items-center justify-center text-2xl">!</div>
+              <h2 className="text-2xl font-bold mb-2">Something went wrong</h2>
+              <p className="text-sm text-gray-600 dark:text-gray-400 mb-6 break-words">
+                {this.state.error?.message || 'The page encountered an unexpected error.'}
+              </p>
+              <button
+                onClick={() => window.location.reload()}
+                className="px-6 py-3 rounded-xl bg-navy text-white font-semibold hover:opacity-90"
+              >
+                Reload Page
+              </button>
+            </div>
+          </div>
+        );
+      }
+    }
+
+    /* ============================================================
+       ICONS
+       ============================================================ */
+    const Icon = ({ name, size = 20, className = '' }) => {
+      const icons = {
+        book: <Fragment><path d="M4 19.5v-15A2.5 2.5 0 0 1 6.5 2H20v20H6.5a2.5 2.5 0 0 1 0-5H20"/><path d="M8 7h6"/><path d="M8 11h8"/></Fragment>,
+        microscope: <Fragment><path d="M6 18h8M3 22h18M14 22a7 7 0 1 0 0-14h-1M9 14h2M9 12a2 2 0 0 1-2-2V6h6v4a2 2 0 0 1-2 2Z M12 6V3a1 1 0 0 0-1-1H9a1 1 0 0 0-1 1v3"/></Fragment>,
+        gradCap: <Fragment><path d="M22 10v6M2 10l10-5 10 5-10 5zM6 12v5c3 3 9 3 12 0v-5"/></Fragment>,
+        pencil: <Fragment><path d="M17 3a2.828 2.828 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3zM15 5l4 4"/></Fragment>,
+        menu: <Fragment><path d="M4 12h16M4 6h16M4 18h16"/></Fragment>,
+        x: <Fragment><path d="M18 6 6 18M6 6l12 12"/></Fragment>,
+        sun: <Fragment><path d="M12 3v1M12 20v1M4.22 4.22l.71.71M19.07 19.07l.71.71M1 12h1M20 12h1M4.22 19.78l.71-.71M19.07 4.93l.71-.71M12 17a5 5 0 1 0 0-10 5 5 0 0 0 0 10z"/></Fragment>,
+        moon: <Fragment><path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z"/></Fragment>,
+        download: <Fragment><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M7 10l5 5 5-5M12 15V3"/></Fragment>,
+        layout: <Fragment><rect x="3" y="3" width="18" height="18" rx="2"/><line x1="3" y1="9" x2="21" y2="9"/><line x1="9" y1="21" x2="9" y2="9"/></Fragment>,
+        users: <Fragment><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75"/></Fragment>,
+        search: <Fragment><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></Fragment>,
+        sparkles: <Fragment><path d="M9.937 15.5A2 2 0 0 0 8.5 14.063l-6.135-1.582a.5.5 0 0 1 0-.962L8.5 9.936A2 2 0 0 0 9.937 8.5l1.582-6.135a.5.5 0 0 1 .963 0L14.063 8.5A2 2 0 0 0 15.5 9.937l6.135 1.581a.5.5 0 0 1 0 .964L15.5 14.063a2 2 0 0 0-1.437 1.437l-1.582 6.135a.5.5 0 0 1-.963 0z"/></Fragment>,
+        arrowLeft: <Fragment><path d="m12 19-7-7 7-7"/><path d="M19 12H5"/></Fragment>,
+        send: <Fragment><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></Fragment>,
+        bot: <Fragment><rect x="3" y="11" width="18" height="10" rx="2"/><circle cx="12" cy="5" r="2"/><path d="M12 7v4M8 16h.01M16 16h.01"/></Fragment>,
+        external: <Fragment><path d="M14 3h7v7M10 14 21 3M21 14v5a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5"/></Fragment>
+      };
+
+      return (
+        <svg
+          xmlns="http://www.w3.org/2000/svg"
+          width={size}
+          height={size}
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth="2"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          className={className}
+          aria-hidden="true"
+        >
+          {icons[name] || icons.layout}
+        </svg>
+      );
+    };
+
+    /* ============================================================
+       PARTICLES
+       ============================================================ */
+    const ParticleBackground = () => {
+      const canvasRef = useRef(null);
+
+      useEffect(() => {
+        const canvas = canvasRef.current;
+        if (!canvas) return;
+        const ctx = canvas.getContext('2d');
+        if (!ctx) return;
+
+        let frame = 0;
+        let particles = [];
+        let width = 0;
+        let height = 0;
+
+        const resize = () => {
+          const ratio = Math.min(window.devicePixelRatio || 1, 2);
+          width = window.innerWidth;
+          height = window.innerHeight;
+          canvas.width = width * ratio;
+          canvas.height = height * ratio;
+          canvas.style.width = width + 'px';
+          canvas.style.height = height + 'px';
+          ctx.setTransform(ratio, 0, 0, ratio, 0, 0);
+        };
+
+        class Microbe {
+          constructor() {
+            this.x = Math.random() * width;
+            this.y = Math.random() * height;
+            this.vx = (Math.random() - .5) * .35;
+            this.vy = (Math.random() - .5) * .35;
+            this.type = Math.floor(Math.random() * 3);
+            this.size = Math.random() * 3 + 2;
+            this.angle = Math.random() * Math.PI * 2;
+            this.spin = (Math.random() - .5) * .015;
+          }
+
+          update() {
+            this.x += this.vx;
+            this.y += this.vy;
+            this.angle += this.spin;
+            if (this.x < -50) this.x = width + 50;
+            if (this.x > width + 50) this.x = -50;
+            if (this.y < -50) this.y = height + 50;
+            if (this.y > height + 50) this.y = -50;
+          }
+
+          draw() {
+            ctx.save();
+            ctx.translate(this.x, this.y);
+            ctx.rotate(this.angle);
+            ctx.fillStyle = 'rgba(46,139,87,.35)';
+            ctx.strokeStyle = 'rgba(46,139,87,.35)';
+            ctx.lineWidth = 1.5;
+
+            if (this.type === 0) {
+              ctx.beginPath();
+              ctx.roundRect(-this.size * 2, -this.size, this.size * 4, this.size * 2, this.size);
+              ctx.fill();
+            } else if (this.type === 1) {
+              ctx.beginPath();
+              ctx.arc(-this.size, 0, this.size, 0, Math.PI * 2);
+              ctx.arc(this.size, 0, this.size, 0, Math.PI * 2);
+              ctx.fill();
+            } else {
+              ctx.beginPath();
+              ctx.moveTo(-this.size * 3, 0);
+              ctx.quadraticCurveTo(-this.size * 1.5, -this.size * 2, 0, 0);
+              ctx.quadraticCurveTo(this.size * 1.5, this.size * 2, this.size * 3, 0);
+              ctx.stroke();
             }
-            static getDerivedStateFromError(error) { return { hasError: true, error }; }
-            componentDidCatch(error, errorInfo) { console.error("Caught by ErrorBoundary:", error, errorInfo); }
-            render() {
-                if (this.state.hasError) {
-                    return (
-                        <div className="min-h-screen flex items-center justify-center bg-gray-50 dark:bg-charcoal p-6">
-                            <div className="bg-white dark:bg-cardDark p-8 rounded-2xl shadow-xl max-w-lg w-full text-center">
-                                <h2 className="text-xl font-bold text-red-500 mb-2">Something went wrong</h2>
-                                <p className="text-sm text-gray-600 dark:text-gray-400 mb-4">{this.state.error && this.state.error.toString()}</p>
-                                <button onClick={() => window.location.reload()} className="px-6 py-2 bg-navy text-white rounded-full">Reload</button>
-                            </div>
-                        </div>
-                    );
-                }
-                return this.props.children;
-            }
+            ctx.restore();
+          }
         }
 
-        const ParticleBackground = () => {
-            const canvasRef = useRef(null);
-
-            useEffect(() => {
-                const canvas = canvasRef.current;
-                if (!canvas) return;
-                const ctx = canvas.getContext('2d');
-                let animationFrameId;
-                let particles = [];
-
-                const resize = () => {
-                    canvas.width = window.innerWidth;
-                    canvas.height = window.innerHeight;
-                };
-                window.addEventListener('resize', resize);
-                resize();
-
-                class Microbe {
-                    constructor() {
-                        this.x = Math.random() * canvas.width;
-                        this.y = Math.random() * canvas.height;
-                        this.vx = (Math.random() - 0.5) * 0.4;
-                        this.vy = (Math.random() - 0.5) * 0.4;
-                        this.type = Math.floor(Math.random() * 3); // 0=Bacillus, 1=Coccus, 2=Spirillum
-                        this.size = Math.random() * 3 + 2;
-                        this.angle = Math.random() * Math.PI * 2;
-                        this.spin = (Math.random() - 0.5) * 0.02;
-                    }
-                    update() {
-                        this.x += this.vx;
-                        this.y += this.vy;
-                        this.angle += this.spin;
-                        if (this.x < -50) this.x = canvas.width + 50;
-                        if (this.x > canvas.width + 50) this.x = -50;
-                        if (this.y < -50) this.y = canvas.height + 50;
-                        if (this.y > canvas.height + 50) this.y = -50;
-                    }
-                    draw() {
-                        ctx.save();
-                        ctx.translate(this.x, this.y);
-                        ctx.rotate(this.angle);
-                        ctx.fillStyle = 'rgba(46, 139, 87, 0.4)';
-                        ctx.strokeStyle = 'rgba(46, 139, 87, 0.4)';
-                        ctx.lineWidth = 1.5;
-
-                        if (this.type === 0) { // Bacillus (Rod)
-                            ctx.beginPath();
-                            ctx.roundRect(-this.size*2, -this.size, this.size*4, this.size*2, this.size);
-                            ctx.fill();
-                        } else if (this.type === 1) { // Diplococcus
-                            ctx.beginPath();
-                            ctx.arc(-this.size, 0, this.size, 0, Math.PI * 2);
-                            ctx.arc(this.size, 0, this.size, 0, Math.PI * 2);
-                            ctx.fill();
-                        } else { // Spirillum (Wavy)
-                            ctx.beginPath();
-                            ctx.moveTo(-this.size*3, 0);
-                            ctx.quadraticCurveTo(-this.size*1.5, -this.size*2, 0, 0);
-                            ctx.quadraticCurveTo(this.size*1.5, this.size*2, this.size*3, 0);
-                            ctx.stroke();
-                        }
-                        ctx.restore();
-                    }
-                }
-
-                for (let i = 0; i < 35; i++) particles.push(new Microbe());
-
-                const animate = () => {
-                    ctx.clearRect(0, 0, canvas.width, canvas.height);
-                    particles.forEach(p => { p.update(); p.draw(); });
-                    
-                    // Network Lines (Mycelium/Biofilm effect)
-                    particles.forEach((p1, i) => {
-                        particles.slice(i + 1).forEach(p2 => {
-                            const dx = p1.x - p2.x;
-                            const dy = p1.y - p2.y;
-                            const dist = Math.sqrt(dx * dx + dy * dy);
-                            if (dist < 120) {
-                                ctx.beginPath();
-                                ctx.moveTo(p1.x, p1.y);
-                                ctx.lineTo(p2.x, p2.y);
-                                ctx.strokeStyle = `rgba(46, 139, 87, ${0.2 - dist/600})`;
-                                ctx.lineWidth = 0.5;
-                                ctx.stroke();
-                            }
-                        });
-                    });
-                    animationFrameId = requestAnimationFrame(animate);
-                };
-                animate();
-                return () => { window.removeEventListener('resize', resize); cancelAnimationFrame(animationFrameId); };
-            }, []);
-
-            return <canvas ref={canvasRef} className="absolute inset-0 z-0 pointer-events-none" />;
+        const build = () => {
+          particles = [];
+          const count = window.innerWidth < 640 ? 18 : 35;
+          for (let i = 0; i < count; i++) particles.push(new Microbe());
         };
 
-        const Icon = ({ name, size = 20, className = "" }) => {
-            const icons = {
-                book: <Fragment><path d="M4 19.5v-15A2.5 2.5 0 0 1 6.5 2H20v20H6.5a2.5 2.5 0 0 1 0-5H20"/><path d="M8 7h6"/><path d="M8 11h8"/></Fragment>,
-                microscope: <Fragment><path d="M6 18h8 M3 22h18 M14 22a7 7 0 1 0 0-14h-1 M9 14h2 M9 12a2 2 0 0 1-2-2V6h6v4a2 2 0 0 1-2 2Z M12 6V3a1 1 0 0 0-1-1H9a1 1 0 0 0-1 1v3"/></Fragment>,
-                gradCap: <Fragment><path d="M22 10v6M2 10l10-5 10 5-10 5z M6 12v5c3 3 9 3 12 0v-5"/></Fragment>,
-                pencil: <Fragment><path d="M17 3a2.828 2.828 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3z M15 5l4 4"/></Fragment>,
-                menu: <Fragment><path d="M4 12h16M4 6h16M4 18h16"/></Fragment>,
-                x: <Fragment><path d="M18 6 6 18M6 6l12 12"/></Fragment>,
-                sun: <Fragment><path d="M12 3v1M12 20v1M4.22 4.22l.71.71M19.07 19.07l.71.71M1 12h1M20 12h1M4.22 19.78l.71-.71M19.07 4.93l.71-.71M12 17a5 5 0 1 0 0-10 5 5 0 0 0 0 10z"/></Fragment>,
-                moon: <Fragment><path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z"/></Fragment>,
-                download: <Fragment><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4 M7 10l5 5 5-5 M12 15V3"/></Fragment>,
-                layout: <Fragment><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><line x1="3" y1="9" x2="21" y2="9"/><line x1="9" y1="21" x2="9" y2="9"/></Fragment>,
-                users: <Fragment><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></Fragment>,
-                chart: <Fragment><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></Fragment>,
-                search: <Fragment><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></Fragment>,
-                sparkles: <Fragment><path d="M9.937 15.5A2 2 0 0 0 8.5 14.063l-6.135-1.582a.5.5 0 0 1 0-.962L8.5 9.936A2 2 0 0 0 9.937 8.5l1.582-6.135a.5.5 0 0 1 .963 0L14.063 8.5A2 2 0 0 0 15.5 9.937l6.135 1.581a.5.5 0 0 1 0 .964L15.5 14.063a2 2 0 0 0-1.437 1.437l-1.582 6.135a.5.5 0 0 1-.963 0z"/></Fragment>,
-                arrowLeft: <Fragment><path d="m12 19-7-7 7-7"/><path d="M19 12H5"/></Fragment>,
-                send: <Fragment><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></Fragment>,
-                bot: <Fragment><rect x="3" y="11" width="18" height="10" rx="2"/><circle cx="12" cy="5" r="2"/><path d="M12 7v4"/><line x1="8" y1="16" x2="8" y2="16"/><line x1="16" y1="16" x2="16" y2="16"/></Fragment>
-            };
-            return (
-                <svg xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}>
-                    {icons[name]}
-                </svg>
-            );
+        const animate = () => {
+          ctx.clearRect(0, 0, width, height);
+          particles.forEach(p => {
+            p.update();
+            p.draw();
+          });
+
+          for (let i = 0; i < particles.length; i++) {
+            for (let j = i + 1; j < particles.length; j++) {
+              const a = particles[i];
+              const b = particles[j];
+              const dx = a.x - b.x;
+              const dy = a.y - b.y;
+              const distance = Math.sqrt(dx * dx + dy * dy);
+
+              if (distance < 120) {
+                ctx.beginPath();
+                ctx.moveTo(a.x, a.y);
+                ctx.lineTo(b.x, b.y);
+                ctx.strokeStyle = `rgba(46,139,87,${Math.max(0, .2 - distance / 600)})`;
+                ctx.lineWidth = .5;
+                ctx.stroke();
+              }
+            }
+          }
+
+          frame = requestAnimationFrame(animate);
         };
 
-        const Navbar = ({ darkMode, setDarkMode, navigateTo, currentView, setShowSearch }) => {
-            const [mobileMenu, setMobileMenu] = useState(false);
-            const navLinks = [
-                { name: 'Library', id: 'library' },
-                { name: 'Research', id: 'research' },
-                { name: 'Journal', id: 'journal' },
-                { name: 'Teaching', id: 'teaching' },
-                { name: 'Blog', id: 'blog' },
-                { name: 'Projects', id: 'projects' },
-                { name: 'About', id: 'about' },
-                { name: 'Contact', id: 'contact' },
-            ];
+        resize();
+        build();
+        window.addEventListener('resize', resize);
+        window.addEventListener('resize', build);
+        animate();
 
-            return (
-                <nav className="bg-[#0B1423] text-white border-b border-white/10 w-full fixed top-0 z-50">
-                    <div className="max-w-[1600px] mx-auto px-4 sm:px-6 lg:px-8">
-                        <div className="flex justify-between items-center h-20">
-                            {/* Logo synced with Footer style */}
-                            <div className="flex-shrink-0 cursor-pointer flex items-center gap-3 group" onClick={() => navigateTo('home')}>
-                                <div className="text-[#D4AF37] group-hover:scale-105 transition-transform">
-                                    <Icon name="book" size={32} />
-                                </div>
-                                <div className="flex flex-col">
-                                    <h1 className="font-serif font-bold text-xl leading-tight">Ajayi Knowledge Hub</h1>
-                                    <span className="text-[#D4AF37] text-[10px] tracking-wider uppercase font-medium">Explore. Learn. Discover. Grow.</span>
-                                </div>
-                            </div>
-                            
-                            {/* Desktop Nav */}
-                            <div className="hidden xl:flex space-x-6 items-center">
-                                {navLinks.map(link => (
-                                    <button key={link.id} onClick={() => navigateTo(link.id)} className={`font-medium text-sm transition-colors pb-1 border-b-2 ${currentView === link.id ? 'text-[#D4AF37] border-[#D4AF37]' : 'text-gray-300 hover:text-white border-transparent hover:border-gray-500'}`}>
-                                        {link.name}
-                                    </button>
-                                ))}
-                                <a href="/admin.html" className="font-medium text-sm text-gray-300 hover:text-white transition-colors pb-1 border-b-2 border-transparent hover:border-gray-500">
-                                    Admin Login
-                                </a>
-                            </div>
-
-                            {/* Actions */}
-                            <div className="flex items-center space-x-3">
-                                {/* AI Button (Hidden on mobile, uses floating bubble instead) */}
-                                <button onClick={() => navigateTo('ai')} className="hidden md:flex px-4 py-2 rounded-lg bg-emerald/20 border border-emerald/50 text-emerald-400 hover:bg-emerald/30 text-sm font-medium transition-colors items-center gap-2">
-                                    <Icon name="sparkles" size={16} /> Ask AI
-                                </button>
-                                
-                                <button onClick={() => setShowSearch(true)} className="w-10 h-10 rounded-xl bg-white/10 border border-white/20 flex items-center justify-center text-white hover:bg-white/20 transition-all shadow-md">
-                                    <Icon name="search" size={18} />
-                                </button>
-                                <button onClick={() => setDarkMode(!darkMode)} className="hidden sm:flex w-10 h-10 rounded-xl bg-white/10 border border-white/20 items-center justify-center text-white hover:bg-white/20 transition-all shadow-md">
-                                    {darkMode ? <Icon name="sun" size={18} /> : <Icon name="moon" size={18} />}
-                                </button>
-                                
-                                {/* High Visibility Mobile Menu Toggle */}
-                                <button onClick={() => setMobileMenu(!mobileMenu)} className="xl:hidden w-10 h-10 rounded-xl bg-white/10 border border-white/20 flex items-center justify-center text-white hover:bg-white/20 transition-all shadow-md">
-                                    <Icon name={mobileMenu ? "x" : "menu"} size={22} />
-                                </button>
-                            </div>
-                        </div>
-                    </div>
-
-                    {/* Solid Background Mobile Menu */}
-                    {mobileMenu && (
-                        <div className="xl:hidden absolute top-20 left-0 w-full bg-[#0B1423] shadow-2xl animate-slide-down border-b border-white/10 z-50">
-                            <div className="px-4 py-4 space-y-1">
-                                {navLinks.map(link => (
-                                    <button key={link.id} onClick={() => { navigateTo(link.id); setMobileMenu(false); }} className={`block w-full text-left px-4 py-3 rounded-xl text-sm font-medium ${currentView === link.id ? 'bg-white/10 text-[#D4AF37]' : 'text-gray-300 hover:bg-white/5 hover:text-white'}`}>
-                                        {link.name}
-                                    </button>
-                                ))}
-                                <a href="/admin.html" onClick={() => setMobileMenu(false)} className="block w-full text-left px-4 py-3 rounded-xl text-sm font-medium text-gray-300 hover:bg-white/5 hover:text-white">
-                                    Admin Login
-                                </a>
-                                <div className="pt-4 mt-2 border-t border-white/10 flex gap-4">
-                                    <button onClick={() => setDarkMode(!darkMode)} className="flex-1 py-3 rounded-xl bg-white/5 border border-white/10 text-white flex justify-center items-center gap-2 font-medium">
-                                        {darkMode ? <Icon name="sun" size={18} /> : <Icon name="moon" size={18} />} Theme
-                                    </button>
-                                </div>
-                            </div>
-                        </div>
-                    )}
-                </nav>
-            );
+        return () => {
+          window.removeEventListener('resize', resize);
+          window.removeEventListener('resize', build);
+          cancelAnimationFrame(frame);
         };
+      }, []);
 
-        const HeroSection = ({ settings, navigateTo }) => (
-            <section className="relative pt-32 pb-24 flex items-center justify-center bg-[#0B1423] text-white overflow-hidden min-h-[80vh]">
-                <ParticleBackground />
-                <div className="absolute inset-0 z-0 bg-[url('https://images.unsplash.com/photo-1532094349884-543bc11b234d?auto=format&fit=crop&q=80')] bg-cover bg-center opacity-20 mix-blend-overlay"></div>
-                <div className="absolute inset-0 z-0 bg-gradient-to-b from-[#0B1423]/80 via-[#0B1423]/60 to-[#0B1423]"></div>
-                
-                <div className="relative z-10 container mx-auto px-6 text-center max-w-5xl animate-fade-in">
-                    <h1 className="font-serif text-5xl md:text-7xl font-bold mb-6 leading-tight tracking-tight">
-                        {settings?.hero_title ? (
-                            <span dangerouslySetInnerHTML={{ __html: settings.hero_title.replace('grows', '<span class="text-[#2E8B57]">grows</span>').replace('matters', '<span class="text-[#D4AF37]">matters</span>').replace('inspire', '<span class="text-[#8B9C2A]">inspire</span>') }} />
-                        ) : (
-                            <Fragment>Knowledge that <span className="text-[#2E8B57]">grows</span>.<br />Research that <span className="text-[#D4AF37]">matters</span>.<br />Ideas that <span className="text-[#8B9C2A]">inspire</span>.</Fragment>
-                        )}
-                    </h1>
-                    <h2 className="text-xl md:text-2xl text-[#D4AF37] font-medium mb-6 font-serif">
-                        {settings?.hero_subtitle || 'Welcome to my digital knowledge hub.'}
-                    </h2>
-                    <p className="text-base md:text-lg text-gray-300 mb-12 max-w-3xl mx-auto font-light leading-relaxed">
-                        {settings?.mission_text || 'Here I share my books, scientific research, teaching materials, journals, articles, and ideas as I pursue a lifelong mission of learning, discovery, and service.'}
-                    </p>
-                    <div className="flex flex-wrap items-center justify-center gap-4">
-                        <button onClick={() => navigateTo('library')} className="px-8 py-3.5 bg-[#2E8B57] hover:bg-[#257348] text-white text-sm font-semibold rounded-lg transition-all flex items-center gap-2 border border-[#2E8B57] shadow-lg">
-                            <Icon name="book" size={18} /> Explore Library
-                        </button>
-                        <button onClick={() => navigateTo('research')} className="px-8 py-3.5 bg-transparent hover:bg-white/5 text-white text-sm font-semibold rounded-lg transition-all border border-blue-400/30 flex items-center gap-2">
-                            <Icon name="microscope" size={18} /> Research Archive
-                        </button>
-                    </div>
+      return <canvas ref={canvasRef} className="absolute inset-0 z-0 pointer-events-none" />;
+    };
+
+    /* ============================================================
+       NAVBAR
+       ============================================================ */
+    const Navbar = ({
+      darkMode,
+      setDarkMode,
+      navigateTo,
+      currentView,
+      setShowSearch
+    }) => {
+      const [mobileMenu, setMobileMenu] = useState(false);
+
+      const navLinks = [
+        ['Library', 'library'],
+        ['Research', 'research'],
+        ['Journal', 'journal'],
+        ['Teaching', 'teaching'],
+        ['Blog', 'blog'],
+        ['Projects', 'projects'],
+        ['About', 'about'],
+        ['Contact', 'contact']
+      ];
+
+      const go = (view) => {
+        navigateTo(view);
+        setMobileMenu(false);
+      };
+
+      return (
+        <nav className="bg-[#0B1423] text-white border-b border-white/10 w-full fixed top-0 z-50">
+          <div className="max-w-[1600px] mx-auto px-4 sm:px-6 lg:px-8">
+            <div className="flex justify-between items-center min-h-20 py-2">
+              <button
+                type="button"
+                className="flex-shrink-0 flex items-center gap-3 group text-left"
+                onClick={() => go('home')}
+              >
+                <span className="text-[#D4AF37] group-hover:scale-105 transition-transform">
+                  <Icon name="book" size={32} />
+                </span>
+                <span className="flex flex-col">
+                  <span className="font-serif font-bold text-lg sm:text-xl leading-tight">Ajayi Knowledge Hub</span>
+                  <span className="text-[#D4AF37] text-[9px] sm:text-[10px] tracking-wider uppercase font-medium">
+                    Explore. Learn. Discover. Grow.
+                  </span>
+                </span>
+              </button>
+
+              <div className="hidden xl:flex space-x-5 items-center">
+                {navLinks.map(([name, id]) => (
+                  <button
+                    key={id}
+                    onClick={() => go(id)}
+                    className={`font-medium text-sm transition-colors pb-1 border-b-2 ${
+                      currentView === id
+                        ? 'text-[#D4AF37] border-[#D4AF37]'
+                        : 'text-gray-300 hover:text-white border-transparent hover:border-gray-500'
+                    }`}
+                  >
+                    {name}
+                  </button>
+                ))}
+                <a
+                  href="/admin.html"
+                  className="font-medium text-sm text-gray-300 hover:text-white transition-colors pb-1 border-b-2 border-transparent hover:border-gray-500"
+                >
+                  Admin Login
+                </a>
+              </div>
+
+              <div className="flex items-center gap-2 sm:gap-3 ml-3">
+                <button
+                  onClick={() => navigateTo('ai')}
+                  className="hidden md:flex px-4 py-2 rounded-lg bg-emerald/20 border border-emerald/50 text-emerald-400 hover:bg-emerald/30 text-sm font-medium transition-colors items-center gap-2"
+                >
+                  <Icon name="sparkles" size={16} /> Ask AI
+                </button>
+
+                <button
+                  onClick={() => setShowSearch(true)}
+                  aria-label="Search"
+                  className="w-10 h-10 rounded-xl bg-white/10 border border-white/20 flex items-center justify-center hover:bg-white/20"
+                >
+                  <Icon name="search" size={18} />
+                </button>
+
+                <button
+                  onClick={() => setDarkMode(v => !v)}
+                  aria-label="Toggle theme"
+                  className="hidden sm:flex w-10 h-10 rounded-xl bg-white/10 border border-white/20 items-center justify-center hover:bg-white/20"
+                >
+                  {darkMode ? <Icon name="sun" size={18} /> : <Icon name="moon" size={18} />}
+                </button>
+
+                <button
+                  onClick={() => setMobileMenu(v => !v)}
+                  aria-label="Open menu"
+                  className="xl:hidden w-10 h-10 rounded-xl bg-white/10 border border-white/20 flex items-center justify-center hover:bg-white/20"
+                >
+                  <Icon name={mobileMenu ? 'x' : 'menu'} size={22} />
+                </button>
+              </div>
+            </div>
+          </div>
+
+          {mobileMenu && (
+            <div className="xl:hidden absolute top-full left-0 w-full bg-[#0B1423] shadow-2xl animate-slide-down border-b border-white/10">
+              <div className="px-4 py-4 space-y-1">
+                {navLinks.map(([name, id]) => (
+                  <button
+                    key={id}
+                    onClick={() => go(id)}
+                    className={`block w-full text-left px-4 py-3 rounded-xl text-sm font-medium ${
+                      currentView === id
+                        ? 'bg-white/10 text-[#D4AF37]'
+                        : 'text-gray-300 hover:bg-white/5 hover:text-white'
+                    }`}
+                  >
+                    {name}
+                  </button>
+                ))}
+                <a
+                  href="/admin.html"
+                  className="block w-full text-left px-4 py-3 rounded-xl text-sm font-medium text-gray-300 hover:bg-white/5 hover:text-white"
+                >
+                  Admin Login
+                </a>
+                <div className="pt-3 mt-2 border-t border-white/10">
+                  <button
+                    onClick={() => setDarkMode(v => !v)}
+                    className="w-full py-3 rounded-xl bg-white/5 border border-white/10 flex justify-center items-center gap-2 font-medium"
+                  >
+                    {darkMode ? <Icon name="sun" size={18} /> : <Icon name="moon" size={18} />}
+                    Theme
+                  </button>
                 </div>
-            </section>
-        );
+              </div>
+            </div>
+          )}
+        </nav>
+      );
+    };
 
-        const ContentCards = ({ publications, navigateTo, setSelectedItem }) => {
-            const getLatest = (type) => publications.find(p => p.type === type);
-            
-            const handleRead = (item, view) => {
-                if(!item) return;
-                setSelectedItem(item);
-                navigateTo(view);
+    /* ============================================================
+       HERO
+       ============================================================ */
+    const HeroSection = ({ settings, navigateTo }) => {
+      const title = safeText(settings?.hero_title).trim();
+
+      return (
+        <section className="relative pt-32 pb-24 flex items-center justify-center bg-[#0B1423] text-white overflow-hidden min-h-[80vh]">
+          <ParticleBackground />
+          <div
+            className="absolute inset-0 z-0 bg-cover bg-center opacity-20 mix-blend-overlay"
+            style={{
+              backgroundImage:
+                "url('https://images.unsplash.com/photo-1532094349884-543bc11b234d?auto=format&fit=crop&q=80')"
+            }}
+          />
+          <div className="absolute inset-0 z-0 bg-gradient-to-b from-[#0B1423]/80 via-[#0B1423]/60 to-[#0B1423]" />
+
+          <div className="relative z-10 container mx-auto px-6 text-center max-w-5xl animate-fade-in">
+            <h1 className="font-serif text-4xl sm:text-5xl md:text-7xl font-bold mb-6 leading-tight tracking-tight">
+              {title ? (
+                <span>{title}</span>
+              ) : (
+                <>
+                  Knowledge that <span className="text-[#2E8B57]">grows</span>.<br />
+                  Research that <span className="text-[#D4AF37]">matters</span>.<br />
+                  Ideas that <span className="text-[#8B9C2A]">inspire</span>.
+                </>
+              )}
+            </h1>
+
+            <h2 className="text-lg md:text-2xl text-[#D4AF37] font-medium mb-6 font-serif">
+              {settings?.hero_subtitle || 'Welcome to my digital knowledge hub.'}
+            </h2>
+
+            <p className="text-base md:text-lg text-gray-300 mb-12 max-w-3xl mx-auto font-light leading-relaxed">
+              {settings?.mission_text ||
+                'Here I share my books, scientific research, teaching materials, journals, articles, and ideas as I pursue a lifelong mission of learning, discovery, and service.'}
+            </p>
+
+            <div className="flex flex-wrap items-center justify-center gap-4">
+              <button
+                onClick={() => navigateTo('library')}
+                className="px-8 py-3.5 bg-[#2E8B57] hover:bg-[#257348] text-white text-sm font-semibold rounded-lg transition-all flex items-center gap-2 shadow-lg"
+              >
+                <Icon name="book" size={18} /> Explore Library
+              </button>
+              <button
+                onClick={() => navigateTo('research')}
+                className="px-8 py-3.5 bg-transparent hover:bg-white/5 text-white text-sm font-semibold rounded-lg transition-all border border-blue-400/30 flex items-center gap-2"
+              >
+                <Icon name="microscope" size={18} /> Research Archive
+              </button>
+            </div>
+          </div>
+        </section>
+      );
+    };
+
+    /* ============================================================
+       CONTENT CARDS
+       ============================================================ */
+    const ContentCards = ({ publications, navigateTo, setSelectedItem }) => {
+      const latest = (type) =>
+        publications.find(p => normalizeType(p.type) === type);
+
+      const handleRead = (item) => {
+        if (!item) return;
+        setSelectedItem(item);
+        navigateTo(contentViewFor(item));
+      };
+
+      const latestBook = latest('book');
+      const latestResearch = latest('research');
+      const latestBlog = latest('blog');
+
+      if (!latestBook && !latestResearch && !latestBlog) return null;
+
+      return (
+        <div className="bg-gray-50 dark:bg-[#121212] py-8 border-b border-gray-200 dark:border-gray-800">
+          <div className="max-w-[1600px] mx-auto px-4 sm:px-6 lg:px-8">
+            <div className="flex flex-nowrap overflow-x-auto pb-6 gap-6 snap-x snap-mandatory hide-scrollbar">
+
+              {latestBook && (
+                <div className="snap-start shrink-0 w-[340px] md:w-[400px] bg-white dark:bg-[#1E1E1E] rounded-xl border border-gray-200 dark:border-gray-800 p-5 shadow-sm flex flex-col">
+                  <div className="flex items-center gap-2 font-serif font-bold text-lg dark:text-white mb-5 border-b border-gray-100 dark:border-gray-800 pb-3">
+                    <Icon name="book" size={20} /> Featured Book
+                  </div>
+                  <div className="flex gap-4 flex-grow">
+                    <div className="w-1/3 shrink-0">
+                      {latestBook.thumbnail_url ? (
+                        <img
+                          src={latestBook.thumbnail_url}
+                          alt=""
+                          loading="lazy"
+                          className="object-cover w-full aspect-[2/3] rounded shadow-md"
+                        />
+                      ) : (
+                        <div className="bg-[#112435] rounded shadow-md aspect-[2/3] flex items-center justify-center text-center border-l-4 border-[#2E8B57] p-2">
+                          <div className="text-white text-sm font-serif font-bold leading-tight">
+                            {latestBook.title}
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                    <div className="flex flex-col justify-between min-w-0">
+                      <div>
+                        <h4 className="font-serif font-bold text-lg mb-2 leading-tight dark:text-white">
+                          {latestBook.title}
+                        </h4>
+                        <p className="text-sm text-gray-600 dark:text-gray-400 mb-2 line-clamp-3">
+                          {latestBook.summary}
+                        </p>
+                        <div className="text-xs text-[#2E8B57] font-medium">
+                          {latestBook.category}
+                        </div>
+                      </div>
+                      <button
+                        onClick={() => handleRead(latestBook)}
+                        className="mt-4 px-4 py-1.5 border border-gray-300 dark:border-gray-600 rounded text-sm font-medium hover:bg-gray-50 dark:hover:bg-gray-800 w-max dark:text-white"
+                      >
+                        View Book
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {latestResearch && (
+                <div className="snap-start shrink-0 w-[340px] md:w-[400px] bg-white dark:bg-[#1E1E1E] rounded-xl border border-gray-200 dark:border-gray-800 p-5 shadow-sm flex flex-col">
+                  <div className="flex items-center gap-2 font-serif font-bold text-lg dark:text-white mb-5 border-b border-gray-100 dark:border-gray-800 pb-3">
+                    <Icon name="microscope" size={20} /> Latest Research
+                  </div>
+                  <div className="h-32 bg-gray-200 dark:bg-gray-700 rounded-lg mb-4 overflow-hidden">
+                    <img
+                      src={latestResearch.thumbnail_url || 'https://images.unsplash.com/photo-1576086213369-97a306d36557?auto=format&fit=crop&q=80'}
+                      alt=""
+                      loading="lazy"
+                      className="w-full h-full object-cover"
+                    />
+                  </div>
+                  <h4 className="font-serif font-bold text-base mb-1 dark:text-white">
+                    {latestResearch.title}
+                  </h4>
+                  <div className="text-xs text-gray-500 mb-2">
+                    {latestResearch.published_date}
+                  </div>
+                  <p className="text-sm text-gray-600 dark:text-gray-400 mb-4 line-clamp-2 flex-grow">
+                    {latestResearch.summary}
+                  </p>
+                  <button
+                    onClick={() => handleRead(latestResearch)}
+                    className="text-[#2E8B57] text-sm font-medium hover:underline text-left"
+                  >
+                    Read Now →
+                  </button>
+                </div>
+              )}
+
+              {latestBlog && (
+                <div className="snap-start shrink-0 w-[340px] md:w-[400px] bg-white dark:bg-[#1E1E1E] rounded-xl border border-gray-200 dark:border-gray-800 p-5 shadow-sm flex flex-col">
+                  <div className="flex items-center gap-2 font-serif font-bold text-lg dark:text-white mb-5 border-b border-gray-100 dark:border-gray-800 pb-3">
+                    <Icon name="pencil" size={20} /> Latest Article
+                  </div>
+                  <div className="flex gap-4 h-full">
+                    <div className="w-2/5 shrink-0 min-h-[140px] bg-gray-200 rounded-lg overflow-hidden">
+                      <img
+                        src={latestBlog.thumbnail_url || 'https://images.unsplash.com/photo-1581093458791-9f3c3900df4b?auto=format&fit=crop&q=80'}
+                        alt=""
+                        loading="lazy"
+                        className="w-full h-full object-cover"
+                      />
+                    </div>
+                    <div className="flex flex-col min-w-0">
+                      <h4 className="font-serif font-bold text-base mb-1 dark:text-white line-clamp-2">
+                        {latestBlog.title}
+                      </h4>
+                      <div className="text-xs text-gray-500 mb-2">
+                        {latestBlog.category}
+                      </div>
+                      <p className="text-sm text-gray-600 dark:text-gray-400 mb-4 line-clamp-3 flex-grow">
+                        {latestBlog.summary}
+                      </p>
+                      <button
+                        onClick={() => handleRead(latestBlog)}
+                        className="text-[#2E8B57] text-sm font-medium hover:underline text-left"
+                      >
+                        Read Article →
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      );
+    };
+
+    /* ============================================================
+       BOTTOM INFO
+       ============================================================ */
+    const BottomInfo = ({ settings }) => {
+      const [email, setEmail] = useState('');
+      const [status, setStatus] = useState('');
+
+      const handleSubscribe = async (e) => {
+        e.preventDefault();
+        if (!supabaseClient) {
+          setStatus('Database connection unavailable.');
+          return;
+        }
+
+        setStatus('Subscribing...');
+
+        try {
+          const { error } = await supabaseClient
+            .from('subscribers')
+            .insert([{ email: email.trim().toLowerCase() }]);
+
+          if (error) throw error;
+
+          setStatus('Success! Thank you.');
+          setEmail('');
+        } catch (error) {
+          console.error('Newsletter error:', error);
+          setStatus(
+            error?.code === '23505'
+              ? 'This email is already subscribed.'
+              : 'Could not subscribe right now.'
+          );
+        }
+
+        setTimeout(() => setStatus(''), 5000);
+      };
+
+      const socials = [
+        settings?.linkedin_url && (
+          <a key="linkedin" href={settings.linkedin_url} target="_blank" rel="noopener noreferrer" className="w-10 h-10 rounded-full bg-[#0077b5] text-white flex items-center justify-center">
+            <span className="font-bold text-lg">in</span>
+          </a>
+        ),
+        settings?.twitter_url && (
+          <a key="twitter" href={settings.twitter_url} target="_blank" rel="noopener noreferrer" className="w-10 h-10 rounded-full bg-black border border-gray-700 text-white flex items-center justify-center">
+            X
+          </a>
+        ),
+        settings?.orcid_url && (
+          <a key="orcid" href={settings.orcid_url} target="_blank" rel="noopener noreferrer" className="w-10 h-10 rounded-full bg-[#A6CE39] text-white flex items-center justify-center font-bold">
+            iD
+          </a>
+        ),
+        settings?.youtube_url && (
+          <a key="youtube" href={settings.youtube_url} target="_blank" rel="noopener noreferrer" className="w-10 h-10 rounded-full bg-[#FF0000] text-white flex items-center justify-center">
+            ▶
+          </a>
+        ),
+        settings?.facebook_url && (
+          <a key="facebook" href={settings.facebook_url} target="_blank" rel="noopener noreferrer" className="w-10 h-10 rounded-full bg-[#1877F2] text-white flex items-center justify-center font-bold text-lg">
+            f
+          </a>
+        ),
+        settings?.whatsapp_number && (
+          <a key="whatsapp" href={`https://wa.me/${safeText(settings.whatsapp_number).replace(/\D/g, '')}`} target="_blank" rel="noopener noreferrer" className="w-10 h-10 rounded-full bg-[#25D366] text-white flex items-center justify-center font-bold">
+            W
+          </a>
+        )
+      ].filter(Boolean);
+
+      return (
+        <div className="max-w-[1600px] mx-auto px-4 sm:px-6 lg:px-8 mb-8">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+
+            <div className="bg-white dark:bg-[#1E1E1E] rounded-xl border border-gray-200 dark:border-gray-800 p-8 shadow-sm">
+              <h3 className="font-serif font-bold text-lg mb-4 dark:text-white">Quote of the Day</h3>
+              <p className="text-gray-700 dark:text-gray-300 font-serif italic mb-4">
+                "{settings?.daily_quote || 'The beautiful thing about learning is that no one can take it away from you.'}"
+              </p>
+              <div className="text-sm font-bold text-[#2E8B57]">
+                — {settings?.quote_author || 'B.B. King'}
+              </div>
+            </div>
+
+            <div className="bg-white dark:bg-[#1E1E1E] rounded-xl border border-gray-200 dark:border-gray-800 p-8 shadow-sm">
+              <h3 className="font-serif font-bold text-lg mb-2 dark:text-white flex items-center gap-2">
+                <Icon name="pencil" size={20} /> Stay Updated
+              </h3>
+              <p className="text-sm text-gray-600 dark:text-gray-400 mb-6">
+                Subscribe to my newsletter and never miss new research and insights.
+              </p>
+              <form onSubmit={handleSubscribe} className="flex flex-col gap-2">
+                <div className="flex gap-2">
+                  <input
+                    type="email"
+                    required
+                    value={email}
+                    onChange={e => setEmail(e.target.value)}
+                    placeholder="Enter your email"
+                    className="min-w-0 flex-1 bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg px-4 py-2 text-sm focus:outline-none focus:border-[#2E8B57]"
+                  />
+                  <button type="submit" className="bg-[#2E8B57] hover:bg-[#257348] text-white px-4 py-2 rounded-lg text-sm font-medium">
+                    Subscribe
+                  </button>
+                </div>
+                {status && <span className="text-xs font-bold text-emerald-500">{status}</span>}
+              </form>
+            </div>
+
+            <div className="bg-white dark:bg-[#1E1E1E] rounded-xl border border-gray-200 dark:border-gray-800 p-8 shadow-sm">
+              <h3 className="font-serif font-bold text-lg mb-2 dark:text-white">Let's Connect</h3>
+              <p className="text-sm text-gray-600 dark:text-gray-400 mb-6">
+                Join a community of learners and researchers building a better future.
+              </p>
+              <div className="flex flex-wrap gap-3">
+                {socials.length ? socials : (
+                  <span className="text-sm text-gray-500">Social links will appear here when configured.</span>
+                )}
+              </div>
+            </div>
+
+          </div>
+        </div>
+      );
+    };
+
+    /* ============================================================
+       LIST VIEW
+       ============================================================ */
+    const GenericListView = ({
+      title,
+      type,
+      publications,
+      navigateTo,
+      setSelectedItem
+    }) => {
+      const normalizedType = normalizeType(type);
+      const data = publications.filter(p => normalizeType(p.type) === normalizedType);
+
+      return (
+        <div className="pt-32 pb-24 max-w-7xl mx-auto px-4 sm:px-6 min-h-screen animate-fade-in">
+          <button
+            onClick={() => navigateTo('home')}
+            className="flex items-center text-[#2E8B57] hover:opacity-80 mb-8 font-medium"
+          >
+            <Icon name="arrowLeft" size={18} className="mr-2" /> Back to Home
+          </button>
+
+          <h1 className="text-4xl font-bold font-serif text-navy dark:text-white capitalize mb-4">
+            {title}
+          </h1>
+
+          {data.length === 0 ? (
+            <div className="mt-12 bg-white dark:bg-cardDark rounded-2xl border border-gray-200 dark:border-gray-800 p-12 text-center">
+              <div className="text-gray-400 mb-3">
+                <Icon name="layout" size={42} className="mx-auto" />
+              </div>
+              <h2 className="text-xl font-bold dark:text-white mb-2">Nothing here yet</h2>
+              <p className="text-gray-500 dark:text-gray-400">
+                Content for this section has not been published yet.
+              </p>
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 mt-12">
+              {data.map(item => (
+                <article
+                  key={item.id ?? `${item.title}-${item.published_date}`}
+                  className="bg-white dark:bg-cardDark rounded-2xl p-6 shadow-sm border border-gray-100 dark:border-gray-800 flex flex-col h-full"
+                >
+                  {item.thumbnail_url && (
+                    <img
+                      src={item.thumbnail_url}
+                      alt=""
+                      loading="lazy"
+                      className="w-full h-40 object-cover rounded-xl mb-4"
+                    />
+                  )}
+
+                  <span className="text-xs font-bold uppercase tracking-wider text-[#2E8B57] mb-2">
+                    {item.category || item.type}
+                  </span>
+
+                  <h3 className="text-xl font-bold text-navy dark:text-white mb-3">
+                    {item.title || 'Untitled'}
+                  </h3>
+
+                  <p className="text-sm text-gray-600 dark:text-gray-400 mb-6 flex-grow line-clamp-4">
+                    {item.summary || 'No summary available.'}
+                  </p>
+
+                  <button
+                    onClick={() => {
+                      setSelectedItem(item);
+                      navigateTo(contentViewFor(item));
+                    }}
+                    className="text-[#2E8B57] text-sm font-semibold text-left mt-auto"
+                  >
+                    Read More →
+                  </button>
+                </article>
+              ))}
+            </div>
+          )}
+        </div>
+      );
+    };
+
+    /* ============================================================
+       DETAIL / READING
+       ============================================================ */
+    const DetailView = ({ item, navigateTo }) => {
+      if (!item) return null;
+
+      const backTo = normalizeType(item.type) || 'library';
+
+      const download = async () => {
+        if (supabaseClient) {
+          try {
+            await supabaseClient.rpc('increment_download');
+          } catch (error) {
+            console.warn('Download counter unavailable:', error);
+          }
+        }
+      };
+
+      return (
+        <div className="max-w-4xl mx-auto px-4 pt-32 pb-24 min-h-screen animate-fade-in">
+          <button
+            onClick={() => navigateTo(backTo)}
+            className="flex items-center text-[#2E8B57] hover:opacity-80 mb-8 font-medium"
+          >
+            <Icon name="arrowLeft" size={18} className="mr-2" />
+            Back to {backTo}
+          </button>
+
+          <div className="bg-white dark:bg-cardDark rounded-3xl p-6 md:p-8 shadow-xl border border-gray-100 dark:border-gray-800 flex flex-col md:flex-row gap-8">
+            <div className="w-full md:w-1/3 shrink-0">
+              {item.thumbnail_url ? (
+                <img
+                  src={item.thumbnail_url}
+                  alt=""
+                  className="w-full aspect-[3/4] rounded-xl shadow-lg object-cover"
+                />
+              ) : (
+                <div className="aspect-[3/4] bg-navy rounded-xl flex items-center justify-center p-6 text-center text-white">
+                  <h3 className="font-serif font-bold text-xl">{item.title}</h3>
+                </div>
+              )}
+            </div>
+
+            <div className="flex flex-col min-w-0">
+              <span className="text-xs font-bold uppercase tracking-wider text-[#2E8B57] mb-2">
+                {item.category || item.type}
+                {item.published_date ? ` • ${item.published_date}` : ''}
+              </span>
+
+              <h1 className="text-3xl font-bold font-serif dark:text-white mb-4">
+                {item.title}
+              </h1>
+
+              <p className="text-gray-600 dark:text-gray-300 mb-8 leading-relaxed whitespace-pre-wrap">
+                {item.content || item.summary || 'No content available.'}
+              </p>
+
+              {item.file_url && (
+                <a
+                  href={item.file_url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  onClick={download}
+                  className="mt-auto w-max flex items-center px-6 py-3 bg-[#2E8B57] text-white rounded-xl font-medium shadow-md hover:bg-[#257348]"
+                >
+                  <Icon name="download" size={18} className="mr-2" />
+                  Download Document
+                </a>
+              )}
+            </div>
+          </div>
+        </div>
+      );
+    };
+
+    const ReadingView = ({ item, navigateTo }) => {
+      if (!item) return null;
+
+      const backTo = normalizeType(item.type) || 'blog';
+
+      return (
+        <div className="max-w-3xl mx-auto px-4 pt-32 pb-24 min-h-screen animate-fade-in">
+          <button
+            onClick={() => navigateTo(backTo)}
+            className="flex items-center text-[#2E8B57] hover:opacity-80 mb-8 font-medium"
+          >
+            <Icon name="arrowLeft" size={18} className="mr-2" />
+            Back to {backTo}
+          </button>
+
+          {item.thumbnail_url && (
+            <img
+              src={item.thumbnail_url}
+              alt=""
+              className="w-full h-64 object-cover rounded-2xl mb-8 shadow-lg"
+            />
+          )}
+
+          <h1 className="text-4xl font-bold font-serif dark:text-white mb-4">
+            {item.title}
+          </h1>
+
+          <p className="text-sm text-gray-500 mb-8 uppercase tracking-wider font-bold">
+            {item.category || item.type}
+            {item.published_date ? ` • ${item.published_date}` : ''}
+          </p>
+
+          <div className="text-gray-700 dark:text-gray-300 max-w-none font-serif leading-relaxed whitespace-pre-wrap text-lg">
+            {item.content || item.summary || 'No content available.'}
+          </div>
+        </div>
+      );
+    };
+
+    /* ============================================================
+       ABOUT
+       ============================================================ */
+    const AboutView = ({ settings, navigateTo }) => (
+      <div className="max-w-5xl mx-auto px-4 pt-32 pb-24 min-h-screen animate-fade-in">
+        <button
+          onClick={() => navigateTo('home')}
+          className="flex items-center text-[#2E8B57] hover:opacity-80 mb-8 font-medium"
+        >
+          <Icon name="arrowLeft" size={18} className="mr-2" /> Back to Home
+        </button>
+
+        <div className="flex flex-col md:flex-row gap-12 items-start">
+          <div className="w-full md:w-1/3 shrink-0">
+            {settings?.profile_pic_url ? (
+              <img
+                src={settings.profile_pic_url}
+                alt="Profile"
+                className="w-full aspect-square object-cover rounded-3xl shadow-xl border-4 border-white dark:border-gray-800"
+              />
+            ) : (
+              <div className="w-full aspect-square bg-navy rounded-3xl flex items-center justify-center text-white">
+                <Icon name="users" size={80} />
+              </div>
+            )}
+          </div>
+
+          <div className="w-full md:w-2/3">
+            <h1 className="text-4xl font-bold font-serif dark:text-white mb-2">
+              {settings?.display_name || 'Paul Olakiitan Ajayi'}
+            </h1>
+
+            <p className="text-xl text-[#2E8B57] font-medium mb-8">
+              {settings?.bio || 'Microbiologist & Researcher'}
+            </p>
+
+            <div className="p-6 bg-emerald/10 rounded-2xl border border-emerald/20 mb-8 shadow-sm">
+              <h3 className="text-xl font-bold dark:text-white mb-3">Mission</h3>
+              <p className="text-gray-800 dark:text-gray-200 font-medium whitespace-pre-wrap">
+                {settings?.mission_text || 'A lifelong mission of learning, discovery, and service.'}
+              </p>
+            </div>
+
+            <div className="text-gray-700 dark:text-gray-300 leading-relaxed font-serif whitespace-pre-wrap text-lg">
+              {settings?.about_text || 'Welcome to the Ajayi Knowledge Hub.'}
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+
+    /* ============================================================
+       CONTACT
+       ============================================================ */
+    const ContactView = ({ navigateTo }) => {
+      const [form, setForm] = useState({ name: '', email: '', message: '' });
+      const [status, setStatus] = useState('');
+
+      const handleSubmit = async (e) => {
+        e.preventDefault();
+
+        if (!supabaseClient) {
+          setStatus('Database connection unavailable.');
+          return;
+        }
+
+        setStatus('Sending...');
+
+        try {
+          const { error } = await supabaseClient
+            .from('messages')
+            .insert([{
+              name: form.name.trim(),
+              email: form.email.trim().toLowerCase(),
+              message: form.message.trim()
+            }]);
+
+          if (error) throw error;
+
+          setStatus('Message sent successfully!');
+          setForm({ name: '', email: '', message: '' });
+        } catch (error) {
+          console.error('Contact error:', error);
+          setStatus('Could not send the message. Please try again.');
+        }
+
+        setTimeout(() => setStatus(''), 6000);
+      };
+
+      return (
+        <div className="max-w-3xl mx-auto px-4 pt-32 pb-24 min-h-screen animate-fade-in">
+          <button
+            onClick={() => navigateTo('home')}
+            className="flex items-center text-[#2E8B57] hover:opacity-80 mb-8 font-medium"
+          >
+            <Icon name="arrowLeft" size={18} className="mr-2" /> Back to Home
+          </button>
+
+          <div className="bg-white dark:bg-cardDark rounded-3xl p-8 shadow-xl border border-gray-100 dark:border-gray-800">
+            <h2 className="text-3xl font-bold font-serif dark:text-white mb-2">Send a Message</h2>
+            <p className="text-gray-500 dark:text-gray-400 mb-6">
+              Your message will be delivered through the site's contact system.
+            </p>
+
+            <form onSubmit={handleSubmit} className="space-y-4">
+              <input
+                required
+                type="text"
+                placeholder="Your Name"
+                value={form.name}
+                onChange={e => setForm({ ...form, name: e.target.value })}
+                className="w-full px-4 py-3 rounded-xl bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 dark:text-white focus:ring-2 focus:ring-[#2E8B57] outline-none"
+              />
+
+              <input
+                required
+                type="email"
+                placeholder="Your Email"
+                value={form.email}
+                onChange={e => setForm({ ...form, email: e.target.value })}
+                className="w-full px-4 py-3 rounded-xl bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 dark:text-white focus:ring-2 focus:ring-[#2E8B57] outline-none"
+              />
+
+              <textarea
+                required
+                rows="6"
+                placeholder="Your Message"
+                value={form.message}
+                onChange={e => setForm({ ...form, message: e.target.value })}
+                className="w-full px-4 py-3 rounded-xl bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 dark:text-white focus:ring-2 focus:ring-[#2E8B57] outline-none"
+              />
+
+              <button
+                type="submit"
+                className="w-full bg-[#2E8B57] text-white px-6 py-4 rounded-xl font-medium shadow-md hover:bg-[#257348]"
+              >
+                Send Message
+              </button>
+
+              {status && (
+                <p className="text-center text-sm font-bold mt-4 text-[#2E8B57]">
+                  {status}
+                </p>
+              )}
+            </form>
+          </div>
+        </div>
+      );
+    };
+
+    /* ============================================================
+       SEARCH
+       ============================================================ */
+    const SearchOverlay = ({
+      publications,
+      onClose,
+      navigateTo,
+      setSelectedItem
+    }) => {
+      const [query, setQuery] = useState('');
+
+      const searchable = (item) =>
+        [
+          item.title,
+          item.summary,
+          item.content,
+          item.category,
+          item.type,
+          Array.isArray(item.tags) ? item.tags.join(' ') : item.tags
+        ]
+          .filter(Boolean)
+          .join(' ')
+          .toLowerCase();
+
+      const results =
+        query.trim().length > 1
+          ? publications.filter(p => searchable(p).includes(query.trim().toLowerCase()))
+          : [];
+
+      const openItem = (item) => {
+        setSelectedItem(item);
+        navigateTo(contentViewFor(item));
+        onClose();
+      };
+
+      return (
+        <div className="fixed inset-0 bg-white/95 dark:bg-charcoal/95 backdrop-blur-xl z-[60] flex flex-col p-6 animate-fade-in overflow-y-auto">
+          <div className="max-w-4xl mx-auto w-full relative">
+            <button
+              onClick={onClose}
+              className="absolute right-0 top-0 p-4 text-gray-500 hover:text-red-500"
+              aria-label="Close search"
+            >
+              <Icon name="x" size={32} />
+            </button>
+
+            <h2 className="text-3xl font-serif font-bold mb-8 dark:text-white pt-12">
+              Search Library
+            </h2>
+
+            <input
+              autoFocus
+              type="search"
+              placeholder="Search books, research, articles..."
+              value={query}
+              onChange={e => setQuery(e.target.value)}
+              className="w-full text-xl md:text-2xl px-6 py-4 rounded-2xl bg-gray-100 dark:bg-cardDark border-none dark:text-white focus:ring-4 focus:ring-[#2E8B57]/50 mb-8 outline-none"
+            />
+
+            <div className="space-y-4">
+              {results.map(item => (
+                <button
+                  type="button"
+                  key={item.id ?? item.title}
+                  onClick={() => openItem(item)}
+                  className="w-full text-left p-4 bg-gray-50 dark:bg-gray-800 rounded-xl hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
+                >
+                  <h4 className="font-bold dark:text-white">{item.title}</h4>
+                  <p className="text-sm text-gray-500 line-clamp-2 mt-1">
+                    {item.summary || item.content || 'No description available.'}
+                  </p>
+                  <span className="text-xs text-[#2E8B57] font-bold uppercase mt-2 block">
+                    {item.type}
+                  </span>
+                </button>
+              ))}
+
+              {query.trim().length > 1 && results.length === 0 && (
+                <p className="text-gray-500 text-center py-8">
+                  No results found for "{query}"
+                </p>
+              )}
+
+              {!query.trim() && (
+                <p className="text-gray-500 text-center py-8">
+                  Start typing to search the knowledge hub.
+                </p>
+              )}
+            </div>
+          </div>
+        </div>
+      );
+    };
+
+    /* ============================================================
+       AI ASSISTANT
+       ============================================================ */
+    const AiAssistantView = ({ publications, settings, navigateTo }) => {
+      const [messages, setMessages] = useState([
+        {
+          role: 'ai',
+          text: "Hello! I am Juedsola, Paul Olakiitan Ajayi's official AI Assistant. I can help you find his research papers, summarize his work, or answer questions about microbiology. How can I help you today?"
+        }
+      ]);
+      const [input, setInput] = useState('');
+      const [loading, setLoading] = useState(false);
+      const [form, setForm] = useState({ name: '', email: '', message: '' });
+      const [formStatus, setFormStatus] = useState('');
+      const chatEndRef = useRef(null);
+
+      useEffect(() => {
+        chatEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+      }, [messages, loading]);
+
+      const handleSend = async (e) => {
+        e.preventDefault();
+        const userText = input.trim();
+        if (!userText || loading) return;
+
+        setInput('');
+        setMessages(prev => [...prev, { role: 'user', text: userText }]);
+        setLoading(true);
+
+        try {
+          const systemPrompt = `
+You are Juedsola, the official AI Assistant for Paul Olakiitan Ajayi's Knowledge Hub.
+Paul is a Microbiologist, Researcher, and Educator.
+
+Profile:
+${JSON.stringify(settings || {})}
+
+Published library:
+${JSON.stringify(
+  publications.map(p => ({
+    title: p.title,
+    type: p.type,
+    summary: p.summary,
+    category: p.category
+  }))
+)}
+
+Answer questions about Paul, his work, research and the public library.
+Do not invent facts that are not present in the provided information.
+
+If the user wants to contact Paul directly, book him, collaborate, or asks something you cannot answer, say:
+"I will need Paul to look into this. Please use the 'Direct Inbox' panel next to our chat to send him a direct message so he can reply via email."
+
+Be polite, professional and concise.
+          `.trim();
+
+          const history = messages
+            .filter(m => m.text)
+            .map(m => ({
+              role: m.role === 'ai' ? 'model' : 'user',
+              parts: [{ text: m.text }]
+            }));
+
+          history.push({
+            role: 'user',
+            parts: [{ text: userText }]
+          });
+
+          const response = await fetch('/api/chatbot', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              contents: history,
+              systemInstruction: { parts: [{ text: systemPrompt }] }
+            })
+          });
+
+          const raw = await response.text();
+          let data = {};
+
+          try {
+            data = raw ? JSON.parse(raw) : {};
+          } catch (_) {
+            data = {};
+          }
+
+          if (!response.ok) {
+            throw new Error(data?.error || `Chat API request failed (${response.status})`);
+          }
+
+          const aiText =
+            data?.candidates?.[0]?.content?.parts?.[0]?.text ||
+            data?.text ||
+            "I am currently disconnected from my knowledge base. Please try again later, or use the Direct Inbox to message Paul.";
+
+          setMessages(prev => [...prev, { role: 'ai', text: aiText }]);
+        } catch (error) {
+          console.error('AI error:', error);
+          setMessages(prev => [
+            ...prev,
+            {
+              role: 'ai',
+              text: 'Sorry, I encountered an error connecting to my servers. Please use the Direct Inbox if you need immediate assistance.'
+            }
+          ]);
+        } finally {
+          setLoading(false);
+        }
+      };
+
+      const handleContactSubmit = async (e) => {
+        e.preventDefault();
+
+        if (!supabaseClient) {
+          setFormStatus('Database connection unavailable.');
+          return;
+        }
+
+        setFormStatus('Sending...');
+
+        try {
+          const { error } = await supabaseClient
+            .from('messages')
+            .insert([{
+              name: form.name.trim(),
+              email: form.email.trim().toLowerCase(),
+              message: form.message.trim()
+            }]);
+
+          if (error) throw error;
+
+          setFormStatus('Sent successfully! Paul will be notified.');
+          setForm({ name: '', email: '', message: '' });
+        } catch (error) {
+          console.error('Inbox error:', error);
+          setFormStatus('Failed to send. Please try again.');
+        }
+
+        setTimeout(() => setFormStatus(''), 6000);
+      };
+
+      return (
+        <div className="pt-24 pb-12 max-w-7xl mx-auto px-4 sm:px-6 min-h-screen animate-fade-in flex flex-col md:flex-row gap-8">
+
+          <div className="flex-1 bg-white dark:bg-cardDark rounded-3xl shadow-xl border border-gray-100 dark:border-gray-800 flex flex-col h-[75vh] min-h-[560px]">
+            <div className="p-4 border-b border-gray-100 dark:border-gray-800 flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-full bg-emerald flex items-center justify-center text-white">
+                  <Icon name="bot" size={20} />
+                </div>
+                <div>
+                  <h3 className="font-bold text-navy dark:text-white">Juedsola - AI Assistant</h3>
+                  <p className="text-xs text-emerald-500 font-medium">Online • Knowledge Base</p>
+                </div>
+              </div>
+
+              <button
+                onClick={() => navigateTo('home')}
+                className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-200"
+                aria-label="Close AI"
+              >
+                <Icon name="x" size={20} />
+              </button>
+            </div>
+
+            <div className="flex-1 overflow-y-auto p-4 space-y-4">
+              {messages.map((msg, idx) => (
+                <div key={idx} className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}>
+                  <div
+                    className={`max-w-[85%] rounded-2xl p-4 ${
+                      msg.role === 'user'
+                        ? 'bg-navy text-white rounded-br-none'
+                        : 'bg-gray-100 dark:bg-gray-800 text-gray-800 dark:text-gray-200 rounded-bl-none'
+                    }`}
+                  >
+                    <p className="whitespace-pre-wrap text-sm leading-relaxed">{msg.text}</p>
+                  </div>
+                </div>
+              ))}
+
+              {loading && (
+                <div className="flex justify-start">
+                  <div className="bg-gray-100 dark:bg-gray-800 rounded-2xl rounded-bl-none p-4 flex gap-2 items-center">
+                    <span className="w-2 h-2 bg-emerald rounded-full animate-bounce" />
+                    <span className="w-2 h-2 bg-emerald rounded-full animate-bounce" style={{ animationDelay: '.2s' }} />
+                    <span className="w-2 h-2 bg-emerald rounded-full animate-bounce" style={{ animationDelay: '.4s' }} />
+                  </div>
+                </div>
+              )}
+
+              <div ref={chatEndRef} />
+            </div>
+
+            <form
+              onSubmit={handleSend}
+              className="p-4 border-t border-gray-100 dark:border-gray-800 bg-gray-50 dark:bg-cardDark rounded-b-3xl flex gap-2"
+            >
+              <input
+                type="text"
+                value={input}
+                onChange={e => setInput(e.target.value)}
+                placeholder="Ask a question..."
+                disabled={loading}
+                className="flex-1 px-4 py-3 rounded-xl bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-emerald disabled:opacity-60"
+              />
+              <button
+                type="submit"
+                disabled={loading || !input.trim()}
+                className="bg-emerald text-white p-3 rounded-xl hover:bg-emerald/90 transition-colors flex items-center justify-center w-12 disabled:opacity-50"
+              >
+                <Icon name="send" size={20} />
+              </button>
+            </form>
+          </div>
+
+          <div className="w-full md:w-1/3 bg-emerald/10 dark:bg-emerald/5 rounded-3xl p-6 border border-emerald/20 flex flex-col h-max">
+            <div className="text-center mb-6">
+              <div className="w-12 h-12 rounded-full bg-emerald/20 text-emerald flex items-center justify-center mx-auto mb-3">
+                <Icon name="pencil" size={24} />
+              </div>
+              <h3 className="font-serif font-bold text-lg dark:text-white mb-1">Direct Inbox</h3>
+              <p className="text-xs text-gray-600 dark:text-gray-400">
+                Leave a message. Paul will reply via email.
+              </p>
+            </div>
+
+            <form onSubmit={handleContactSubmit} className="space-y-3">
+              <input
+                required
+                type="text"
+                placeholder="Your Name"
+                value={form.name}
+                onChange={e => setForm({ ...form, name: e.target.value })}
+                className="w-full px-4 py-2.5 rounded-xl bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 text-sm dark:text-white focus:outline-none focus:ring-2 focus:ring-emerald"
+              />
+
+              <input
+                required
+                type="email"
+                placeholder="Your Email"
+                value={form.email}
+                onChange={e => setForm({ ...form, email: e.target.value })}
+                className="w-full px-4 py-2.5 rounded-xl bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 text-sm dark:text-white focus:outline-none focus:ring-2 focus:ring-emerald"
+              />
+
+              <textarea
+                required
+                rows="4"
+                placeholder="How can Paul help you?"
+                value={form.message}
+                onChange={e => setForm({ ...form, message: e.target.value })}
+                className="w-full px-4 py-2.5 rounded-xl bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 text-sm dark:text-white focus:outline-none focus:ring-2 focus:ring-emerald"
+              />
+
+              <button
+                type="submit"
+                className="w-full bg-navy text-white py-3 rounded-xl text-sm font-bold shadow-md hover:opacity-90"
+              >
+                Send to Paul
+              </button>
+
+              {formStatus && (
+                <p className="text-center text-xs font-bold text-emerald mt-2">
+                  {formStatus}
+                </p>
+              )}
+            </form>
+          </div>
+        </div>
+      );
+    };
+
+    /* ============================================================
+       APP
+       ============================================================ */
+    const App = () => {
+      const [darkMode, setDarkMode] = useState(() => {
+        const saved = localStorage.getItem('akh-theme');
+        return saved ? saved === 'dark' : true;
+      });
+
+      const [view, setView] = useState(initialViewFromHash);
+      const [selectedItem, setSelectedItem] = useState(null);
+      const [showSearch, setShowSearch] = useState(false);
+      const [publications, setPublications] = useState([]);
+      const [settings, setSettings] = useState(null);
+      const [loadingData, setLoadingData] = useState(true);
+      const [dataError, setDataError] = useState('');
+
+      useEffect(() => {
+        document.documentElement.classList.toggle('dark', darkMode);
+        localStorage.setItem('akh-theme', darkMode ? 'dark' : 'light');
+      }, [darkMode]);
+
+      useEffect(() => {
+        const onPopState = () => {
+          setView(initialViewFromHash());
+          window.scrollTo({ top: 0, behavior: 'instant' });
+        };
+
+        window.addEventListener('popstate', onPopState);
+        return () => window.removeEventListener('popstate', onPopState);
+      }, []);
+
+      useEffect(() => {
+        let mounted = true;
+
+        const fetchData = async () => {
+          if (!supabaseClient) {
+            if (mounted) {
+              setDataError('Supabase could not be initialized.');
+              setLoadingData(false);
+            }
+            return;
+          }
+
+          setLoadingData(true);
+          setDataError('');
+
+          try {
+            const [pubResult, settingsResult] = await Promise.all([
+              supabaseClient
+                .from('publications')
+                .select('*')
+                .order('id', { ascending: false }),
+
+              supabaseClient
+                .from('site_settings')
+                .select('*')
+                .eq('id', 1)
+                .maybeSingle()
+            ]);
+
+            if (pubResult.error) throw pubResult.error;
+
+            if (mounted) {
+              setPublications(Array.isArray(pubResult.data) ? pubResult.data : []);
+              setSettings(settingsResult?.data || null);
+
+              if (settingsResult?.error) {
+                console.warn('site_settings query:', settingsResult.error);
+              }
             }
 
-            const latestBook = getLatest('book');
-            const latestResearch = getLatest('research');
-            const latestBlog = getLatest('blog');
-
-            return (
-                <div className="bg-gray-50 dark:bg-[#121212] py-8 border-b border-gray-200 dark:border-gray-800">
-                    <div className="max-w-[1600px] mx-auto px-4 sm:px-6 lg:px-8">
-                        <div className="flex flex-nowrap overflow-x-auto pb-6 gap-6 snap-x snap-mandatory hide-scrollbar">
-                            
-                            {/* Featured Book */}
-                            {latestBook && (
-                                <div className="snap-start shrink-0 w-[350px] md:w-[400px] bg-white dark:bg-[#1E1E1E] rounded-xl border border-gray-200 dark:border-gray-800 p-5 shadow-sm flex flex-col group">
-                                    <div className="flex justify-between items-center mb-5 border-b border-gray-100 dark:border-gray-800 pb-3">
-                                        <div className="flex items-center gap-2 font-serif font-bold text-lg dark:text-white">
-                                            <Icon name="book" size={20} className="text-gray-700 dark:text-gray-300" /> Featured Book
-                                        </div>
-                                    </div>
-                                    <div className="flex gap-4 flex-grow">
-                                        <div className="w-1/3 shrink-0">
-                                            {latestBook.thumbnail_url ? (
-                                                <div className="bg-gray-200 rounded shadow-md aspect-[2/3] overflow-hidden">
-                                                    <img src={latestBook.thumbnail_url} alt="Cover" className="object-cover object-center w-full h-full" />
-                                                </div>
-                                            ) : (
-                                                <div className="bg-[#112435] p-2 rounded shadow-md aspect-[2/3] flex items-center justify-center text-center border-l-4 border-[#2E8B57]">
-                                                    <div className="text-white">
-                                                        <div className="text-sm font-serif font-bold leading-tight mb-2">{latestBook.title}</div>
-                                                        <div className="w-8 h-[1px] bg-[#2E8B57] mx-auto"></div>
-                                                    </div>
-                                                </div>
-                                            )}
-                                        </div>
-                                        <div className="flex flex-col justify-between min-w-0">
-                                            <div>
-                                                <h4 className="font-serif font-bold text-lg mb-2 leading-tight dark:text-white truncate">{latestBook.title}</h4>
-                                                <p className="text-sm text-gray-600 dark:text-gray-400 mb-2 line-clamp-3">{latestBook.summary}</p>
-                                                <div className="text-xs text-[#2E8B57] font-medium truncate">{latestBook.category}</div>
-                                            </div>
-                                            <button onClick={() => handleRead(latestBook, 'detail')} className="mt-4 px-4 py-1.5 border border-gray-300 dark:border-gray-600 rounded text-sm font-medium hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors w-max dark:text-white">View Book</button>
-                                        </div>
-                                    </div>
-                                </div>
-                            )}
-
-                            {/* Latest Research */}
-                            {latestResearch && (
-                                <div className="snap-start shrink-0 w-[350px] md:w-[400px] bg-white dark:bg-[#1E1E1E] rounded-xl border border-gray-200 dark:border-gray-800 p-5 shadow-sm flex flex-col group">
-                                    <div className="flex justify-between items-center mb-5 border-b border-gray-100 dark:border-gray-800 pb-3">
-                                        <div className="flex items-center gap-2 font-serif font-bold text-lg dark:text-white">
-                                            <Icon name="microscope" size={20} className="text-gray-700 dark:text-gray-300" /> Latest Research
-                                        </div>
-                                    </div>
-                                    <div className="flex flex-col h-full">
-                                        <div className="h-32 bg-gray-200 dark:bg-gray-700 rounded-lg mb-4 overflow-hidden relative">
-                                            <img src={latestResearch.thumbnail_url || 'https://images.unsplash.com/photo-1576086213369-97a306d36557?auto=format&fit=crop&q=80'} className="absolute inset-0 w-full h-full object-cover object-center" />
-                                        </div>
-                                        <h4 className="font-serif font-bold text-base mb-1 leading-tight dark:text-white truncate">{latestResearch.title}</h4>
-                                        <div className="text-xs text-gray-500 mb-2">{latestResearch.published_date}</div>
-                                        <p className="text-sm text-gray-600 dark:text-gray-400 mb-4 line-clamp-2 flex-grow">{latestResearch.summary}</p>
-                                        <button onClick={() => handleRead(latestResearch, 'detail')} className="text-[#2E8B57] text-sm font-medium hover:underline text-left flex items-center gap-1">Read Now <span>&rarr;</span></button>
-                                    </div>
-                                </div>
-                            )}
-
-                            {/* Latest Blog */}
-                            {latestBlog && (
-                                <div className="snap-start shrink-0 w-[350px] md:w-[400px] bg-white dark:bg-[#1E1E1E] rounded-xl border border-gray-200 dark:border-gray-800 p-5 shadow-sm flex flex-col group">
-                                    <div className="flex justify-between items-center mb-5 border-b border-gray-100 dark:border-gray-800 pb-3">
-                                        <div className="flex items-center gap-2 font-serif font-bold text-lg dark:text-white">
-                                            <Icon name="pencil" size={20} className="text-gray-700 dark:text-gray-300" /> Latest Article
-                                        </div>
-                                    </div>
-                                    <div className="flex gap-4 h-full">
-                                        <div className="w-2/5 shrink-0 h-full min-h-[140px] bg-gray-200 rounded-lg overflow-hidden relative">
-                                            <img src={latestBlog.thumbnail_url || 'https://images.unsplash.com/photo-1581093458791-9f3c3900df4b?auto=format&fit=crop&q=80'} className="absolute inset-0 w-full h-full object-cover object-center" />
-                                        </div>
-                                        <div className="flex flex-col min-w-0">
-                                            <h4 className="font-serif font-bold text-base mb-1 leading-tight dark:text-white line-clamp-2">{latestBlog.title}</h4>
-                                            <div className="text-xs text-gray-500 mb-2">{latestBlog.category}</div>
-                                            <p className="text-sm text-gray-600 dark:text-gray-400 mb-4 line-clamp-3 flex-grow">{latestBlog.summary}</p>
-                                            <button onClick={() => handleRead(latestBlog, 'reading')} className="text-[#2E8B57] text-sm font-medium hover:underline text-left flex items-center gap-1 mt-auto">Read Article <span>&rarr;</span></button>
-                                        </div>
-                                    </div>
-                                </div>
-                            )}
-                        </div>
-                    </div>
-                </div>
-            );
+            try {
+              await supabaseClient.rpc('increment_page_view');
+            } catch (error) {
+              console.warn('Page-view counter unavailable:', error);
+            }
+          } catch (error) {
+            console.error('Supabase load error:', error);
+            if (mounted) {
+              setDataError('We could not load the latest content. Please refresh the page.');
+            }
+          } finally {
+            if (mounted) setLoadingData(false);
+          }
         };
 
-        const BottomInfo = ({ settings }) => {
-            const [email, setEmail] = useState('');
-            const [status, setStatus] = useState('');
+        fetchData();
 
-            const handleSubscribe = async (e) => {
-                e.preventDefault();
-                setStatus('Subscribing...');
-                try {
-                    await supabase.from('subscribers').insert([{ email }]);
-                    setStatus('Success! Thank you.');
-                    setEmail('');
-                } catch (error) { setStatus('Error connecting.'); }
-                setTimeout(() => setStatus(''), 4000);
-            };
-
-            return (
-                <div className="max-w-[1600px] mx-auto px-4 sm:px-6 lg:px-8 mb-16">
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                        {/* Quote */}
-                        <div className="bg-white dark:bg-[#1E1E1E] rounded-xl border border-gray-200 dark:border-gray-800 p-8 shadow-sm relative">
-                            <div className="text-[#2E8B57] absolute top-6 left-6 opacity-20">
-                                <svg width="60" height="60" viewBox="0 0 24 24" fill="currentColor"><path d="M14.017 21v-7.391c0-5.704 3.731-9.57 8.983-10.609l.995 2.151c-2.432.917-3.995 3.638-3.995 5.849h4v10h-9.983zm-14.017 0v-7.391c0-5.704 3.748-9.57 9-10.609l.996 2.151c-2.433.917-3.996 3.638-3.996 5.849h3.983v10h-9.983z"/></svg>
-                            </div>
-                            <div className="pl-4 relative z-10">
-                                <h3 className="font-serif font-bold text-lg mb-4 dark:text-white">Quote of the Day</h3>
-                                <p className="text-gray-700 dark:text-gray-300 font-serif italic mb-4">"{settings?.daily_quote || 'The beautiful thing about learning is that no one can take it away from you.'}"</p>
-                                <div className="text-sm font-bold text-[#2E8B57]">- {settings?.quote_author || 'B.B. King'}</div>
-                            </div>
-                        </div>
-
-                        {/* Newsletter */}
-                        <div className="bg-white dark:bg-[#1E1E1E] rounded-xl border border-gray-200 dark:border-gray-800 p-8 shadow-sm">
-                            <h3 className="font-serif font-bold text-lg mb-2 dark:text-white flex items-center gap-2">
-                                <Icon name="pencil" size={20} className="text-gray-500" /> Stay Updated
-                            </h3>
-                            <p className="text-sm text-gray-600 dark:text-gray-400 mb-6">Subscribe to my newsletter and never miss new research and insights.</p>
-                            <form className="flex flex-col gap-2" onSubmit={handleSubscribe}>
-                                <div className="flex gap-2 w-full">
-                                    <input type="email" required value={email} onChange={e=>setEmail(e.target.value)} placeholder="Enter your email" className="flex-1 bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg px-4 py-2 text-sm focus:outline-none focus:border-[#2E8B57]" />
-                                    <button type="submit" className="bg-[#2E8B57] hover:bg-[#257348] text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors">Subscribe</button>
-                                </div>
-                                {status && <span className="text-xs font-bold text-emerald-500">{status}</span>}
-                            </form>
-                        </div>
-
-                        {/* Socials */}
-                        <div className="bg-white dark:bg-[#1E1E1E] rounded-xl border border-gray-200 dark:border-gray-800 p-8 shadow-sm">
-                            <h3 className="font-serif font-bold text-lg mb-2 dark:text-white">Let's Connect</h3>
-                            <p className="text-sm text-gray-600 dark:text-gray-400 mb-6">Join a community of learners and researchers building a better future.</p>
-                            <div className="flex flex-wrap gap-3">
-                                {settings?.linkedin_url && <a href={settings.linkedin_url} target="_blank" className="w-10 h-10 rounded-full bg-[#0077b5] text-white flex items-center justify-center hover:opacity-90"><span className="font-bold text-lg">in</span></a>}
-                                {settings?.twitter_url && <a href={settings.twitter_url} target="_blank" className="w-10 h-10 rounded-full bg-[#000000] border border-gray-700 text-white flex items-center justify-center hover:opacity-90">
-                                    <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/></svg>
-                                </a>}
-                                {settings?.orcid_url && <a href={settings.orcid_url} target="_blank" className="w-10 h-10 rounded-full bg-[#A6CE39] text-white flex items-center justify-center hover:opacity-90"><span className="font-bold font-serif text-lg">iD</span></a>}
-                                {settings?.youtube_url && <a href={settings.youtube_url} target="_blank" className="w-10 h-10 rounded-full bg-[#FF0000] text-white flex items-center justify-center hover:opacity-90"><svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M23.498 6.186a3.016 3.016 0 0 0-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.017 3.017 0 0 0 .502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.016 3.016 0 0 0 2.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.015 3.015 0 0 0 2.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814zM9.545 15.568V8.432L15.818 12l-6.273 3.568z"/></svg></a>}
-                                {settings?.facebook_url && <a href={settings.facebook_url} target="_blank" className="w-10 h-10 rounded-full bg-[#1877F2] text-white flex items-center justify-center hover:opacity-90"><svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C6.477 2 2 6.477 2 12c0 4.991 3.657 9.128 8.438 9.879V15.32H7.898v-3.32h2.54V9.52c0-2.506 1.493-3.89 3.777-3.89 1.094 0 2.238.195 2.238.195v2.46h-1.26c-1.243 0-1.63 1.562v1.873h2.773l-.443 3.32h-2.33v6.559C18.343 21.128 22 16.991 22 12c0-5.523-4.477-10-10-10z"/></svg></a>}
-                                {settings?.whatsapp_number && <a href={`https://wa.me/${settings.whatsapp_number}`} target="_blank" className="w-10 h-10 rounded-full bg-[#25D366] text-white flex items-center justify-center hover:opacity-90"><svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347z"/></svg></a>}
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            );
+        return () => {
+          mounted = false;
         };
+      }, []);
 
-        const AiAssistantView = ({ publications, settings, navigateTo }) => {
-            const [messages, setMessages] = useState([{role: 'ai', text: "Hello! I am Juedsola, Paul Olakiitan Ajayi's official AI Assistant. I can help you find his research papers, summarize his work, or answer questions about microbiology. How can I help you today?"}]);
-            const [input, setInput] = useState('');
-            const [loading, setLoading] = useState(false);
-            const chatEndRef = useRef(null);
+      const navigateTo = (newView) => {
+        setView(newView);
+        setShowSearch(false);
+        window.scrollTo({ top: 0, behavior: 'instant' });
+        navigateHash(newView);
+      };
 
-            const [form, setForm] = useState({ name: '', email: '', message: '' });
-            const [formStatus, setFormStatus] = useState('');
+      const statBoxes = [
+        {
+          count: publications.filter(p => normalizeType(p.type) === 'book').length,
+          label: 'Books & eBooks',
+          icon: 'book'
+        },
+        {
+          count: publications.filter(p => normalizeType(p.type) === 'research').length,
+          label: 'Research Notes',
+          icon: 'microscope'
+        },
+        {
+          count: publications.filter(p => normalizeType(p.type) === 'journal').length,
+          label: 'Journal Entries',
+          icon: 'layout'
+        },
+        {
+          count: publications.filter(p => normalizeType(p.type) === 'teaching').length,
+          label: 'Teaching Hub',
+          icon: 'gradCap'
+        },
+        {
+          count: Number(settings?.views_count || 0),
+          label: 'Global Readers',
+          icon: 'users'
+        },
+        {
+          count: Number(settings?.downloads_count || 0),
+          label: 'Downloads',
+          icon: 'download'
+        }
+      ];
 
-            useEffect(() => {
-                chatEndRef.current?.scrollIntoView({ behavior: 'smooth' });
-            }, [messages]);
+      const home = (
+        <div className="bg-gray-50 dark:bg-[#121212]">
+          <HeroSection settings={settings} navigateTo={navigateTo} />
 
-            const handleSend = async (e) => {
-                e.preventDefault();
-                if (!input.trim()) return;
-                const userText = input;
-                setInput('');
-                setMessages(prev => [...prev, {role: 'user', text: userText}]);
-                setLoading(true);
-
-                try {
-                    // Gemini is called through our secure Vercel API route.
-                    // The API key is never exposed in the browser.
-                    const apiUrl = '/api/chatbot';
-
-                    const systemPrompt = `You are Juedsola, the official AI Assistant for Paul Olakiitan Ajayi's Knowledge Hub. You speak on behalf of Paul.
-                    Paul is a Microbiologist, Researcher, and Educator.
-                    Here is his profile: ${JSON.stringify(settings)}
-                    Here is his published library: ${JSON.stringify(publications.map(p=>({title: p.title, type: p.type, summary: p.summary, category: p.category})))}.
-                    Your job is to answer questions about Paul, summarize his research, and guide visitors.
-                    CRITICAL RULE: If the user wants to contact Paul directly, book him, collaborate, or asks something you cannot answer, say EXACTLY THIS: "I will need Paul to look into this. Please use the 'Direct Inbox' panel next to our chat to send him a direct message so he can reply via email."
-                    Be polite, professional, and concise. Format text neatly.`;
-
-                    const historyForApi = messages.filter(m => m.text).map(m => ({
-                        role: m.role === 'ai' ? 'model' : 'user',
-                        parts: [{ text: m.text }]
-                    }));
-                    historyForApi.push({ role: 'user', parts: [{ text: userText }] });
-
-                    const payload = {
-                        contents: historyForApi,
-                        systemInstruction: { parts: [{ text: systemPrompt }] }
-                    };
-
-                    const res = await fetch(apiUrl, {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({ contents: historyForApi, systemInstruction: payload.systemInstruction })
-                    });
-
-                    const data = await res.json();
-                    if (!res.ok) {
-                        throw new Error(data?.error || `Chat API request failed (${res.status})`);
-                    }
-                    const aiText = data.candidates?.[0]?.content?.parts?.[0]?.text || "I am currently disconnected from my knowledge base. Please try again later, or use the Direct Inbox to message Paul.";
-
-                    setMessages(prev => [...prev, {role: 'ai', text: aiText}]);
-                } catch (err) {
-                    setMessages(prev => [...prev, {role: 'ai', text: "Sorry, I encountered an error connecting to my servers. Please use the Direct Inbox if you need immediate assistance."}]);
-                }
-                setLoading(false);
-            };
-
-            const handleContactSubmit = async (e) => {
-                e.preventDefault();
-                setFormStatus('Sending...');
-                try {
-                    await supabase.from('messages').insert([form]);
-                    setFormStatus('Sent successfully! Paul will be notified.');
-                    setForm({ name: '', email: '', message: '' });
-                } catch (error) { setFormStatus('Failed to send.'); }
-                setTimeout(() => setFormStatus(''), 5000);
-            };
-
-            return (
-                <div className="pt-24 pb-12 max-w-7xl mx-auto px-4 sm:px-6 min-h-screen animate-fade-in flex flex-col md:flex-row gap-8">
-                    {/* Chat Section */}
-                    <div className="flex-1 bg-white dark:bg-cardDark rounded-3xl shadow-xl border border-gray-100 dark:border-gray-800 flex flex-col h-[75vh]">
-                        {/* Chat Header */}
-                        <div className="p-4 border-b border-gray-100 dark:border-gray-800 flex items-center justify-between">
-                            <div className="flex items-center gap-3">
-                                <div className="w-10 h-10 rounded-full bg-emerald flex items-center justify-center text-white"><Icon name="bot" size={20}/></div>
-                                <div>
-                                    <h3 className="font-bold text-navy dark:text-white">Juedsola - AI Assistant</h3>
-                                    <p className="text-xs text-emerald-500 font-medium">Online • Connected to Knowledge Base</p>
-                                </div>
-                            </div>
-                            <button onClick={() => navigateTo('home')} className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-200"><Icon name="x" size={20}/></button>
-                        </div>
-
-                        {/* Messages Area */}
-                        <div className="flex-1 overflow-y-auto p-4 space-y-4">
-                            {messages.map((msg, idx) => (
-                                <div key={idx} className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}>
-                                    <div className={`max-w-[80%] rounded-2xl p-4 ${msg.role === 'user' ? 'bg-navy text-white rounded-br-none' : 'bg-gray-100 dark:bg-gray-800 text-gray-800 dark:text-gray-200 rounded-bl-none'}`}>
-                                        <p className="whitespace-pre-wrap text-sm leading-relaxed">{msg.text}</p>
-                                    </div>
-                                </div>
-                            ))}
-                            {loading && (
-                                <div className="flex justify-start">
-                                    <div className="bg-gray-100 dark:bg-gray-800 rounded-2xl rounded-bl-none p-4 flex space-x-2 items-center">
-                                        <div className="w-2 h-2 bg-emerald rounded-full animate-bounce"></div>
-                                        <div className="w-2 h-2 bg-emerald rounded-full animate-bounce" style={{animationDelay: '0.2s'}}></div>
-                                        <div className="w-2 h-2 bg-emerald rounded-full animate-bounce" style={{animationDelay: '0.4s'}}></div>
-                                    </div>
-                                </div>
-                            )}
-                            <div ref={chatEndRef} />
-                        </div>
-
-                        {/* Input Area */}
-                        <form onSubmit={handleSend} className="p-4 border-t border-gray-100 dark:border-gray-800 bg-gray-50 dark:bg-cardDark rounded-b-3xl flex gap-2">
-                            <input type="text" value={input} onChange={e=>setInput(e.target.value)} placeholder="Ask a question..." className="flex-1 px-4 py-3 rounded-xl bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-emerald" />
-                            <button type="submit" disabled={loading} className="bg-emerald text-white p-3 rounded-xl hover:bg-emerald/90 transition-colors flex items-center justify-center w-12"><Icon name="send" size={20}/></button>
-                        </form>
+          <div className="max-w-[1600px] mx-auto px-4 sm:px-6 lg:px-8 -mt-6 relative z-20 mb-12">
+            <div className="bg-[#0f1b29] rounded-xl shadow-xl flex flex-wrap lg:flex-nowrap divide-y lg:divide-y-0 lg:divide-x divide-white/10 p-2">
+              {statBoxes.map((stat, idx) => (
+                <div
+                  key={idx}
+                  className="flex-1 min-w-[140px] p-4 flex items-center justify-center lg:justify-start gap-4"
+                >
+                  <div className="text-[#D4AF37]">
+                    <Icon name={stat.icon} size={28} />
+                  </div>
+                  <div>
+                    <div className="text-white font-bold text-xl leading-none mb-1">
+                      {stat.count}
                     </div>
-
-                    {/* Direct Inbox Escalation Panel */}
-                    <div className="w-full md:w-1/3 bg-emerald/10 dark:bg-emerald/5 rounded-3xl p-6 border border-emerald/20 flex flex-col h-max">
-                        <div className="text-center mb-6">
-                            <div className="w-12 h-12 rounded-full bg-emerald/20 text-emerald flex items-center justify-center mx-auto mb-3"><Icon name="pencil" size={24}/></div>
-                            <h3 className="font-serif font-bold text-lg dark:text-white mb-1">Direct Inbox</h3>
-                            <p className="text-xs text-gray-600 dark:text-gray-400">Leave a message. Paul will reply via email.</p>
-                        </div>
-                        <form onSubmit={handleContactSubmit} className="space-y-3">
-                            <input required type="text" placeholder="Your Name" value={form.name} onChange={e=>setForm({...form, name: e.target.value})} className="w-full px-4 py-2.5 rounded-xl bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 text-sm focus:outline-none focus:ring-2 focus:ring-emerald dark:text-white" />
-                            <input required type="email" placeholder="Your Email" value={form.email} onChange={e=>setForm({...form, email: e.target.value})} className="w-full px-4 py-2.5 rounded-xl bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 text-sm focus:outline-none focus:ring-2 focus:ring-emerald dark:text-white" />
-                            <textarea required rows="4" placeholder="How can Paul help you?" value={form.message} onChange={e=>setForm({...form, message: e.target.value})} className="w-full px-4 py-2.5 rounded-xl bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 text-sm focus:outline-none focus:ring-2 focus:ring-emerald dark:text-white"></textarea>
-                            <button type="submit" className="w-full bg-navy text-white py-3 rounded-xl text-sm font-bold shadow-md hover:opacity-90 transition-opacity">Send to Paul</button>
-                            {formStatus && <p className="text-center text-xs font-bold text-emerald mt-2">{formStatus}</p>}
-                        </form>
-                    </div>
+                    <div className="text-gray-400 text-xs">{stat.label}</div>
+                  </div>
                 </div>
-            );
-        };
-
-        const GenericListView = ({ title, type, publications, navigateTo, setSelectedItem }) => {
-            const data = publications.filter(p => p.type === type);
-            return (
-                <div className="pt-32 pb-24 max-w-7xl mx-auto px-4 sm:px-6 min-h-screen animate-fade-in">
-                    <button onClick={() => navigateTo('home')} className="flex items-center text-[#2E8B57] hover:opacity-80 mb-8 font-medium">
-                        <Icon name="arrowLeft" size={18} className="mr-2"/> Back to Home
-                    </button>
-                    <h1 className="text-4xl font-bold font-serif text-navy dark:text-white capitalize mb-4">{title}</h1>
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 mt-12">
-                        {data.map(item => (
-                            <div key={item.id} className="bg-white dark:bg-cardDark rounded-2xl p-6 shadow-sm border border-gray-100 dark:border-gray-800 flex flex-col h-full">
-                                {item.thumbnail_url && (
-                                    <img src={item.thumbnail_url} className="w-full h-40 object-cover object-center rounded-xl mb-4" />
-                                )}
-                                <span className="text-xs font-bold uppercase tracking-wider text-[#2E8B57] mb-2">{item.category}</span>
-                                <h3 className="text-xl font-bold text-navy dark:text-white mb-3">{item.title}</h3>
-                                <p className="text-sm text-gray-600 dark:text-gray-400 mb-6 flex-grow line-clamp-3">{item.summary}</p>
-                                <button onClick={() => { setSelectedItem(item); navigateTo(item.type === 'blog' || item.type === 'journal' ? 'reading' : 'detail'); }} className="text-[#2E8B57] text-sm font-semibold flex items-center hover:gap-1 mt-auto">
-                                    Read More &rarr;
-                                </button>
-                            </div>
-                        ))}
-                    </div>
-                </div>
-            );
-        };
-
-        const DetailView = ({ item, navigateTo }) => (
-            <div className="max-w-4xl mx-auto px-4 pt-32 pb-24 min-h-screen animate-fade-in">
-                <button onClick={() => navigateTo(item.type)} className="flex items-center text-[#2E8B57] hover:opacity-80 mb-8 font-medium">
-                    <Icon name="arrowLeft" size={18} className="mr-2"/> Back to {item.type}
-                </button>
-                <div className="bg-white dark:bg-cardDark rounded-3xl p-8 shadow-xl border border-gray-100 dark:border-gray-800 flex flex-col md:flex-row gap-8">
-                    <div className="w-full md:w-1/3 shrink-0">
-                        {item.thumbnail_url ? (
-                            <img src={item.thumbnail_url} className="w-full aspect-[3/4] rounded-xl shadow-lg object-cover object-center" />
-                        ) : (
-                            <div className="aspect-[3/4] bg-navy rounded-xl flex items-center justify-center p-6 text-center text-white"><h3 className="font-serif font-bold text-xl">{item.title}</h3></div>
-                        )}
-                    </div>
-                    <div className="flex flex-col">
-                        <span className="text-xs font-bold uppercase tracking-wider text-[#2E8B57] mb-2">{item.category} • {item.published_date}</span>
-                        <h1 className="text-3xl font-bold font-serif dark:text-white mb-4">{item.title}</h1>
-                        <p className="text-gray-600 dark:text-gray-300 mb-8 leading-relaxed whitespace-pre-wrap">{item.content || item.summary}</p>
-                        {item.file_url && (
-                            <a href={item.file_url} target="_blank" onClick={()=>supabase.rpc('increment_download')} className="mt-auto w-max flex items-center px-6 py-3 bg-[#2E8B57] text-white rounded-xl font-medium shadow-md">
-                                <Icon name="download" size={18} className="mr-2"/> Download Document
-                            </a>
-                        )}
-                    </div>
-                </div>
+              ))}
             </div>
-        );
+          </div>
 
-        const ReadingView = ({ item, navigateTo }) => (
-            <div className="max-w-3xl mx-auto px-4 pt-32 pb-24 min-h-screen animate-fade-in">
-                <button onClick={() => navigateTo(item.type)} className="flex items-center text-[#2E8B57] hover:opacity-80 mb-8 font-medium">
-                    <Icon name="arrowLeft" size={18} className="mr-2"/> Back to {item.type}
-                </button>
-                {item.thumbnail_url && <img src={item.thumbnail_url} className="w-full h-64 object-cover object-center rounded-2xl mb-8 shadow-lg" />}
-                <h1 className="text-4xl font-bold font-serif dark:text-white mb-4">{item.title}</h1>
-                <p className="text-sm text-gray-500 mb-8 uppercase tracking-wider font-bold">{item.category} • {item.published_date}</p>
-                <div className="prose prose-lg dark:prose-invert max-w-none font-serif leading-relaxed whitespace-pre-wrap">{item.content}</div>
+          <ContentCards
+            publications={publications}
+            navigateTo={navigateTo}
+            setSelectedItem={setSelectedItem}
+          />
+
+          <div className="py-12">
+            <BottomInfo settings={settings} />
+          </div>
+        </div>
+      );
+
+      let page;
+
+      if (view === 'home') {
+        page = home;
+      } else if (['library', 'research', 'teaching', 'projects', 'journal', 'blog'].includes(view)) {
+        page = (
+          <GenericListView
+            title={view}
+            type={view}
+            publications={publications}
+            navigateTo={navigateTo}
+            setSelectedItem={setSelectedItem}
+          />
+        );
+      } else if (view === 'detail') {
+        page = selectedItem ? (
+          <DetailView item={selectedItem} navigateTo={navigateTo} />
+        ) : (
+          <GenericListView
+            title="Library"
+            type="book"
+            publications={publications}
+            navigateTo={navigateTo}
+            setSelectedItem={setSelectedItem}
+          />
+        );
+      } else if (view === 'reading') {
+        page = selectedItem ? (
+          <ReadingView item={selectedItem} navigateTo={navigateTo} />
+        ) : (
+          <GenericListView
+            title="Blog"
+            type="blog"
+            publications={publications}
+            navigateTo={navigateTo}
+            setSelectedItem={setSelectedItem}
+          />
+        );
+      } else if (view === 'about') {
+        page = <AboutView settings={settings} navigateTo={navigateTo} />;
+      } else if (view === 'contact') {
+        page = <ContactView navigateTo={navigateTo} />;
+      } else if (view === 'ai') {
+        page = (
+          <AiAssistantView
+            publications={publications}
+            settings={settings}
+            navigateTo={navigateTo}
+          />
+        );
+      } else {
+        page = home;
+      }
+
+      return (
+        <div className="min-h-screen flex flex-col selection:bg-emerald selection:text-white">
+          <Navbar
+            darkMode={darkMode}
+            setDarkMode={setDarkMode}
+            navigateTo={navigateTo}
+            currentView={view}
+            setShowSearch={setShowSearch}
+          />
+
+          {showSearch && (
+            <SearchOverlay
+              publications={publications}
+              onClose={() => setShowSearch(false)}
+              navigateTo={navigateTo}
+              setSelectedItem={setSelectedItem}
+            />
+          )}
+
+          <main className="flex-grow">
+            {loadingData && view === 'home' && (
+              <div className="fixed top-20 left-0 right-0 z-40 h-1 overflow-hidden bg-white/10">
+                <div className="h-full bg-[#2E8B57] animate-pulse w-1/2" />
+              </div>
+            )}
+
+            {dataError && (
+              <div className="pt-24 px-4 max-w-4xl mx-auto">
+                <div className="rounded-xl bg-amber-50 border border-amber-200 text-amber-800 px-4 py-3 text-sm">
+                  {dataError}
+                </div>
+              </div>
+            )}
+
+            {page}
+          </main>
+
+          {view !== 'ai' && (
+            <button
+              onClick={() => navigateTo('ai')}
+              aria-label="Ask AI"
+              className="md:hidden fixed bottom-6 right-6 w-14 h-14 bg-[#2E8B57] text-white rounded-full shadow-2xl flex items-center justify-center z-50 hover:bg-[#257348]"
+            >
+              <Icon name="sparkles" size={24} />
+            </button>
+          )}
+
+          <footer className="bg-[#0B1423] py-8 text-gray-400 text-sm border-t border-white/10">
+            <div className="max-w-[1600px] mx-auto px-4 sm:px-6 lg:px-8 flex flex-col md:flex-row justify-between items-center gap-4">
+              <button
+                onClick={() => navigateTo('home')}
+                className="flex items-center gap-3 text-left"
+              >
+                <div className="text-[#D4AF37]">
+                  <Icon name="book" size={32} />
+                </div>
+                <div>
+                  <h2 className="text-white font-serif font-bold text-lg leading-none">
+                    Ajayi Knowledge Hub
+                  </h2>
+                  <span className="text-[#D4AF37] text-[10px] tracking-wider uppercase font-medium">
+                    Explore. Learn. Discover. Grow.
+                  </span>
+                </div>
+              </button>
+
+              <div className="text-center">
+                <p>© {new Date().getFullYear()} Paul Olakiitan Ajayi. All rights reserved.</p>
+              </div>
+
+              <div className="text-center md:text-right">
+                {settings?.footer_text || 'Built with ♥ for knowledge, science, and humanity.'}
+              </div>
             </div>
-        );
+          </footer>
+        </div>
+      );
+    };
 
-        const AboutView = ({ settings, navigateTo }) => (
-            <div className="max-w-5xl mx-auto px-4 pt-32 pb-24 min-h-screen animate-fade-in">
-                <button onClick={() => navigateTo('home')} className="flex items-center text-[#2E8B57] hover:opacity-80 mb-8 font-medium"><Icon name="arrowLeft" size={18} className="mr-2"/> Back to Home</button>
-                <div className="flex flex-col md:flex-row gap-12 items-start">
-                    <div className="w-full md:w-1/3 shrink-0">
-                        {settings?.profile_pic_url ? (
-                            <img src={settings.profile_pic_url} alt="Profile" className="w-full aspect-square object-cover object-center rounded-3xl shadow-xl border-4 border-white dark:border-gray-800" />
-                        ) : (
-                            <div className="w-full aspect-square bg-navy rounded-3xl flex items-center justify-center text-white"><Icon name="users" size={80}/></div>
-                        )}
-                    </div>
-                    <div className="w-full md:w-2/3">
-                        <h1 className="text-4xl font-bold font-serif dark:text-white mb-2">{settings?.display_name || 'Paul Olakiitan Ajayi'}</h1>
-                        <p className="text-xl text-[#2E8B57] font-medium mb-8">{settings?.bio || 'Microbiologist & Researcher'}</p>
-                        <div className="p-6 bg-emerald/10 rounded-2xl border border-emerald/20 mb-8 shadow-sm">
-                            <h3 className="text-xl font-bold dark:text-white mb-3">Mission</h3>
-                            <p className="text-gray-800 dark:text-gray-200 font-medium whitespace-pre-wrap">{settings?.mission_text}</p>
-                        </div>
-                        <div className="prose prose-lg dark:prose-invert max-w-none text-gray-700 dark:text-gray-300 leading-relaxed font-serif whitespace-pre-wrap">
-                            {settings?.about_text}
-                        </div>
-                    </div>
-                </div>
-            </div>
-        );
+    /* ============================================================
+       START
+       ============================================================ */
+    const rootElement = document.getElementById('root');
 
-        const ContactView = ({ navigateTo }) => {
-            const [form, setForm] = useState({ name: '', email: '', message: '' });
-            const [status, setStatus] = useState('');
-
-            const handleSubmit = async (e) => {
-                e.preventDefault();
-                setStatus('Sending...');
-                try {
-                    await supabase.from('messages').insert([form]);
-                    setStatus('Message sent successfully!');
-                    setForm({ name: '', email: '', message: '' });
-                } catch (error) { setStatus('Failed to send message.'); }
-                setTimeout(() => setStatus(''), 5000);
-            };
-
-            return (
-                <div className="max-w-3xl mx-auto px-4 pt-32 pb-24 min-h-screen animate-fade-in">
-                    <button onClick={() => navigateTo('home')} className="flex items-center text-[#2E8B57] hover:opacity-80 mb-8 font-medium"><Icon name="arrowLeft" size={18} className="mr-2"/> Back to Home</button>
-                    <div className="bg-white dark:bg-cardDark rounded-3xl p-8 shadow-xl border border-gray-100 dark:border-gray-800">
-                        <h2 className="text-3xl font-bold font-serif dark:text-white mb-6">Send a Message</h2>
-                        <form onSubmit={handleSubmit} className="space-y-4">
-                            <input required type="text" placeholder="Your Name" value={form.name} onChange={e=>setForm({...form, name: e.target.value})} className="w-full px-4 py-3 rounded-xl bg-gray-50 dark:bg-gray-800 border-none dark:text-white focus:ring-2 focus:ring-[#2E8B57]" />
-                            <input required type="email" placeholder="Your Email" value={form.email} onChange={e=>setForm({...form, email: e.target.value})} className="w-full px-4 py-3 rounded-xl bg-gray-50 dark:bg-gray-800 border-none dark:text-white focus:ring-2 focus:ring-[#2E8B57]" />
-                            <textarea required rows="5" placeholder="Your Message" value={form.message} onChange={e=>setForm({...form, message: e.target.value})} className="w-full px-4 py-3 rounded-xl bg-gray-50 dark:bg-gray-800 border-none dark:text-white focus:ring-2 focus:ring-[#2E8B57]"></textarea>
-                            <button type="submit" className="w-full bg-[#2E8B57] text-white px-6 py-4 rounded-xl font-medium shadow-md hover:opacity-90">Send Message</button>
-                            {status && <p className="text-center text-sm font-bold mt-4 text-[#2E8B57]">{status}</p>}
-                        </form>
-                    </div>
-                </div>
-            );
-        };
-
-        const SearchOverlay = ({ publications, onClose, navigateTo, setSelectedItem }) => {
-            const [query, setQuery] = useState('');
-            const results = query.length > 2 ? publications.filter(p => (p.title + p.summary + p.tags?.join(' ')).toLowerCase().includes(query.toLowerCase())) : [];
-
-            return (
-                <div className="fixed inset-0 bg-white/95 dark:bg-charcoal/95 backdrop-blur-xl z-[60] flex flex-col p-6 animate-fade-in overflow-y-auto">
-                    <div className="max-w-4xl mx-auto w-full relative">
-                        <button onClick={onClose} className="absolute right-0 top-0 p-4 text-gray-500 hover:text-red-500"><Icon name="x" size={32}/></button>
-                        <h2 className="text-3xl font-serif font-bold mb-8 dark:text-white pt-12">Search Library</h2>
-                        <input autoFocus type="text" placeholder="Type to search..." value={query} onChange={e=>setQuery(e.target.value)} className="w-full text-2xl px-6 py-4 rounded-2xl bg-gray-100 dark:bg-cardDark border-none dark:text-white focus:ring-4 focus:ring-[#2E8B57]/50 mb-8" />
-                        <div className="space-y-4">
-                            {results.map(item => (
-                                <div key={item.id} onClick={() => { setSelectedItem(item); navigateTo(item.type === 'blog' || item.type === 'journal' ? 'reading' : 'detail'); onClose(); }} className="p-4 bg-gray-50 dark:bg-gray-800 rounded-xl cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors">
-                                    <h4 className="font-bold dark:text-white">{item.title}</h4>
-                                    <p className="text-sm text-gray-500 line-clamp-1">{item.summary}</p>
-                                    <span className="text-xs text-[#2E8B57] font-bold uppercase mt-2 block">{item.type}</span>
-                                </div>
-                            ))}
-                            {query.length > 2 && results.length === 0 && <p className="text-gray-500 text-center py-8">No results found for "{query}"</p>}
-                        </div>
-                    </div>
-                </div>
-            );
-        };
-
-        const App = () => {
-            const [darkMode, setDarkMode] = useState(true);
-            const [view, setView] = useState('home');
-            const [selectedItem, setSelectedItem] = useState(null);
-            const [showSearch, setShowSearch] = useState(false);
-            const [publications, setPublications] = useState([]);
-            const [settings, setSettings] = useState(null);
-
-            useEffect(() => {
-                if (darkMode) document.documentElement.classList.add('dark');
-                else document.documentElement.classList.remove('dark');
-            }, [darkMode]);
-
-            useEffect(() => {
-                const fetchData = async () => {
-                    const { data: pubs } = await supabase.from('publications').select('*').order('id', { ascending: false });
-                    if (pubs) setPublications(pubs);
-                    const { data: sets } = await supabase.from('site_settings').select('*').eq('id', 1).single();
-                    if (sets) setSettings(sets);
-                    await supabase.rpc('increment_page_view');
-                };
-                fetchData();
-            }, []);
-
-            const navigateTo = (newView) => {
-                setView(newView);
-                window.scrollTo(0, 0);
-                try { window.history.pushState({}, '', `#${newView}`); } catch (e) {}
-            };
-
-            const statBoxes = [
-                { count: publications.filter(p=>p.type==='book').length, label: "Books & eBooks", icon: "book" },
-                { count: publications.filter(p=>p.type==='research').length, label: "Research Notes", icon: "microscope" },
-                { count: publications.filter(p=>p.type==='journal').length, label: "Journal Entries", icon: "layout" },
-                { count: publications.filter(p=>p.type==='teaching').length, label: "Teaching Hub", icon: "gradCap" },
-                { count: settings?.views_count || 0, label: "Global Readers", icon: "users" },
-                { count: settings?.downloads_count || 0, label: "Downloads", icon: "download" },
-            ];
-
-            return (
-                <div className="min-h-screen flex flex-col selection:bg-emerald selection:text-white relative">
-                    <Navbar darkMode={darkMode} setDarkMode={setDarkMode} navigateTo={navigateTo} currentView={view} setShowSearch={setShowSearch} />
-                    
-                    {showSearch && <SearchOverlay publications={publications} onClose={() => setShowSearch(false)} navigateTo={navigateTo} setSelectedItem={setSelectedItem} />}
-
-                    <main className="flex-grow">
-                        {view === 'home' && (
-                            <div className="bg-gray-50 dark:bg-[#121212]">
-                                <HeroSection settings={settings} navigateTo={navigateTo} />
-                                <div className="max-w-[1600px] mx-auto px-4 sm:px-6 lg:px-8 -mt-6 relative z-20 mb-12">
-                                    <div className="bg-[#0f1b29] rounded-xl shadow-xl flex flex-wrap lg:flex-nowrap divide-y lg:divide-y-0 lg:divide-x divide-white/10 p-2">
-                                        {statBoxes.map((stat, idx) => (
-                                            <div key={idx} className="flex-1 min-w-[140px] p-4 flex items-center justify-center lg:justify-start gap-4">
-                                                <div className="text-[#D4AF37]"><Icon name={stat.icon} size={28} /></div>
-                                                <div>
-                                                    <div className="text-white font-bold text-xl leading-none mb-1">{stat.count}</div>
-                                                    <div className="text-gray-400 text-xs">{stat.label}</div>
-                                                </div>
-                                            </div>
-                                        ))}
-                                    </div>
-                                </div>
-                                <ContentCards publications={publications} navigateTo={navigateTo} setSelectedItem={setSelectedItem} />
-                                <div className="py-12"><BottomInfo settings={settings} /></div>
-                            </div>
-                        )}
-                        
-                        {['library', 'research', 'teaching', 'projects', 'journal', 'blog'].includes(view) && <GenericListView title={view} type={view} publications={publications} navigateTo={navigateTo} setSelectedItem={setSelectedItem} />}
-                        {view === 'detail' && selectedItem && <DetailView item={selectedItem} navigateTo={navigateTo} />}
-                        {view === 'reading' && selectedItem && <ReadingView item={selectedItem} navigateTo={navigateTo} />}
-                        {view === 'about' && <AboutView settings={settings} navigateTo={navigateTo} />}
-                        {view === 'contact' && <ContactView navigateTo={navigateTo} />}
-                        
-                        {view === 'ai' && <AiAssistantView publications={publications} settings={settings} navigateTo={navigateTo} />}
-                    </main>
-
-                    {/* Floating Mobile Ask AI Button */}
-                    {view !== 'ai' && (
-                        <button onClick={() => navigateTo('ai')} className="md:hidden fixed bottom-6 right-6 w-14 h-14 bg-[#2E8B57] text-white rounded-full shadow-2xl flex items-center justify-center z-50 hover:bg-[#257348] transition-colors">
-                            <Icon name="sparkles" size={24} />
-                        </button>
-                    )}
-
-                    <footer className="bg-[#0B1423] py-8 text-gray-400 text-sm border-t border-white/10">
-                        <div className="max-w-[1600px] mx-auto px-4 sm:px-6 lg:px-8 flex flex-col md:flex-row justify-between items-center gap-4">
-                            <div className="flex items-center gap-3">
-                                 <div className="text-[#D4AF37]"><Icon name="book" size={32} /></div>
-                                <div>
-                                    <h2 className="text-white font-serif font-bold text-lg leading-none">Ajayi Knowledge Hub</h2>
-                                    <span className="text-[#D4AF37] text-[10px] tracking-wider uppercase font-medium">Explore. Learn. Discover. Grow.</span>
-                                </div>
-                            </div>
-                            <div className="text-center">
-                                <p>&copy; {new Date().getFullYear()} Paul Olakiitan Ajayi. All rights reserved.</p>
-                            </div>
-                            <div>{settings?.footer_text || 'Built with ♥ for knowledge, science, and humanity.'}</div>
-                        </div>
-                    </footer>
-                </div>
-            );
-        };
-
-        const root = ReactDOM.createRoot(document.getElementById('root'));
-        root.render(<ErrorBoundary><App /></ErrorBoundary>);
-    </script>
+    if (!rootElement) {
+      document.body.innerHTML = '<p style="padding:2rem;font-family:sans-serif">App root was not found.</p>';
+    } else {
+      ReactDOM.createRoot(rootElement).render(
+        <ErrorBoundary>
+          <App />
+        </ErrorBoundary>
+      );
+    }
+  </script>
 </body>
 </html>
