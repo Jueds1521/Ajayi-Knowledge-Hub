@@ -1,6 +1,8 @@
 export default async function handler(req, res) {
   if (req.method !== "POST") {
-    return res.status(405).json({ error: "Method not allowed" });
+    return res.status(405).json({
+      error: "Method not allowed"
+    });
   }
 
   const apiKey = process.env.GROQ_API_KEY;
@@ -12,7 +14,10 @@ export default async function handler(req, res) {
   }
 
   try {
-    const body = req.body || {};
+    const body =
+      typeof req.body === "string"
+        ? JSON.parse(req.body)
+        : req.body || {};
 
     if (!Array.isArray(body.contents)) {
       return res.status(400).json({
@@ -20,12 +25,37 @@ export default async function handler(req, res) {
       });
     }
 
-    const messages = body.contents.map((item) => ({
-      role: item.role === "model" ? "assistant" : "user",
-      content: Array.isArray(item.parts)
-        ? item.parts.map((part) => part.text || "").join("")
-        : ""
-    }));
+    const messages = [];
+
+    // Send the Knowledge Hub instructions/knowledge to Groq
+    if (body.systemInstruction?.parts?.length) {
+      const systemText = body.systemInstruction.parts
+        .map(part => part.text || "")
+        .join("\n");
+
+      if (systemText.trim()) {
+        messages.push({
+          role: "system",
+          content: systemText
+        });
+      }
+    }
+
+    // Send conversation history
+    for (const item of body.contents) {
+      if (!item || !Array.isArray(item.parts)) continue;
+
+      const content = item.parts
+        .map(part => part.text || "")
+        .join("");
+
+      if (!content.trim()) continue;
+
+      messages.push({
+        role: item.role === "model" ? "assistant" : "user",
+        content
+      });
+    }
 
     const response = await fetch(
       "https://api.groq.com/openai/v1/chat/completions",
@@ -38,7 +68,8 @@ export default async function handler(req, res) {
         body: JSON.stringify({
           model: "llama-3.1-8b-instant",
           messages,
-          temperature: 0.4
+          temperature: 0.3,
+          max_tokens: 1000
         })
       }
     );
@@ -49,9 +80,14 @@ export default async function handler(req, res) {
       console.error("Groq API error:", data);
 
       return res.status(response.status).json({
-        error: data?.error?.message || "Groq request failed."
+        error:
+          data?.error?.message ||
+          "Groq request failed."
       });
     }
+
+    const answer =
+      data?.choices?.[0]?.message?.content || "";
 
     return res.status(200).json({
       candidates: [
@@ -59,7 +95,7 @@ export default async function handler(req, res) {
           content: {
             parts: [
               {
-                text: data.choices?.[0]?.message?.content || ""
+                text: answer
               }
             ]
           }
@@ -71,7 +107,8 @@ export default async function handler(req, res) {
     console.error("Chat API error:", error);
 
     return res.status(500).json({
-      error: "Unable to connect to the AI service."
+      error: error?.message ||
+        "Unable to connect to the AI service."
     });
   }
 }
