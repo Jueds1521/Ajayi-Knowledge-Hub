@@ -36,10 +36,17 @@
                     animation: {
                         'fade-in': 'fadeIn 0.5s ease-out forwards',
                         'slide-down': 'slideDown 0.3s ease-out forwards',
+                        'pulse-slow': 'pulse 4s cubic-bezier(0.4, 0, 0.6, 1) infinite',
                     },
                     keyframes: {
-                        fadeIn: { '0%': { opacity: '0' }, '100%': { opacity: '1' } },
-                        slideDown: { '0%': { opacity: '0', transform: 'translateY(-10px)' }, '100%': { opacity: '1', transform: 'translateY(0)' } }
+                        fadeIn: {
+                            '0%': { opacity: '0' },
+                            '100%': { opacity: '1' },
+                        },
+                        slideDown: {
+                            '0%': { opacity: '0', transform: 'translateY(-10px)' },
+                            '100%': { opacity: '1', transform: 'translateY(0)' },
+                        }
                     }
                 }
             }
@@ -50,8 +57,6 @@
         body::-webkit-scrollbar-track { background: transparent; }
         body::-webkit-scrollbar-thumb { background-color: #cbd5e1; border-radius: 20px; }
         .dark body::-webkit-scrollbar-thumb { background-color: #334155; }
-        
-        /* Custom horizontal scrolling hide */
         .hide-scrollbar::-webkit-scrollbar { display: none; }
         .hide-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
     </style>
@@ -62,32 +67,27 @@
     <script type="text/babel">
         const { useState, useEffect, useRef, Fragment, Component } = React;
 
+        // --- SUPABASE CONFIGURATION ---
+        const supabaseUrl = 'https://ulqihwnzujncqpexersp.supabase.co';
+        const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InVscWlod256dWpuY3FwZXhlcnNwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODUyNDIxNjMsImV4cCI6MjEwMDgxODE2M30.vvMQLeUtjVmciJxwqVgiFVZjmHlclY0Z-oHngY3SVso';
+        const supabase = window.supabase.createClient(supabaseUrl, supabaseKey);
+
+        // --- ERROR BOUNDARY ---
         class ErrorBoundary extends Component {
             constructor(props) {
                 super(props);
                 this.state = { hasError: false, error: null };
             }
-
-            static getDerivedStateFromError(error) {
-                return { hasError: true, error };
-            }
-
-            componentDidCatch(error, errorInfo) {
-                console.error("Caught by ErrorBoundary:", error, errorInfo);
-            }
-
+            static getDerivedStateFromError(error) { return { hasError: true, error }; }
+            componentDidCatch(error, errorInfo) { console.error("Caught by ErrorBoundary:", error, errorInfo); }
             render() {
                 if (this.state.hasError) {
                     return (
-                        <div className="min-h-screen flex items-center justify-center p-6 bg-gray-50 dark:bg-[#121212]">
-                            <div className="bg-white dark:bg-[#1E1E1E] p-8 rounded-2xl shadow-xl max-w-lg w-full border border-red-100 dark:border-red-900">
-                                <h2 className="text-xl font-bold font-serif mb-2 text-red-500">Something went wrong</h2>
-                                <p className="text-sm text-gray-600 dark:text-gray-400 mb-6 bg-gray-50 dark:bg-gray-800 p-4 rounded-lg overflow-auto border border-gray-200 dark:border-gray-700">
-                                    {this.state.error && this.state.error.toString()}
-                                </p>
-                                <button onClick={() => window.location.reload()} className="px-6 py-3 bg-[#2E8B57] hover:bg-[#257348] text-white rounded-lg text-sm font-medium transition-colors">
-                                    Reload Application
-                                </button>
+                        <div className="min-h-screen flex items-center justify-center bg-gray-50 dark:bg-charcoal p-6">
+                            <div className="bg-white dark:bg-cardDark p-8 rounded-2xl shadow-xl max-w-lg w-full text-center">
+                                <h2 className="text-xl font-bold text-red-500 mb-2">Something went wrong</h2>
+                                <p className="text-sm text-gray-600 dark:text-gray-400 mb-4">{this.state.error && this.state.error.toString()}</p>
+                                <button onClick={() => window.location.reload()} className="px-6 py-2 bg-navy text-white rounded-full">Reload</button>
                             </div>
                         </div>
                     );
@@ -96,46 +96,21 @@
             }
         }
 
-        // --- SUPABASE CONNECTION ---
-        const supabaseUrl = 'https://ulqihwnzujncqpexersp.supabase.co';
-        const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InVscWlod256dWpuY3FwZXhlcnNwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODUyNDIxNjMsImV4cCI6MjEwMDgxODE2M30.vvMQLeUtjVmciJxwqVgiFVZjmHlclY0Z-oHngY3SVso';
-        const supabase = window.supabase.createClient(supabaseUrl, supabaseKey);
-
-        const Icon = ({ name, size = 20, className = "" }) => {
-            const icons = {
-                book: <path d="M4 19.5v-15A2.5 2.5 0 0 1 6.5 2H20v20H6.5a2.5 2.5 0 0 1 0-5H20"/>,
-                microscope: <path d="M6 18h8 M3 22h18 M14 22a7 7 0 1 0 0-14h-1 M9 14h2 M9 12a2 2 0 0 1-2-2V6h6v4a2 2 0 0 1-2 2Z M12 6V3a1 1 0 0 0-1-1H9a1 1 0 0 0-1 1v3"/>,
-                gradCap: <path d="M22 10v6M2 10l10-5 10 5-10 5z M6 12v5c3 3 9 3 12 0v-5"/>,
-                pencil: <path d="M17 3a2.828 2.828 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3z M15 5l4 4"/>,
-                menu: <path d="M4 12h16M4 6h16M4 18h16"/>,
-                x: <path d="M18 6 6 18M6 6l12 12"/>,
-                sun: <path d="M12 3v1M12 20v1M4.22 4.22l.71.71M19.07 19.07l.71.71M1 12h1M20 12h1M4.22 19.78l.71-.71M19.07 4.93l.71-.71M12 17a5 5 0 1 0 0-10 5 5 0 0 0 0 10z"/>,
-                moon: <path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z"/>,
-                search: <Fragment><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></Fragment>,
-                download: <Fragment><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></Fragment>,
-                layout: <Fragment><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><line x1="3" y1="9" x2="21" y2="9"/><line x1="9" y1="21" x2="9" y2="9"/></Fragment>,
-                users: <Fragment><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></Fragment>,
-                chart: <Fragment><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></Fragment>,
-                sparkles: <Fragment><path d="m12 3-1.912 5.813a2 2 0 0 1-1.275 1.275L3 12l5.813 1.912a2 2 0 0 1 1.275 1.275L12 21l1.912-5.813a2 2 0 0 1 1.275-1.275L21 12l-5.813-1.912a2 2 0 0 1-1.275-1.275L12 3Z"/><path d="M5 3v4M3 5h4"/></Fragment>,
-                arrowLeft: <Fragment><line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/></Fragment>,
-                send: <Fragment><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></Fragment>
-            };
-            return (
-                <svg xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}>
-                    {icons[name] || icons['book']}
-                </svg>
-            );
-        };
-
-        const ParticleBackground = ({ isDarkMode }) => {
+        // --- MICROORGANISM PARTICLE BACKGROUND ---
+        const ParticleBackground = () => {
             const canvasRef = useRef(null);
+
             useEffect(() => {
                 const canvas = canvasRef.current;
                 if (!canvas) return;
                 const ctx = canvas.getContext('2d');
                 let animationFrameId;
                 let particles = [];
-                const resize = () => { canvas.width = window.innerWidth; canvas.height = window.innerHeight; };
+
+                const resize = () => {
+                    canvas.width = window.innerWidth;
+                    canvas.height = window.innerHeight;
+                };
                 window.addEventListener('resize', resize);
                 resize();
 
@@ -143,47 +118,68 @@
                     constructor() {
                         this.x = Math.random() * canvas.width;
                         this.y = Math.random() * canvas.height;
-                        this.vx = (Math.random() - 0.5) * 0.8;
-                        this.vy = (Math.random() - 0.5) * 0.8;
-                        this.type = Math.floor(Math.random() * 3);
+                        this.vx = (Math.random() - 0.5) * 0.4;
+                        this.vy = (Math.random() - 0.5) * 0.4;
+                        this.type = Math.floor(Math.random() * 3); // 0=Bacillus, 1=Coccus, 2=Spirillum
                         this.size = Math.random() * 3 + 2;
                         this.angle = Math.random() * Math.PI * 2;
                         this.spin = (Math.random() - 0.5) * 0.02;
                     }
                     update() {
-                        this.x += this.vx; this.y += this.vy; this.angle += this.spin;
-                        if (this.x < 0 || this.x > canvas.width) this.vx = -this.vx;
-                        if (this.y < 0 || this.y > canvas.height) this.vy = -this.vy;
+                        this.x += this.vx;
+                        this.y += this.vy;
+                        this.angle += this.spin;
+                        if (this.x < -50) this.x = canvas.width + 50;
+                        if (this.x > canvas.width + 50) this.x = -50;
+                        if (this.y < -50) this.y = canvas.height + 50;
+                        if (this.y > canvas.height + 50) this.y = -50;
                     }
                     draw() {
                         ctx.save();
                         ctx.translate(this.x, this.y);
                         ctx.rotate(this.angle);
-                        ctx.fillStyle = isDarkMode ? 'rgba(46, 139, 87, 0.4)' : 'rgba(11, 31, 58, 0.15)';
-                        ctx.strokeStyle = isDarkMode ? 'rgba(46, 139, 87, 0.4)' : 'rgba(11, 31, 58, 0.15)';
-                        ctx.lineWidth = 2;
-                        ctx.beginPath();
-                        if (this.type === 0) {
-                            ctx.roundRect(-this.size*2, -this.size, this.size*4, this.size*2, this.size); ctx.fill();
-                        } else if (this.type === 1) {
-                            ctx.arc(-this.size, 0, this.size, 0, Math.PI * 2); ctx.arc(this.size, 0, this.size, 0, Math.PI * 2); ctx.fill();
-                        } else {
-                            ctx.moveTo(-this.size*2, 0); ctx.quadraticCurveTo(-this.size, -this.size*2, 0, 0); ctx.quadraticCurveTo(this.size, this.size*2, this.size*2, 0); ctx.stroke();
+                        ctx.fillStyle = 'rgba(46, 139, 87, 0.4)';
+                        ctx.strokeStyle = 'rgba(46, 139, 87, 0.4)';
+                        ctx.lineWidth = 1.5;
+
+                        if (this.type === 0) { // Bacillus (Rod)
+                            ctx.beginPath();
+                            ctx.roundRect(-this.size*2, -this.size, this.size*4, this.size*2, this.size);
+                            ctx.fill();
+                        } else if (this.type === 1) { // Diplococcus
+                            ctx.beginPath();
+                            ctx.arc(-this.size, 0, this.size, 0, Math.PI * 2);
+                            ctx.arc(this.size, 0, this.size, 0, Math.PI * 2);
+                            ctx.fill();
+                        } else { // Spirillum (Wavy)
+                            ctx.beginPath();
+                            ctx.moveTo(-this.size*3, 0);
+                            ctx.quadraticCurveTo(-this.size*1.5, -this.size*2, 0, 0);
+                            ctx.quadraticCurveTo(this.size*1.5, this.size*2, this.size*3, 0);
+                            ctx.stroke();
                         }
                         ctx.restore();
                     }
                 }
+
                 for (let i = 0; i < 35; i++) particles.push(new Microbe());
 
                 const animate = () => {
                     ctx.clearRect(0, 0, canvas.width, canvas.height);
                     particles.forEach(p => { p.update(); p.draw(); });
+                    
+                    // Network Lines (Mycelium/Biofilm effect)
                     particles.forEach((p1, i) => {
                         particles.slice(i + 1).forEach(p2 => {
-                            const dist = Math.hypot(p1.x - p2.x, p1.y - p2.y);
+                            const dx = p1.x - p2.x;
+                            const dy = p1.y - p2.y;
+                            const dist = Math.sqrt(dx * dx + dy * dy);
                             if (dist < 120) {
-                                ctx.beginPath(); ctx.moveTo(p1.x, p1.y); ctx.lineTo(p2.x, p2.y);
-                                ctx.strokeStyle = isDarkMode ? `rgba(46, 139, 87, ${0.25 - dist/480})` : `rgba(11, 31, 58, ${0.15 - dist/800})`;
+                                ctx.beginPath();
+                                ctx.moveTo(p1.x, p1.y);
+                                ctx.lineTo(p2.x, p2.y);
+                                ctx.strokeStyle = `rgba(46, 139, 87, ${0.2 - dist/600})`;
+                                ctx.lineWidth = 0.5;
                                 ctx.stroke();
                             }
                         });
@@ -192,595 +188,553 @@
                 };
                 animate();
                 return () => { window.removeEventListener('resize', resize); cancelAnimationFrame(animationFrameId); };
-            }, [isDarkMode]);
-            return <canvas ref={canvasRef} className="fixed top-0 left-0 w-full h-full pointer-events-none z-0" />;
+            }, []);
+
+            return <canvas ref={canvasRef} className="absolute inset-0 z-0 pointer-events-none" />;
         };
 
+        // --- ICONS ---
+        const Icon = ({ name, size = 20, className = "" }) => {
+            const icons = {
+                book: <Fragment><path d="M4 19.5v-15A2.5 2.5 0 0 1 6.5 2H20v20H6.5a2.5 2.5 0 0 1 0-5H20"/><path d="M8 7h6"/><path d="M8 11h8"/></Fragment>,
+                microscope: <Fragment><path d="M6 18h8 M3 22h18 M14 22a7 7 0 1 0 0-14h-1 M9 14h2 M9 12a2 2 0 0 1-2-2V6h6v4a2 2 0 0 1-2 2Z M12 6V3a1 1 0 0 0-1-1H9a1 1 0 0 0-1 1v3"/></Fragment>,
+                gradCap: <Fragment><path d="M22 10v6M2 10l10-5 10 5-10 5z M6 12v5c3 3 9 3 12 0v-5"/></Fragment>,
+                pencil: <Fragment><path d="M17 3a2.828 2.828 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3z M15 5l4 4"/></Fragment>,
+                menu: <Fragment><path d="M4 12h16M4 6h16M4 18h16"/></Fragment>,
+                x: <Fragment><path d="M18 6 6 18M6 6l12 12"/></Fragment>,
+                sun: <Fragment><path d="M12 3v1M12 20v1M4.22 4.22l.71.71M19.07 19.07l.71.71M1 12h1M20 12h1M4.22 19.78l.71-.71M19.07 4.93l.71-.71M12 17a5 5 0 1 0 0-10 5 5 0 0 0 0 10z"/></Fragment>,
+                moon: <Fragment><path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z"/></Fragment>,
+                download: <Fragment><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4 M7 10l5 5 5-5 M12 15V3"/></Fragment>,
+                layout: <Fragment><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><line x1="3" y1="9" x2="21" y2="9"/><line x1="9" y1="21" x2="9" y2="9"/></Fragment>,
+                users: <Fragment><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></Fragment>,
+                chart: <Fragment><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></Fragment>,
+                search: <Fragment><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></Fragment>,
+                sparkles: <Fragment><path d="M9.937 15.5A2 2 0 0 0 8.5 14.063l-6.135-1.582a.5.5 0 0 1 0-.962L8.5 9.936A2 2 0 0 0 9.937 8.5l1.582-6.135a.5.5 0 0 1 .963 0L14.063 8.5A2 2 0 0 0 15.5 9.937l6.135 1.581a.5.5 0 0 1 0 .964L15.5 14.063a2 2 0 0 0-1.437 1.437l-1.582 6.135a.5.5 0 0 1-.963 0z"/></Fragment>,
+                arrowLeft: <Fragment><path d="m12 19-7-7 7-7"/><path d="M19 12H5"/></Fragment>
+            };
+            return (
+                <svg xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}>
+                    {icons[name]}
+                </svg>
+            );
+        };
+
+        // --- NAVBAR ---
+        const Navbar = ({ darkMode, setDarkMode, navigateTo, currentView, setShowSearch }) => {
+            const [mobileMenu, setMobileMenu] = useState(false);
+            const navLinks = [
+                { name: 'Library', id: 'library' },
+                { name: 'Research', id: 'research' },
+                { name: 'Journal', id: 'journal' },
+                { name: 'Teaching', id: 'teaching' },
+                { name: 'Blog', id: 'blog' },
+                { name: 'Projects', id: 'projects' },
+                { name: 'About', id: 'about' },
+                { name: 'Contact', id: 'contact' },
+            ];
+
+            return (
+                <nav className="bg-[#0B1423] text-white border-b border-white/10 w-full fixed top-0 z-50">
+                    <div className="max-w-[1600px] mx-auto px-4 sm:px-6 lg:px-8">
+                        <div className="flex justify-between items-center h-20">
+                            {/* Logo synced with Footer style */}
+                            <div className="flex-shrink-0 cursor-pointer flex items-center gap-3 group" onClick={() => navigateTo('home')}>
+                                <div className="text-[#D4AF37] group-hover:scale-105 transition-transform">
+                                    <Icon name="book" size={32} />
+                                </div>
+                                <div className="flex flex-col">
+                                    <h1 className="font-serif font-bold text-xl leading-tight">Ajayi Knowledge Hub</h1>
+                                    <span className="text-[#D4AF37] text-[10px] tracking-wider uppercase font-medium">Explore. Learn. Discover. Grow.</span>
+                                </div>
+                            </div>
+                            
+                            {/* Desktop Nav */}
+                            <div className="hidden xl:flex space-x-6 items-center">
+                                {navLinks.map(link => (
+                                    <button key={link.id} onClick={() => navigateTo(link.id)} className={`font-medium text-sm transition-colors pb-1 border-b-2 ${currentView === link.id ? 'text-[#D4AF37] border-[#D4AF37]' : 'text-gray-300 hover:text-white border-transparent hover:border-gray-500'}`}>
+                                        {link.name}
+                                    </button>
+                                ))}
+                            </div>
+
+                            {/* Actions */}
+                            <div className="flex items-center space-x-3">
+                                <button onClick={() => navigateTo('ai')} className="hidden md:flex px-4 py-2 rounded-lg bg-emerald/20 border border-emerald/50 text-emerald-400 hover:bg-emerald/30 text-sm font-medium transition-colors items-center gap-2">
+                                    <Icon name="sparkles" size={16} /> Ask AI
+                                </button>
+                                <button onClick={() => setShowSearch(true)} className="w-10 h-10 rounded-xl bg-white/5 border border-white/10 flex items-center justify-center text-gray-300 hover:text-white hover:bg-white/10 transition-all">
+                                    <Icon name="search" size={18} />
+                                </button>
+                                <button onClick={() => setDarkMode(!darkMode)} className="hidden sm:flex w-10 h-10 rounded-xl bg-white/5 border border-white/10 items-center justify-center text-gray-300 hover:text-white hover:bg-white/10 transition-all">
+                                    {darkMode ? <Icon name="sun" size={18} /> : <Icon name="moon" size={18} />}
+                                </button>
+                                
+                                {/* High Visibility Mobile Menu Toggle */}
+                                <button onClick={() => setMobileMenu(!mobileMenu)} className="xl:hidden w-10 h-10 rounded-xl bg-white/10 border border-white/20 flex items-center justify-center text-white hover:bg-white/20 transition-all shadow-md">
+                                    <Icon name={mobileMenu ? "x" : "menu"} size={22} />
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                    {/* Solid Background Mobile Menu */}
+                    {mobileMenu && (
+                        <div className="xl:hidden absolute top-20 left-0 w-full bg-[#0B1423] border-b border-white/10 shadow-2xl animate-slide-down">
+                            <div className="px-4 py-4 space-y-1">
+                                {navLinks.map(link => (
+                                    <button key={link.id} onClick={() => { navigateTo(link.id); setMobileMenu(false); }} className={`block w-full text-left px-4 py-3 rounded-xl text-sm font-medium ${currentView === link.id ? 'bg-white/10 text-[#D4AF37]' : 'text-gray-300 hover:bg-white/5 hover:text-white'}`}>
+                                        {link.name}
+                                    </button>
+                                ))}
+                                <div className="pt-4 mt-2 border-t border-white/10 flex gap-4">
+                                    <button onClick={() => setDarkMode(!darkMode)} className="flex-1 py-3 rounded-xl bg-white/5 border border-white/10 text-white flex justify-center items-center gap-2 font-medium">
+                                        {darkMode ? <Icon name="sun" size={18} /> : <Icon name="moon" size={18} />} Theme
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    )}
+                </nav>
+            );
+        };
+
+        // --- HERO SECTION ---
+        const HeroSection = ({ settings, navigateTo }) => (
+            <section className="relative pt-32 pb-24 flex items-center justify-center bg-[#0B1423] text-white overflow-hidden min-h-[80vh]">
+                <ParticleBackground />
+                <div className="absolute inset-0 z-0 bg-[url('https://images.unsplash.com/photo-1532094349884-543bc11b234d?auto=format&fit=crop&q=80')] bg-cover bg-center opacity-20 mix-blend-overlay"></div>
+                <div className="absolute inset-0 z-0 bg-gradient-to-b from-[#0B1423]/80 via-[#0B1423]/60 to-[#0B1423]"></div>
+                
+                <div className="relative z-10 container mx-auto px-6 text-center max-w-5xl animate-fade-in">
+                    <h1 className="font-serif text-5xl md:text-7xl font-bold mb-6 leading-tight tracking-tight">
+                        {settings?.hero_title ? (
+                            <span dangerouslySetInnerHTML={{ __html: settings.hero_title.replace('grows', '<span class="text-[#2E8B57]">grows</span>').replace('matters', '<span class="text-[#D4AF37]">matters</span>').replace('inspire', '<span class="text-[#8B9C2A]">inspire</span>') }} />
+                        ) : (
+                            <Fragment>Knowledge that <span className="text-[#2E8B57]">grows</span>.<br />Research that <span className="text-[#D4AF37]">matters</span>.<br />Ideas that <span className="text-[#8B9C2A]">inspire</span>.</Fragment>
+                        )}
+                    </h1>
+                    <h2 className="text-xl md:text-2xl text-[#D4AF37] font-medium mb-6 font-serif">
+                        {settings?.hero_subtitle || 'Welcome to my digital knowledge hub.'}
+                    </h2>
+                    <p className="text-base md:text-lg text-gray-300 mb-12 max-w-3xl mx-auto font-light leading-relaxed">
+                        {settings?.mission_text || 'Here I share my books, scientific research, teaching materials, journals, articles, and ideas as I pursue a lifelong mission of learning, discovery, and service.'}
+                    </p>
+                    <div className="flex flex-wrap items-center justify-center gap-4">
+                        <button onClick={() => navigateTo('library')} className="px-8 py-3.5 bg-[#2E8B57] hover:bg-[#257348] text-white text-sm font-semibold rounded-lg transition-all flex items-center gap-2 border border-[#2E8B57] shadow-lg">
+                            <Icon name="book" size={18} /> Explore Library
+                        </button>
+                        <button onClick={() => navigateTo('research')} className="px-8 py-3.5 bg-transparent hover:bg-white/5 text-white text-sm font-semibold rounded-lg transition-all border border-blue-400/30 flex items-center gap-2">
+                            <Icon name="microscope" size={18} /> Research Archive
+                        </button>
+                    </div>
+                </div>
+            </section>
+        );
+
+        // --- CONTENT CARDS ---
+        const ContentCards = ({ publications, navigateTo, setSelectedItem }) => {
+            const getLatest = (type) => publications.find(p => p.type === type);
+            
+            const handleRead = (item, view) => {
+                if(!item) return;
+                setSelectedItem(item);
+                navigateTo(view);
+            }
+
+            const latestBook = getLatest('book');
+            const latestResearch = getLatest('research');
+            const latestJournal = getLatest('journal');
+            const latestBlog = getLatest('blog');
+            const latestProject = getLatest('project');
+
+            return (
+                <div className="bg-gray-50 dark:bg-[#121212] py-8 border-b border-gray-200 dark:border-gray-800">
+                    <div className="max-w-[1600px] mx-auto px-4 sm:px-6 lg:px-8">
+                        <div className="flex flex-nowrap overflow-x-auto pb-6 gap-6 snap-x snap-mandatory hide-scrollbar">
+                            
+                            {/* Featured Book */}
+                            {latestBook && (
+                                <div className="snap-start shrink-0 w-[350px] md:w-[400px] bg-white dark:bg-[#1E1E1E] rounded-xl border border-gray-200 dark:border-gray-800 p-5 shadow-sm flex flex-col group">
+                                    <div className="flex justify-between items-center mb-5 border-b border-gray-100 dark:border-gray-800 pb-3">
+                                        <div className="flex items-center gap-2 font-serif font-bold text-lg dark:text-white">
+                                            <Icon name="book" size={20} className="text-gray-700 dark:text-gray-300" /> Featured Book
+                                        </div>
+                                    </div>
+                                    <div className="flex gap-4 flex-grow">
+                                        <div className="w-1/3 shrink-0">
+                                            {latestBook.thumbnail_url ? (
+                                                <div className="bg-gray-200 rounded shadow-md aspect-[2/3] overflow-hidden">
+                                                    <img src={latestBook.thumbnail_url} alt="Cover" className="object-cover object-center w-full h-full" />
+                                                </div>
+                                            ) : (
+                                                <div className="bg-[#112435] p-2 rounded shadow-md aspect-[2/3] flex items-center justify-center text-center border-l-4 border-[#2E8B57]">
+                                                    <div className="text-white">
+                                                        <div className="text-sm font-serif font-bold leading-tight mb-2">{latestBook.title}</div>
+                                                        <div className="w-8 h-[1px] bg-[#2E8B57] mx-auto"></div>
+                                                    </div>
+                                                </div>
+                                            )}
+                                        </div>
+                                        <div className="flex flex-col justify-between min-w-0">
+                                            <div>
+                                                <h4 className="font-serif font-bold text-lg mb-2 leading-tight dark:text-white truncate">{latestBook.title}</h4>
+                                                <p className="text-sm text-gray-600 dark:text-gray-400 mb-2 line-clamp-3">{latestBook.summary}</p>
+                                                <div className="text-xs text-[#2E8B57] font-medium truncate">{latestBook.category}</div>
+                                            </div>
+                                            <button onClick={() => handleRead(latestBook, 'detail')} className="mt-4 px-4 py-1.5 border border-gray-300 dark:border-gray-600 rounded text-sm font-medium hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors w-max dark:text-white">View Book</button>
+                                        </div>
+                                    </div>
+                                </div>
+                            )}
+
+                            {/* Latest Research */}
+                            {latestResearch && (
+                                <div className="snap-start shrink-0 w-[350px] md:w-[400px] bg-white dark:bg-[#1E1E1E] rounded-xl border border-gray-200 dark:border-gray-800 p-5 shadow-sm flex flex-col group">
+                                    <div className="flex justify-between items-center mb-5 border-b border-gray-100 dark:border-gray-800 pb-3">
+                                        <div className="flex items-center gap-2 font-serif font-bold text-lg dark:text-white">
+                                            <Icon name="microscope" size={20} className="text-gray-700 dark:text-gray-300" /> Latest Research
+                                        </div>
+                                    </div>
+                                    <div className="flex flex-col h-full">
+                                        <div className="h-32 bg-gray-200 dark:bg-gray-700 rounded-lg mb-4 overflow-hidden bg-cover bg-center" style={{ backgroundImage: `url(${latestResearch.thumbnail_url || 'https://images.unsplash.com/photo-1576086213369-97a306d36557?auto=format&fit=crop&q=80'})`}}></div>
+                                        <h4 className="font-serif font-bold text-base mb-1 leading-tight dark:text-white truncate">{latestResearch.title}</h4>
+                                        <div className="text-xs text-gray-500 mb-2">{latestResearch.published_date}</div>
+                                        <p className="text-sm text-gray-600 dark:text-gray-400 mb-4 line-clamp-2 flex-grow">{latestResearch.summary}</p>
+                                        <button onClick={() => handleRead(latestResearch, 'detail')} className="text-[#2E8B57] text-sm font-medium hover:underline text-left flex items-center gap-1">Read Now <span>&rarr;</span></button>
+                                    </div>
+                                </div>
+                            )}
+
+                            {/* Latest Blog */}
+                            {latestBlog && (
+                                <div className="snap-start shrink-0 w-[350px] md:w-[400px] bg-white dark:bg-[#1E1E1E] rounded-xl border border-gray-200 dark:border-gray-800 p-5 shadow-sm flex flex-col group">
+                                    <div className="flex justify-between items-center mb-5 border-b border-gray-100 dark:border-gray-800 pb-3">
+                                        <div className="flex items-center gap-2 font-serif font-bold text-lg dark:text-white">
+                                            <Icon name="pencil" size={20} className="text-gray-700 dark:text-gray-300" /> Latest Article
+                                        </div>
+                                    </div>
+                                    <div className="flex gap-4 h-full">
+                                        <div className="w-2/5 shrink-0 h-full min-h-[140px] bg-gray-200 rounded-lg overflow-hidden bg-cover bg-center" style={{ backgroundImage: `url(${latestBlog.thumbnail_url || 'https://images.unsplash.com/photo-1581093458791-9f3c3900df4b?auto=format&fit=crop&q=80'})`}}></div>
+                                        <div className="flex flex-col min-w-0">
+                                            <h4 className="font-serif font-bold text-base mb-1 leading-tight dark:text-white line-clamp-2">{latestBlog.title}</h4>
+                                            <div className="text-xs text-gray-500 mb-2">{latestBlog.category}</div>
+                                            <p className="text-sm text-gray-600 dark:text-gray-400 mb-4 line-clamp-3 flex-grow">{latestBlog.summary}</p>
+                                            <button onClick={() => handleRead(latestBlog, 'reading')} className="text-[#2E8B57] text-sm font-medium hover:underline text-left flex items-center gap-1 mt-auto">Read Article <span>&rarr;</span></button>
+                                        </div>
+                                    </div>
+                                </div>
+                            )}
+                        </div>
+                    </div>
+                </div>
+            );
+        };
+
+        // --- BOTTOM INFO / CONTACT ---
+        const BottomInfo = ({ settings }) => {
+            const [email, setEmail] = useState('');
+            const [status, setStatus] = useState('');
+
+            const handleSubscribe = async (e) => {
+                e.preventDefault();
+                setStatus('Subscribing...');
+                try {
+                    await supabase.from('subscribers').insert([{ email }]);
+                    setStatus('Success! Thank you.');
+                    setEmail('');
+                } catch (error) { setStatus('Error connecting.'); }
+                setTimeout(() => setStatus(''), 4000);
+            };
+
+            return (
+                <div className="max-w-[1600px] mx-auto px-4 sm:px-6 lg:px-8 mb-16">
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                        {/* Quote */}
+                        <div className="bg-white dark:bg-[#1E1E1E] rounded-xl border border-gray-200 dark:border-gray-800 p-8 shadow-sm relative">
+                            <div className="text-[#2E8B57] absolute top-6 left-6 opacity-20">
+                                <svg width="60" height="60" viewBox="0 0 24 24" fill="currentColor"><path d="M14.017 21v-7.391c0-5.704 3.731-9.57 8.983-10.609l.995 2.151c-2.432.917-3.995 3.638-3.995 5.849h4v10h-9.983zm-14.017 0v-7.391c0-5.704 3.748-9.57 9-10.609l.996 2.151c-2.433.917-3.996 3.638-3.996 5.849h3.983v10h-9.983z"/></svg>
+                            </div>
+                            <div className="pl-4 relative z-10">
+                                <h3 className="font-serif font-bold text-lg mb-4 dark:text-white">Quote of the Day</h3>
+                                <p className="text-gray-700 dark:text-gray-300 font-serif italic mb-4">"{settings?.daily_quote || 'The beautiful thing about learning is that no one can take it away from you.'}"</p>
+                                <div className="text-sm font-bold text-[#2E8B57]">- {settings?.quote_author || 'B.B. King'}</div>
+                            </div>
+                        </div>
+
+                        {/* Newsletter */}
+                        <div className="bg-white dark:bg-[#1E1E1E] rounded-xl border border-gray-200 dark:border-gray-800 p-8 shadow-sm">
+                            <h3 className="font-serif font-bold text-lg mb-2 dark:text-white flex items-center gap-2">
+                                <Icon name="pencil" size={20} className="text-gray-500" /> Stay Updated
+                            </h3>
+                            <p className="text-sm text-gray-600 dark:text-gray-400 mb-6">Subscribe to my newsletter and never miss new research and insights.</p>
+                            <form className="flex flex-col gap-2" onSubmit={handleSubscribe}>
+                                <div className="flex gap-2 w-full">
+                                    <input type="email" required value={email} onChange={e=>setEmail(e.target.value)} placeholder="Enter your email" className="flex-1 bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg px-4 py-2 text-sm focus:outline-none focus:border-[#2E8B57]" />
+                                    <button type="submit" className="bg-[#2E8B57] hover:bg-[#257348] text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors">Subscribe</button>
+                                </div>
+                                {status && <span className="text-xs font-bold text-emerald-500">{status}</span>}
+                            </form>
+                        </div>
+
+                        {/* Socials */}
+                        <div className="bg-white dark:bg-[#1E1E1E] rounded-xl border border-gray-200 dark:border-gray-800 p-8 shadow-sm">
+                            <h3 className="font-serif font-bold text-lg mb-2 dark:text-white">Let's Connect</h3>
+                            <p className="text-sm text-gray-600 dark:text-gray-400 mb-6">Join a community of learners and researchers building a better future.</p>
+                            <div className="flex flex-wrap gap-3">
+                                {settings?.linkedin_url && <a href={settings.linkedin_url} target="_blank" className="w-10 h-10 rounded-full bg-[#0077b5] text-white flex items-center justify-center hover:opacity-90"><span className="font-bold text-lg">in</span></a>}
+                                {settings?.twitter_url && <a href={settings.twitter_url} target="_blank" className="w-10 h-10 rounded-full bg-[#1DA1F2] text-white flex items-center justify-center hover:opacity-90"><svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M23.953 4.57a10 10 0 01-2.825.775 4.958 4.958 0 002.163-2.723c-.951.555-2.005.959-3.127 1.184a4.92 4.92 0 00-8.384 4.482C7.69 8.095 4.067 6.13 1.64 3.162a4.822 4.822 0 00-.666 2.475c0 1.71.87 3.213 2.188 4.096a4.904 4.904 0 01-2.228-.616v.06a4.923 4.923 0 003.946 4.827 4.996 4.996 0 01-2.212.085 4.936 4.936 0 004.604 3.417 9.867 9.867 0 01-6.102 2.105c-.39 0-.779-.023-1.17-.067a13.995 13.995 0 007.557 2.209c9.053 0 13.998-7.496 13.998-13.985 0-.21 0-.42-.015-.63A9.935 9.935 0 0024 4.59z"/></svg></a>}
+                                {settings?.orcid_url && <a href={settings.orcid_url} target="_blank" className="w-10 h-10 rounded-full bg-[#A6CE39] text-white flex items-center justify-center hover:opacity-90"><span className="font-bold font-serif text-lg">iD</span></a>}
+                                {settings?.youtube_url && <a href={settings.youtube_url} target="_blank" className="w-10 h-10 rounded-full bg-[#FF0000] text-white flex items-center justify-center hover:opacity-90"><svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M23.498 6.186a3.016 3.016 0 0 0-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.017 3.017 0 0 0 .502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.016 3.016 0 0 0 2.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.015 3.015 0 0 0 2.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814zM9.545 15.568V8.432L15.818 12l-6.273 3.568z"/></svg></a>}
+                                {settings?.facebook_url && <a href={settings.facebook_url} target="_blank" className="w-10 h-10 rounded-full bg-[#1877F2] text-white flex items-center justify-center hover:opacity-90"><svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C6.477 2 2 6.477 2 12c0 4.991 3.657 9.128 8.438 9.879V15.32H7.898v-3.32h2.54V9.52c0-2.506 1.493-3.89 3.777-3.89 1.094 0 2.238.195 2.238.195v2.46h-1.26c-1.243 0-1.63.771-1.63 1.562v1.873h2.773l-.443 3.32h-2.33v6.559C18.343 21.128 22 16.991 22 12c0-5.523-4.477-10-10-10z"/></svg></a>}
+                                {settings?.whatsapp_number && <a href={`https://wa.me/${settings.whatsapp_number}`} target="_blank" className="w-10 h-10 rounded-full bg-[#25D366] text-white flex items-center justify-center hover:opacity-90"><svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347z"/></svg></a>}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            );
+        };
+
+        // --- SUB VIEWS ---
+        const GenericListView = ({ title, type, publications, navigateTo, setSelectedItem }) => {
+            const data = publications.filter(p => p.type === type);
+            return (
+                <div className="pt-32 pb-24 max-w-7xl mx-auto px-4 sm:px-6 min-h-screen animate-fade-in">
+                    <button onClick={() => navigateTo('home')} className="flex items-center text-[#2E8B57] hover:opacity-80 mb-8 font-medium">
+                        <Icon name="arrowLeft" size={18} className="mr-2"/> Back to Home
+                    </button>
+                    <h1 className="text-4xl font-bold font-serif text-navy dark:text-white capitalize mb-4">{title}</h1>
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 mt-12">
+                        {data.map(item => (
+                            <div key={item.id} className="bg-white dark:bg-cardDark rounded-2xl p-6 shadow-sm border border-gray-100 dark:border-gray-800 flex flex-col h-full">
+                                <span className="text-xs font-bold uppercase tracking-wider text-[#2E8B57] mb-2">{item.category}</span>
+                                <h3 className="text-xl font-bold text-navy dark:text-white mb-3">{item.title}</h3>
+                                <p className="text-sm text-gray-600 dark:text-gray-400 mb-6 flex-grow line-clamp-3">{item.summary}</p>
+                                <button onClick={() => { setSelectedItem(item); navigateTo(item.type === 'blog' || item.type === 'journal' ? 'reading' : 'detail'); }} className="text-[#2E8B57] text-sm font-semibold flex items-center hover:gap-1 mt-auto">
+                                    Read More &rarr;
+                                </button>
+                            </div>
+                        ))}
+                    </div>
+                </div>
+            );
+        };
+
+        const DetailView = ({ item, navigateTo }) => (
+            <div className="max-w-4xl mx-auto px-4 pt-32 pb-24 min-h-screen animate-fade-in">
+                <button onClick={() => navigateTo(item.type)} className="flex items-center text-[#2E8B57] hover:opacity-80 mb-8 font-medium">
+                    <Icon name="arrowLeft" size={18} className="mr-2"/> Back to {item.type}
+                </button>
+                <div className="bg-white dark:bg-cardDark rounded-3xl p-8 shadow-xl border border-gray-100 dark:border-gray-800 flex flex-col md:flex-row gap-8">
+                    <div className="w-full md:w-1/3 shrink-0">
+                        {item.thumbnail_url ? (
+                            <img src={item.thumbnail_url} className="w-full rounded-xl shadow-lg object-cover" />
+                        ) : (
+                            <div className="aspect-[3/4] bg-navy rounded-xl flex items-center justify-center p-6 text-center text-white"><h3 className="font-serif font-bold text-xl">{item.title}</h3></div>
+                        )}
+                    </div>
+                    <div className="flex flex-col">
+                        <span className="text-xs font-bold uppercase tracking-wider text-[#2E8B57] mb-2">{item.category} • {item.published_date}</span>
+                        <h1 className="text-3xl font-bold font-serif dark:text-white mb-4">{item.title}</h1>
+                        <p className="text-gray-600 dark:text-gray-300 mb-8 leading-relaxed">{item.content || item.summary}</p>
+                        {item.file_url && (
+                            <a href={item.file_url} target="_blank" onClick={()=>supabase.rpc('increment_download')} className="mt-auto w-max flex items-center px-6 py-3 bg-[#2E8B57] text-white rounded-xl font-medium shadow-md">
+                                <Icon name="download" size={18} className="mr-2"/> Download Document
+                            </a>
+                        )}
+                    </div>
+                </div>
+            </div>
+        );
+
+        const ReadingView = ({ item, navigateTo }) => (
+            <div className="max-w-3xl mx-auto px-4 pt-32 pb-24 min-h-screen animate-fade-in">
+                <button onClick={() => navigateTo(item.type)} className="flex items-center text-[#2E8B57] hover:opacity-80 mb-8 font-medium">
+                    <Icon name="arrowLeft" size={18} className="mr-2"/> Back to {item.type}
+                </button>
+                {item.thumbnail_url && <img src={item.thumbnail_url} className="w-full h-64 object-cover rounded-2xl mb-8 shadow-lg" />}
+                <h1 className="text-4xl font-bold font-serif dark:text-white mb-4">{item.title}</h1>
+                <p className="text-sm text-gray-500 mb-8 uppercase tracking-wider font-bold">{item.category} • {item.published_date}</p>
+                <div className="prose prose-lg dark:prose-invert max-w-none font-serif leading-relaxed whitespace-pre-wrap">{item.content}</div>
+            </div>
+        );
+
+        const AboutView = ({ settings, navigateTo }) => (
+            <div className="max-w-5xl mx-auto px-4 pt-32 pb-24 min-h-screen animate-fade-in">
+                <button onClick={() => navigateTo('home')} className="flex items-center text-[#2E8B57] hover:opacity-80 mb-8 font-medium"><Icon name="arrowLeft" size={18} className="mr-2"/> Back to Home</button>
+                <div className="flex flex-col md:flex-row gap-12 items-start">
+                    <div className="w-full md:w-1/3 shrink-0">
+                        {settings?.profile_pic_url ? (
+                            <img src={settings.profile_pic_url} alt="Profile" className="w-full aspect-square object-cover rounded-3xl shadow-xl border-4 border-white dark:border-gray-800" />
+                        ) : (
+                            <div className="w-full aspect-square bg-navy rounded-3xl flex items-center justify-center text-white"><Icon name="users" size={80}/></div>
+                        )}
+                    </div>
+                    <div className="w-full md:w-2/3">
+                        <h1 className="text-4xl font-bold font-serif dark:text-white mb-2">{settings?.display_name || 'Paul Olakiitan Ajayi'}</h1>
+                        <p className="text-xl text-[#2E8B57] font-medium mb-8">{settings?.bio || 'Microbiologist & Researcher'}</p>
+                        <div className="p-6 bg-emerald/10 rounded-2xl border border-emerald/20 mb-8 shadow-sm">
+                            <h3 className="text-xl font-bold dark:text-white mb-3">Mission</h3>
+                            <p className="text-gray-800 dark:text-gray-200 font-medium">{settings?.mission_text}</p>
+                        </div>
+                        <div className="prose prose-lg dark:prose-invert max-w-none text-gray-700 dark:text-gray-300 leading-relaxed font-serif whitespace-pre-wrap">
+                            {settings?.about_text}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        );
+
+        const ContactView = ({ navigateTo }) => {
+            const [form, setForm] = useState({ name: '', email: '', message: '' });
+            const [status, setStatus] = useState('');
+
+            const handleSubmit = async (e) => {
+                e.preventDefault();
+                setStatus('Sending...');
+                try {
+                    await supabase.from('messages').insert([form]);
+                    setStatus('Message sent successfully!');
+                    setForm({ name: '', email: '', message: '' });
+                } catch (error) { setStatus('Failed to send message.'); }
+                setTimeout(() => setStatus(''), 5000);
+            };
+
+            return (
+                <div className="max-w-3xl mx-auto px-4 pt-32 pb-24 min-h-screen animate-fade-in">
+                    <button onClick={() => navigateTo('home')} className="flex items-center text-[#2E8B57] hover:opacity-80 mb-8 font-medium"><Icon name="arrowLeft" size={18} className="mr-2"/> Back to Home</button>
+                    <div className="bg-white dark:bg-cardDark rounded-3xl p-8 shadow-xl border border-gray-100 dark:border-gray-800">
+                        <h2 className="text-3xl font-bold font-serif dark:text-white mb-6">Send a Message</h2>
+                        <form onSubmit={handleSubmit} className="space-y-4">
+                            <input required type="text" placeholder="Your Name" value={form.name} onChange={e=>setForm({...form, name: e.target.value})} className="w-full px-4 py-3 rounded-xl bg-gray-50 dark:bg-gray-800 border-none dark:text-white focus:ring-2 focus:ring-[#2E8B57]" />
+                            <input required type="email" placeholder="Your Email" value={form.email} onChange={e=>setForm({...form, email: e.target.value})} className="w-full px-4 py-3 rounded-xl bg-gray-50 dark:bg-gray-800 border-none dark:text-white focus:ring-2 focus:ring-[#2E8B57]" />
+                            <textarea required rows="5" placeholder="Your Message" value={form.message} onChange={e=>setForm({...form, message: e.target.value})} className="w-full px-4 py-3 rounded-xl bg-gray-50 dark:bg-gray-800 border-none dark:text-white focus:ring-2 focus:ring-[#2E8B57]"></textarea>
+                            <button type="submit" className="w-full bg-[#2E8B57] text-white px-6 py-4 rounded-xl font-medium shadow-md hover:opacity-90">Send Message</button>
+                            {status && <p className="text-center text-sm font-bold mt-4 text-[#2E8B57]">{status}</p>}
+                        </form>
+                    </div>
+                </div>
+            );
+        };
+
+        const SearchOverlay = ({ publications, onClose, navigateTo, setSelectedItem }) => {
+            const [query, setQuery] = useState('');
+            const results = query.length > 2 ? publications.filter(p => (p.title + p.summary + p.tags?.join(' ')).toLowerCase().includes(query.toLowerCase())) : [];
+
+            return (
+                <div className="fixed inset-0 bg-white/95 dark:bg-charcoal/95 backdrop-blur-xl z-[60] flex flex-col p-6 animate-fade-in overflow-y-auto">
+                    <div className="max-w-4xl mx-auto w-full relative">
+                        <button onClick={onClose} className="absolute right-0 top-0 p-4 text-gray-500 hover:text-red-500"><Icon name="x" size={32}/></button>
+                        <h2 className="text-3xl font-serif font-bold mb-8 dark:text-white pt-12">Search Library</h2>
+                        <input autoFocus type="text" placeholder="Type to search..." value={query} onChange={e=>setQuery(e.target.value)} className="w-full text-2xl px-6 py-4 rounded-2xl bg-gray-100 dark:bg-cardDark border-none dark:text-white focus:ring-4 focus:ring-[#2E8B57]/50 mb-8" />
+                        <div className="space-y-4">
+                            {results.map(item => (
+                                <div key={item.id} onClick={() => { setSelectedItem(item); navigateTo(item.type === 'blog' || item.type === 'journal' ? 'reading' : 'detail'); onClose(); }} className="p-4 bg-gray-50 dark:bg-gray-800 rounded-xl cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors">
+                                    <h4 className="font-bold dark:text-white">{item.title}</h4>
+                                    <p className="text-sm text-gray-500 line-clamp-1">{item.summary}</p>
+                                    <span className="text-xs text-[#2E8B57] font-bold uppercase mt-2 block">{item.type}</span>
+                                </div>
+                            ))}
+                            {query.length > 2 && results.length === 0 && <p className="text-gray-500 text-center py-8">No results found for "{query}"</p>}
+                        </div>
+                    </div>
+                </div>
+            );
+        };
+
+        // --- MAIN APP ---
         const App = () => {
             const [darkMode, setDarkMode] = useState(true);
             const [view, setView] = useState('home');
             const [selectedItem, setSelectedItem] = useState(null);
-            
-            // State
+            const [showSearch, setShowSearch] = useState(false);
             const [publications, setPublications] = useState([]);
-            const [settings, setSettings] = useState({});
-            const [isSearchOpen, setIsSearchOpen] = useState(false);
-            const [searchQuery, setSearchQuery] = useState('');
-            const [mobileMenu, setMobileMenu] = useState(false);
-            const [subscribeEmail, setSubscribeEmail] = useState('');
-            const [subStatus, setSubStatus] = useState('');
-
-            // Initialization
-            useEffect(() => {
-                const loadData = async () => {
-                    const { data: pubs } = await supabase.from('publications').select('*').order('id', { ascending: false });
-                    if (pubs) setPublications(pubs);
-                    const { data: sets } = await supabase.from('site_settings').select('*').eq('id', 1).single();
-                    if (sets) setSettings(sets);
-                    await supabase.rpc('increment_page_view'); // Real-time counter
-                };
-                loadData();
-            }, []);
+            const [settings, setSettings] = useState(null);
 
             useEffect(() => {
                 if (darkMode) document.documentElement.classList.add('dark');
                 else document.documentElement.classList.remove('dark');
             }, [darkMode]);
 
-            // Handlers
-            const navigateTo = (newView, item = null) => {
-                try { window.history.pushState(null, '', `#${newView}`); } catch (e) { console.log('Preview routing blocked, ignoring.'); }
-                setSelectedItem(item);
+            useEffect(() => {
+                const fetchData = async () => {
+                    const { data: pubs } = await supabase.from('publications').select('*').order('id', { ascending: false });
+                    if (pubs) setPublications(pubs);
+                    const { data: sets } = await supabase.from('site_settings').select('*').eq('id', 1).single();
+                    if (sets) setSettings(sets);
+                    await supabase.rpc('increment_page_view');
+                };
+                fetchData();
+            }, []);
+
+            const navigateTo = (newView) => {
                 setView(newView);
-                setMobileMenu(false);
-                setIsSearchOpen(false);
-                setSearchQuery('');
-                window.scrollTo({ top: 0, behavior: 'smooth' });
+                window.scrollTo(0, 0);
+                try { window.history.pushState({}, '', `#${newView}`); } catch (e) {}
             };
 
-            const handleSubscribe = async (e) => {
-                e.preventDefault();
-                if (!subscribeEmail) return;
-                setSubStatus('Subscribing...');
-                try {
-                    const { error } = await supabase.from('subscribers').insert([{ email: subscribeEmail }]);
-                    if (error && error.code !== '23505') throw error;
-                    setSubStatus('Success! Thank you.');
-                    setSubscribeEmail('');
-                } catch (err) { setSubStatus('Failed to subscribe.'); }
-                setTimeout(() => setSubStatus(''), 3000);
-            };
-
-            const handleDownload = async (url) => {
-                await supabase.rpc('increment_download');
-                window.open(url, '_blank');
-            };
-
-            const searchResults = publications.filter(p => 
-                (p.title && p.title.toLowerCase().includes(searchQuery.toLowerCase())) ||
-                (p.summary && p.summary.toLowerCase().includes(searchQuery.toLowerCase())) ||
-                (p.tags && p.tags.some(tag => tag.toLowerCase().includes(searchQuery.toLowerCase())))
-            );
-
-            const navLinks = [
-                { name: 'Home', id: 'home' }, { name: 'Library', id: 'library' },
-                { name: 'Research', id: 'research' }, { name: 'Journal', id: 'journal' },
-                { name: 'Teaching', id: 'teaching' }, { name: 'Blog', id: 'blog' },
-                { name: 'Projects', id: 'projects' }, { name: 'About', id: 'about' },
-                { name: 'Contact', id: 'contact' },
+            const statBoxes = [
+                { count: publications.filter(p=>p.type==='book').length, label: "Books & eBooks", icon: "book" },
+                { count: publications.filter(p=>p.type==='research').length, label: "Research Notes", icon: "microscope" },
+                { count: publications.filter(p=>p.type==='journal').length, label: "Journal Entries", icon: "layout" },
+                { count: publications.filter(p=>p.type==='teaching').length, label: "Teaching Hub", icon: "gradCap" },
+                { count: settings?.views_count || 0, label: "Global Readers", icon: "users" },
+                { count: settings?.downloads_count || 0, label: "Downloads", icon: "download" },
             ];
 
-            const Navbar = () => (
-                <nav className="bg-[#0B1423] text-white w-full fixed top-0 z-50 shadow-lg">
-                    <div className="max-w-[1600px] mx-auto px-4 sm:px-6 lg:px-8">
-                        <div className="flex justify-between items-center h-20">
-                            {/* Logo (Exact match to Footer styling) */}
-                            <div className="flex-shrink-0 cursor-pointer flex items-center gap-3 group" onClick={() => navigateTo('home')}>
-                                <div className="text-[#D4AF37] group-hover:scale-105 transition-transform">
-                                    <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
-                                        <path d="M4 19.5v-15A2.5 2.5 0 0 1 6.5 2H20v20H6.5a2.5 2.5 0 0 1 0-5H20"/><path d="M8 7h6"/><path d="M8 11h8"/>
-                                    </svg>
-                                </div>
-                                <div className="flex flex-col">
-                                    <h1 className="font-serif font-bold text-lg leading-none text-white">Ajayi Knowledge Hub</h1>
-                                    <span className="text-[#D4AF37] text-[10px] tracking-wider uppercase font-medium mt-1">Explore. Learn. Discover. Grow.</span>
-                                </div>
-                            </div>
-                            
-                            {/* Action Buttons */}
-                            <div className="flex items-center gap-3">
-                                {/* Desktop AI Button */}
-                                <button onClick={() => navigateTo('ai')} className="hidden sm:flex items-center gap-2 px-4 py-2 bg-[#2E8B57]/20 text-[#2E8B57] hover:bg-[#2E8B57]/30 rounded-lg font-medium text-sm transition-colors border border-[#2E8B57]/50">
-                                    <Icon name="sparkles" size={16} /> Ask AI
-                                </button>
-                                
-                                <button onClick={() => setIsSearchOpen(true)} className="w-10 h-10 rounded-lg bg-white/10 border border-white/20 flex items-center justify-center text-gray-300 hover:text-white hover:bg-white/20 transition-colors shadow-sm">
-                                    <Icon name="search" size={18} />
-                                </button>
-                                
-                                <button onClick={() => setDarkMode(!darkMode)} className="w-10 h-10 rounded-lg bg-white/10 border border-white/20 flex items-center justify-center text-gray-300 hover:text-white hover:bg-white/20 transition-colors shadow-sm">
-                                    {darkMode ? <Icon name="sun" size={18} /> : <Icon name="moon" size={18} />}
-                                </button>
-                                
-                                <button onClick={() => setMobileMenu(!mobileMenu)} className="w-10 h-10 rounded-lg bg-[#2E8B57] text-white border border-[#2E8B57] flex items-center justify-center hover:bg-[#257348] transition-colors shadow-md">
-                                    <Icon name={mobileMenu ? "x" : "menu"} size={20} />
-                                </button>
-                            </div>
-                        </div>
-                    </div>
-
-                    {/* Collapsed Dropdown Menu */}
-                    {mobileMenu && (
-                        <div className="absolute top-20 left-0 w-full bg-[#0B1423] border-t border-white/10 shadow-2xl py-4 px-6 animate-slide-down border-b border-gray-800">
-                            <div className="max-w-[1600px] mx-auto grid grid-cols-2 md:grid-cols-4 gap-4">
-                                {navLinks.map(link => (
-                                    <button key={link.id} onClick={() => navigateTo(link.id)} className={`text-left px-4 py-3 rounded-xl text-sm font-medium transition-colors ${view === link.id ? 'bg-[#2E8B57]/20 text-[#2E8B57]' : 'text-gray-300 hover:bg-white/10 hover:text-white'}`}>
-                                        {link.name}
-                                    </button>
-                                ))}
-                                {/* Add an Admin link for easy access */}
-                                <button onClick={() => { window.location.href='admin.html'; }} className="text-left px-4 py-3 rounded-xl text-sm font-bold text-gray-400 hover:bg-white/10 hover:text-white border border-gray-700">
-                                    Admin Login
-                                </button>
-                            </div>
-                        </div>
-                    )}
-                </nav>
-            );
-
-            const SearchOverlay = () => {
-                if (!isSearchOpen) return null;
-                return (
-                    <div className="fixed inset-0 z-[100] bg-white/95 dark:bg-[#0a0a0a]/95 backdrop-blur-md overflow-y-auto animate-fade-in p-4 sm:p-8">
-                        <div className="max-w-4xl mx-auto pt-20">
-                            <div className="flex justify-between items-center mb-8">
-                                <h2 className="text-3xl font-serif font-bold text-navy dark:text-white">Search Knowledge Base</h2>
-                                <button onClick={() => setIsSearchOpen(false)} className="p-2 bg-gray-100 dark:bg-gray-800 rounded-full text-gray-500 hover:text-gray-900 dark:hover:text-white transition-colors">
-                                    <Icon name="x" size={24} />
-                                </button>
-                            </div>
-                            <div className="relative mb-12">
-                                <Icon name="search" size={24} className="absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400" />
-                                <input type="text" autoFocus placeholder="Search publications, research, articles..." value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} className="w-full pl-14 pr-6 py-5 rounded-2xl bg-gray-100 dark:bg-gray-900 border border-gray-200 dark:border-gray-800 text-xl focus:outline-none focus:border-emerald-500 text-gray-900 dark:text-white" />
-                            </div>
-                            
-                            {searchQuery && (
-                                <div className="space-y-4">
-                                    <h3 className="text-sm font-bold text-gray-500 uppercase tracking-wider mb-4">Results ({searchResults.length})</h3>
-                                    {searchResults.map(item => (
-                                        <div key={item.id} onClick={() => navigateTo(item.type === 'blog' || item.type === 'journal' ? 'reading' : 'detail', item)} className="bg-white dark:bg-gray-900 p-6 rounded-2xl border border-gray-200 dark:border-gray-800 shadow-sm cursor-pointer hover:border-[#2E8B57] transition-colors">
-                                            <span className="text-xs font-bold uppercase tracking-wider text-[#2E8B57] mb-2 block">{item.category || item.type}</span>
-                                            <h4 className="text-xl font-bold text-navy dark:text-white mb-2">{item.title}</h4>
-                                            <p className="text-gray-600 dark:text-gray-400 text-sm line-clamp-2">{item.summary}</p>
-                                        </div>
-                                    ))}
-                                    {searchResults.length === 0 && <p className="text-gray-500 text-center py-8">No results found.</p>}
-                                </div>
-                            )}
-                        </div>
-                    </div>
-                );
-            };
-
-            const HomeContent = () => {
-                const latestBook = publications.find(p => p.type === 'book');
-                const latestResearch = publications.find(p => p.type === 'research');
-                const latestJournal = publications.find(p => p.type === 'journal');
-                const latestBlog = publications.find(p => p.type === 'blog');
-                const latestProject = publications.find(p => p.type === 'project');
-
-                return (
-                    <div className="bg-transparent relative z-10">
-                        {/* HERO SECTION EXACTLY AS REQUESTED */}
-                        <section className="relative pt-32 pb-24 flex items-center justify-center bg-[#0B1423] text-white overflow-hidden min-h-[80vh]">
-                            <div className="absolute inset-0 z-0 bg-[url('https://images.unsplash.com/photo-1532094349884-543bc11b234d?auto=format&fit=crop&q=80')] bg-cover bg-center opacity-20 mix-blend-overlay"></div>
-                            <div className="absolute inset-0 z-0 bg-gradient-to-b from-[#0B1423]/80 via-[#0B1423]/60 to-[#0B1423]"></div>
-                            
-                            <div className="relative z-10 container mx-auto px-6 text-center max-w-5xl animate-fade-in">
-                                <h1 className="font-serif text-5xl md:text-7xl font-bold mb-6 leading-tight tracking-tight">
-                                    Knowledge that <span className="text-[#2E8B57]">grows</span>.<br />
-                                    Research that <span className="text-[#D4AF37]">matters</span>.<br />
-                                    Ideas that <span className="text-[#8B9C2A]">inspire</span>.
-                                </h1>
-                                
-                                <h2 className="text-xl md:text-2xl text-[#D4AF37] font-medium mb-6 font-serif">
-                                    {settings?.hero_subtitle || 'Welcome to my digital knowledge hub.'}
-                                </h2>
-                                
-                                <p className="text-base md:text-lg text-gray-300 mb-12 max-w-3xl mx-auto font-light leading-relaxed">
-                                    {settings?.mission_text || 'Here I share my books, scientific research, teaching materials, journals, articles, and ideas as I pursue a lifelong mission of learning, discovery, and service.'}
-                                </p>
-                                
-                                <div className="flex flex-wrap items-center justify-center gap-4">
-                                    <button onClick={() => navigateTo('library')} className="px-8 py-3.5 bg-[#2E8B57] hover:bg-[#257348] text-white text-sm font-semibold rounded-lg transition-all flex items-center justify-center gap-2 border border-[#2E8B57]">
-                                        <Icon name="book" size={18} /> Explore Library
-                                    </button>
-                                    <button onClick={() => navigateTo('research')} className="px-8 py-3.5 bg-transparent hover:bg-white/5 text-white text-sm font-semibold rounded-lg transition-all border border-blue-400/30 flex items-center justify-center gap-2">
-                                        <Icon name="microscope" size={18} /> Research Archive
-                                    </button>
-                                    <button onClick={() => navigateTo('teaching')} className="px-8 py-3.5 bg-[#3B7A57]/80 hover:bg-[#3B7A57] text-white text-sm font-semibold rounded-lg transition-all border border-[#3B7A57] flex items-center justify-center gap-2">
-                                        <Icon name="gradCap" size={18} /> Teaching Hub
-                                    </button>
-                                </div>
-                            </div>
-                        </section>
-
-                        {/* STATS BANNER EXACTLY AS REQUESTED */}
-                        <div className="max-w-[1600px] mx-auto px-4 sm:px-6 lg:px-8 -mt-6 relative z-20 mb-12">
-                            <div className="bg-[#0f1b29] rounded-xl shadow-xl flex flex-wrap lg:flex-nowrap divide-y lg:divide-y-0 lg:divide-x divide-white/10 p-2">
-                                {[
-                                    { count: publications.filter(p=>p.type==='book').length || 0, label: "Books", icon: "book" },
-                                    { count: publications.filter(p=>p.type==='research').length || 0, label: "Research", icon: "microscope" },
-                                    { count: publications.filter(p=>p.type==='journal').length || 0, label: "Journals", icon: "layout" },
-                                    { count: settings?.views_count || 0, label: "Page Views", icon: "users" },
-                                    { count: settings?.downloads_count || 0, label: "Downloads", icon: "download" }
-                                ].map((stat, idx) => (
-                                    <div key={idx} className="flex-1 min-w-[140px] p-4 flex items-center justify-center lg:justify-start gap-4">
-                                        <div className="text-[#D4AF37]"><Icon name={stat.icon} size={28} /></div>
-                                        <div>
-                                            <div className="text-white font-bold text-xl leading-none mb-1">{stat.count}</div>
-                                            <div className="text-gray-400 text-xs">{stat.label}</div>
-                                        </div>
-                                    </div>
-                                ))}
-                            </div>
-                        </div>
-
-                        {/* HORIZONTAL SCROLL CARDS EXACTLY AS REQUESTED */}
-                        <div className="max-w-[1600px] mx-auto px-4 sm:px-6 lg:px-8 pb-16">
-                            <div className="flex flex-nowrap overflow-x-auto pb-6 gap-6 snap-x snap-mandatory hide-scrollbar">
-                                
-                                {/* Featured Book */}
-                                {latestBook && (
-                                <div className="snap-start shrink-0 w-[350px] md:w-[400px] bg-white dark:bg-[#1E1E1E] rounded-xl border border-gray-200 dark:border-gray-800 p-5 shadow-sm flex flex-col">
-                                    <div className="flex justify-between items-center mb-5 border-b border-gray-100 dark:border-gray-800 pb-3">
-                                        <div className="flex items-center gap-2 font-serif font-bold text-lg dark:text-white"><Icon name="book" size={20} className="text-gray-700 dark:text-gray-300" /> Featured Book</div>
-                                        <button onClick={()=>navigateTo('library')} className="text-xs text-gray-500 hover:text-gray-900 dark:hover:text-white flex items-center gap-1">View all &rarr;</button>
-                                    </div>
-                                    <div className="flex gap-4 flex-grow min-w-0">
-                                        <div className="w-1/3 shrink-0 h-40">
-                                            {latestBook.thumbnail_url ? (
-                                                <img src={latestBook.thumbnail_url} className="w-full h-full object-cover object-center rounded shadow-md border border-gray-200 dark:border-gray-700" alt="Cover"/>
-                                            ) : (
-                                                <div className="bg-[#112435] p-2 rounded shadow-md w-full h-full flex flex-col items-center justify-center text-center border-l-4 border-[#2E8B57]">
-                                                    <div className="text-[10px] text-white uppercase mb-1 line-clamp-4 font-serif font-bold">{latestBook.title}</div>
-                                                </div>
-                                            )}
-                                        </div>
-                                        <div className="flex flex-col flex-grow min-w-0">
-                                            <h4 className="font-serif font-bold text-lg mb-2 leading-tight dark:text-white truncate">{latestBook.title}</h4>
-                                            <p className="text-sm text-gray-600 dark:text-gray-400 mb-2 line-clamp-3">{latestBook.summary}</p>
-                                            <div className="text-xs text-[#2E8B57] font-medium">{latestBook.category || 'Science'}</div>
-                                            <button onClick={()=>navigateTo('detail', latestBook)} className="mt-auto px-4 py-1.5 border border-gray-300 dark:border-gray-600 rounded text-sm font-medium hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors w-max dark:text-white">View Book</button>
-                                        </div>
-                                    </div>
-                                </div>
-                                )}
-
-                                {/* Latest Research */}
-                                {latestResearch && (
-                                <div className="snap-start shrink-0 w-[350px] md:w-[400px] bg-white dark:bg-[#1E1E1E] rounded-xl border border-gray-200 dark:border-gray-800 p-5 shadow-sm flex flex-col">
-                                    <div className="flex justify-between items-center mb-5 border-b border-gray-100 dark:border-gray-800 pb-3">
-                                        <div className="flex items-center gap-2 font-serif font-bold text-lg dark:text-white"><Icon name="microscope" size={20} className="text-gray-700 dark:text-gray-300" /> Latest Research</div>
-                                        <button onClick={()=>navigateTo('research')} className="text-xs text-gray-500 hover:text-gray-900 dark:hover:text-white flex items-center gap-1">View all &rarr;</button>
-                                    </div>
-                                    <div className="flex flex-col flex-grow min-w-0">
-                                        <div className="h-32 shrink-0 bg-gray-200 dark:bg-gray-700 rounded-lg mb-4 overflow-hidden">
-                                            <img src={latestResearch.thumbnail_url || "https://images.unsplash.com/photo-1576086213369-97a306d36557?auto=format&fit=crop&q=80&w=400"} className="w-full h-full object-cover object-center" alt="Research"/>
-                                        </div>
-                                        <h4 className="font-serif font-bold text-base mb-1 leading-tight dark:text-white truncate">{latestResearch.title}</h4>
-                                        <p className="text-sm text-gray-600 dark:text-gray-400 mb-4 line-clamp-2 flex-grow">{latestResearch.summary}</p>
-                                        <button onClick={()=>navigateTo('detail', latestResearch)} className="text-[#2E8B57] text-sm font-medium hover:underline text-left mt-auto">Read Now &rarr;</button>
-                                    </div>
-                                </div>
-                                )}
-                                
-                                {/* Latest Journal */}
-                                {latestJournal && (
-                                <div className="snap-start shrink-0 w-[350px] md:w-[400px] bg-white dark:bg-[#1E1E1E] rounded-xl border border-gray-200 dark:border-gray-800 p-5 shadow-sm flex flex-col">
-                                    <div className="flex justify-between items-center mb-5 border-b border-gray-100 dark:border-gray-800 pb-3">
-                                        <div className="flex items-center gap-2 font-serif font-bold text-lg dark:text-white"><Icon name="layout" size={20} className="text-gray-700 dark:text-gray-300" /> Latest Journal</div>
-                                        <button onClick={()=>navigateTo('journal')} className="text-xs text-gray-500 hover:text-gray-900 dark:hover:text-white flex items-center gap-1">View all &rarr;</button>
-                                    </div>
-                                    <div className="flex gap-4 flex-grow min-w-0 h-32">
-                                        <div className="w-2/5 shrink-0 h-full rounded-lg overflow-hidden">
-                                            <img src={latestJournal.thumbnail_url || "https://images.unsplash.com/photo-1464822759023-fed622ff2c3b?auto=format&fit=crop&q=80&w=400"} className="w-full h-full object-cover object-center" alt="Journal"/>
-                                        </div>
-                                        <div className="flex flex-col flex-grow min-w-0">
-                                            <h4 className="font-serif font-bold text-base mb-1 leading-tight dark:text-white line-clamp-2">{latestJournal.title}</h4>
-                                            <p className="text-sm text-gray-600 dark:text-gray-400 mb-2 line-clamp-2 flex-grow">{latestJournal.summary}</p>
-                                            <button onClick={()=>navigateTo('reading', latestJournal)} className="text-[#2E8B57] text-sm font-medium hover:underline text-left mt-auto">Read Entry &rarr;</button>
-                                        </div>
-                                    </div>
-                                </div>
-                                )}
-
-                                {/* Latest Blog */}
-                                {latestBlog && (
-                                <div className="snap-start shrink-0 w-[350px] md:w-[400px] bg-white dark:bg-[#1E1E1E] rounded-xl border border-gray-200 dark:border-gray-800 p-5 shadow-sm flex flex-col">
-                                    <div className="flex justify-between items-center mb-5 border-b border-gray-100 dark:border-gray-800 pb-3">
-                                        <div className="flex items-center gap-2 font-serif font-bold text-lg dark:text-white"><Icon name="pencil" size={20} className="text-gray-700 dark:text-gray-300" /> Latest Blog</div>
-                                        <button onClick={()=>navigateTo('blog')} className="text-xs text-gray-500 hover:text-gray-900 dark:hover:text-white flex items-center gap-1">View all &rarr;</button>
-                                    </div>
-                                    <div className="flex gap-4 flex-grow min-w-0 h-32">
-                                        <div className="w-2/5 shrink-0 h-full rounded-lg overflow-hidden">
-                                            <img src={latestBlog.thumbnail_url || "https://images.unsplash.com/photo-1581093458791-9f3c3900df4b?auto=format&fit=crop&q=80&w=400"} className="w-full h-full object-cover object-center" alt="Blog"/>
-                                        </div>
-                                        <div className="flex flex-col flex-grow min-w-0">
-                                            <h4 className="font-serif font-bold text-base mb-1 leading-tight dark:text-white line-clamp-2">{latestBlog.title}</h4>
-                                            <p className="text-sm text-gray-600 dark:text-gray-400 mb-2 line-clamp-2 flex-grow">{latestBlog.summary}</p>
-                                            <button onClick={()=>navigateTo('reading', latestBlog)} className="text-[#2E8B57] text-sm font-medium hover:underline text-left mt-auto">Read Article &rarr;</button>
-                                        </div>
-                                    </div>
-                                </div>
-                                )}
-                            </div>
-                        </div>
-
-                        {/* BOTTOM INFO EXACTLY AS REQUESTED */}
-                        <div className="max-w-[1600px] mx-auto px-4 sm:px-6 lg:px-8 pb-20">
-                            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                                <div className="bg-white dark:bg-[#1E1E1E] rounded-xl border border-gray-200 dark:border-gray-800 p-8 shadow-sm relative overflow-hidden">
-                                    <div className="text-[#2E8B57] absolute top-6 left-6 opacity-10">
-                                        <svg width="60" height="60" viewBox="0 0 24 24" fill="currentColor"><path d="M14.017 21v-7.391c0-5.704 3.731-9.57 8.983-10.609l.995 2.151c-2.432.917-3.995 3.638-3.995 5.849h4v10h-9.983zm-14.017 0v-7.391c0-5.704 3.748-9.57 9-10.609l.996 2.151c-2.433.917-3.996 3.638-3.996 5.849h3.983v10h-9.983z"/></svg>
-                                    </div>
-                                    <div className="relative z-10">
-                                        <h3 className="font-serif font-bold text-lg mb-4 dark:text-white">Quote of the Day</h3>
-                                        <p className="text-gray-700 dark:text-gray-300 font-serif italic mb-4 text-lg">"{settings?.daily_quote || 'The beautiful thing about learning is that no one can take it away from you.'}"</p>
-                                        <div className="text-sm font-bold text-[#2E8B57]">- {settings?.quote_author || 'B.B. King'}</div>
-                                    </div>
-                                </div>
-                                <div className="bg-white dark:bg-[#1E1E1E] rounded-xl border border-gray-200 dark:border-gray-800 p-8 shadow-sm">
-                                    <h3 className="font-serif font-bold text-lg mb-2 dark:text-white flex items-center gap-2"><Icon name="pencil" size={20} className="text-gray-500" /> Stay Updated</h3>
-                                    <p className="text-sm text-gray-600 dark:text-gray-400 mb-6">Subscribe to receive new research, books, and insights.</p>
-                                    <form className="flex flex-col gap-2" onSubmit={handleSubscribe}>
-                                        <input type="email" required value={subscribeEmail} onChange={e=>setSubscribeEmail(e.target.value)} placeholder="Enter your email" className="w-full bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg px-4 py-3 text-sm focus:outline-none focus:border-[#2E8B57] text-gray-900 dark:text-white" />
-                                        <button type="submit" className="w-full bg-[#2E8B57] hover:bg-[#257348] text-white px-6 py-3 rounded-lg text-sm font-medium transition-colors">Subscribe</button>
-                                        {subStatus && <p className="text-xs font-bold text-[#2E8B57] mt-1">{subStatus}</p>}
-                                    </form>
-                                </div>
-                                <div className="bg-white dark:bg-[#1E1E1E] rounded-xl border border-gray-200 dark:border-gray-800 p-8 shadow-sm">
-                                    <h3 className="font-serif font-bold text-lg mb-2 dark:text-white flex items-center gap-2">Let's Connect</h3>
-                                    <p className="text-sm text-gray-600 dark:text-gray-400 mb-6">Join the network across academic and social platforms.</p>
-                                    <div className="flex flex-wrap gap-3">
-                                        {settings?.linkedin_url && <a href={settings.linkedin_url} target="_blank" className="w-10 h-10 rounded-full bg-[#0077b5] text-white flex items-center justify-center font-bold">in</a>}
-                                        {settings?.orcid_url && <a href={settings.orcid_url} target="_blank" className="w-10 h-10 rounded-full bg-[#A6CE39] text-white flex items-center justify-center font-bold text-xs">iD</a>}
-                                        {settings?.facebook_url && <a href={settings.facebook_url} target="_blank" className="w-10 h-10 rounded-full bg-[#1877F2] text-white flex items-center justify-center font-bold">f</a>}
-                                        {settings?.whatsapp_number && <a href={`https://wa.me/${settings.whatsapp_number}`} target="_blank" className="w-10 h-10 rounded-full bg-[#25D366] text-white flex items-center justify-center font-bold text-lg"><Icon name="users" size={16}/></a>}
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                );
-            };
-
-            const DetailView = ({ item }) => (
-                <div className="max-w-4xl mx-auto px-4 pt-32 pb-24 min-h-screen relative z-10 animate-fade-in">
-                    <button onClick={() => navigateTo(item.type === 'book' ? 'library' : item.type)} className="flex items-center text-[#2E8B57] hover:underline mb-8 font-medium">
-                        <Icon name="arrowLeft" size={16} className="mr-2" /> Back to {item.type}s
-                    </button>
-                    <div className="bg-white dark:bg-[#1E1E1E] rounded-3xl p-8 shadow-xl border border-gray-200 dark:border-gray-800 flex flex-col md:flex-row gap-8">
-                        <div className="w-full md:w-1/3 shrink-0 h-64 md:h-auto">
-                            {item.thumbnail_url ? (
-                                <img src={item.thumbnail_url} className="w-full h-full object-cover object-center rounded-xl shadow-md border border-gray-200 dark:border-gray-700" alt="Cover"/>
-                            ) : (
-                                <div className="w-full h-full bg-[#0B1423] rounded-xl flex items-center justify-center border border-gray-800">
-                                    <Icon name={item.type === 'book' ? 'book' : 'microscope'} size={60} className="text-[#2E8B57] opacity-50" />
-                                </div>
-                            )}
-                        </div>
-                        <div className="w-full md:w-2/3 flex flex-col">
-                            <span className="px-3 py-1 bg-emerald-50 dark:bg-emerald-900/30 text-[#2E8B57] rounded w-max text-xs font-bold uppercase mb-4">{item.category || item.type}</span>
-                            <h1 className="text-3xl md:text-4xl font-bold font-serif text-navy dark:text-white mb-2 leading-tight">{item.title}</h1>
-                            <p className="text-sm text-gray-500 dark:text-gray-400 mb-6">Published: {item.published_date || 'Recently'}</p>
-                            <h3 className="font-bold text-lg text-navy dark:text-white mb-2">Abstract / Summary</h3>
-                            <p className="text-gray-700 dark:text-gray-300 whitespace-pre-wrap leading-relaxed mb-8">{item.content || item.summary}</p>
-                            
-                            {item.file_url && (
-                                <button onClick={() => handleDownload(item.file_url)} className="mt-auto inline-flex items-center justify-center bg-[#2E8B57] hover:bg-[#257348] text-white px-6 py-4 rounded-xl font-bold shadow-md transition-colors w-full sm:w-auto">
-                                    <Icon name="download" size={20} className="mr-2" /> Download Document
-                                </button>
-                            )}
-                        </div>
-                    </div>
-                </div>
-            );
-
-            const ReadingView = ({ item }) => (
-                <div className="max-w-3xl mx-auto px-4 pt-32 pb-24 min-h-screen relative z-10 animate-fade-in">
-                    <button onClick={() => navigateTo(item.type)} className="flex items-center text-[#2E8B57] hover:underline mb-8 font-medium">
-                        <Icon name="arrowLeft" size={16} className="mr-2" /> Back to {item.type}s
-                    </button>
-                    {item.thumbnail_url && (
-                        <div className="w-full h-[300px] md:h-[400px] mb-8 rounded-2xl overflow-hidden shadow-lg">
-                            <img src={item.thumbnail_url} className="w-full h-full object-cover object-center" alt="Cover" />
-                        </div>
-                    )}
-                    <div className="text-center mb-12">
-                        <span className="px-3 py-1 bg-emerald-50 dark:bg-emerald-900/30 text-[#2E8B57] rounded text-xs font-bold uppercase mb-4 inline-block">{item.category || item.type}</span>
-                        <h1 className="text-4xl font-bold font-serif text-navy dark:text-white mb-4 leading-tight">{item.title}</h1>
-                        <p className="text-gray-500 text-sm">{item.published_date || 'Recent Post'}</p>
-                    </div>
-                    <div className="prose prose-lg dark:prose-invert max-w-none font-serif text-gray-800 dark:text-gray-200 leading-relaxed whitespace-pre-wrap">
-                        {item.content}
-                    </div>
-                    {item.file_url && (
-                        <div className="mt-12 p-6 bg-gray-50 dark:bg-[#1E1E1E] rounded-xl border border-gray-200 dark:border-gray-800 text-center">
-                            <h3 className="font-bold text-navy dark:text-white mb-2">Attached Document</h3>
-                            <button onClick={() => handleDownload(item.file_url)} className="mt-2 inline-flex items-center bg-[#2E8B57] text-white px-6 py-3 rounded-lg font-bold hover:bg-[#257348]">
-                                <Icon name="download" size={18} className="mr-2" /> Download PDF
-                            </button>
-                        </div>
-                    )}
-                </div>
-            );
-
-            const ListView = ({ title, type }) => {
-                const items = publications.filter(p => type === 'library' ? p.type === 'book' : p.type === type);
-                return (
-                    <div className="max-w-[1600px] mx-auto px-4 sm:px-6 lg:px-8 pt-32 pb-24 min-h-screen relative z-10 animate-fade-in">
-                        <button onClick={() => navigateTo('home')} className="flex items-center text-[#2E8B57] hover:underline mb-8 font-medium">
-                            <Icon name="arrowLeft" size={16} className="mr-2" /> Back to Home
-                        </button>
-                        <h1 className="text-4xl font-bold font-serif text-navy dark:text-white mb-2">{title}</h1>
-                        <p className="text-gray-500 dark:text-gray-400 mb-10">Archive of published {type}s.</p>
-                        
-                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-                            {items.map(item => (
-                                <div key={item.id} onClick={() => navigateTo(['blog','journal'].includes(item.type) ? 'reading' : 'detail', item)} className="bg-white dark:bg-[#1E1E1E] p-5 rounded-xl border border-gray-200 dark:border-gray-800 shadow-sm cursor-pointer hover:border-[#2E8B57] transition-colors flex flex-col h-full">
-                                    {item.thumbnail_url && (
-                                        <div className="w-full h-48 mb-4 rounded-lg overflow-hidden bg-gray-100 dark:bg-gray-800 shrink-0">
-                                            <img src={item.thumbnail_url} className="w-full h-full object-cover object-center" alt="Thumb" />
-                                        </div>
-                                    )}
-                                    <span className="text-[10px] font-bold uppercase text-[#2E8B57] mb-2">{item.category || item.type}</span>
-                                    <h3 className="text-lg font-bold text-navy dark:text-white mb-2 line-clamp-2">{item.title}</h3>
-                                    <p className="text-sm text-gray-600 dark:text-gray-400 line-clamp-3 mb-4 flex-grow">{item.summary}</p>
-                                    <span className="text-sm font-bold text-[#2E8B57] mt-auto">Read &rarr;</span>
-                                </div>
-                            ))}
-                            {items.length === 0 && <p className="text-gray-500 col-span-full py-8">No content published in this section yet.</p>}
-                        </div>
-                    </div>
-                );
-            };
-
-            const AboutView = () => (
-                <div className="max-w-5xl mx-auto px-4 pt-32 pb-24 min-h-screen relative z-10 animate-fade-in">
-                    <button onClick={() => navigateTo('home')} className="flex items-center text-[#2E8B57] hover:underline mb-8 font-medium">
-                        <Icon name="arrowLeft" size={16} className="mr-2" /> Back to Home
-                    </button>
-                    <div className="flex flex-col md:flex-row gap-12 items-start">
-                        <div className="w-full md:w-1/3 shrink-0">
-                            {settings?.profile_pic_url ? (
-                                <img src={settings.profile_pic_url} className="w-full aspect-square object-cover object-center rounded-3xl shadow-xl border-4 border-white dark:border-gray-800" alt="Profile" />
-                            ) : (
-                                <div className="w-full aspect-square bg-gray-200 dark:bg-gray-800 rounded-3xl flex items-center justify-center shadow-xl">
-                                    <Icon name="users" size={80} className="text-gray-400" />
-                                </div>
-                            )}
-                        </div>
-                        <div className="w-full md:w-2/3">
-                            <h1 className="text-4xl md:text-5xl font-bold font-serif text-navy dark:text-white mb-2">{settings?.display_name || 'Paul Olakiitan Ajayi'}</h1>
-                            <p className="text-xl text-[#2E8B57] dark:text-[#D4AF37] font-medium mb-8">{settings?.bio || 'Microbiologist · Researcher'}</p>
-                            
-                            <div className="bg-emerald-50 dark:bg-emerald-900/20 p-6 rounded-2xl border border-emerald-100 dark:border-emerald-900/50 mb-8">
-                                <h3 className="font-bold text-navy dark:text-white mb-2 flex items-center gap-2"><Icon name="sparkles" size={18} className="text-[#2E8B57]"/> Mission</h3>
-                                <p className="text-gray-800 dark:text-gray-200 italic font-serif leading-relaxed">{settings?.mission_text || 'To advance science through research and education.'}</p>
-                            </div>
-                            
-                            <h3 className="text-2xl font-bold text-navy dark:text-white mb-4 font-serif">About Me</h3>
-                            <div className="prose prose-lg dark:prose-invert max-w-none text-gray-700 dark:text-gray-300 font-serif whitespace-pre-wrap leading-relaxed">
-                                {settings?.about_text || 'Welcome to my digital hub.'}
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            );
-
-            const ContactView = () => {
-                const [form, setForm] = useState({ name: '', email: '', message: '' });
-                const [status, setStatus] = useState('');
-                const handleSubmit = async (e) => {
-                    e.preventDefault();
-                    setStatus('Sending...');
-                    try {
-                        const { error } = await supabase.from('messages').insert([form]);
-                        if (error) throw error;
-                        setStatus('Message sent successfully!');
-                        setForm({ name: '', email: '', message: '' });
-                    } catch (err) { setStatus('Failed to send message.'); }
-                    setTimeout(() => setStatus(''), 4000);
-                };
-                return (
-                    <div className="max-w-3xl mx-auto px-4 pt-32 pb-24 min-h-screen relative z-10 animate-fade-in text-center">
-                        <button onClick={() => navigateTo('home')} className="flex items-center text-[#2E8B57] hover:underline mb-8 font-medium mx-auto">
-                            <Icon name="arrowLeft" size={16} className="mr-2" /> Back to Home
-                        </button>
-                        <h1 className="text-4xl font-bold font-serif text-navy dark:text-white mb-4">Let's Connect</h1>
-                        <p className="text-gray-600 dark:text-gray-400 mb-12">Interested in research collaboration or speaking engagements? Send a message.</p>
-                        
-                        <form onSubmit={handleSubmit} className="bg-white dark:bg-[#1E1E1E] p-8 rounded-2xl shadow-xl border border-gray-200 dark:border-gray-800 text-left space-y-4">
-                            <input required type="text" placeholder="Your Name" value={form.name} onChange={e=>setForm({...form, name:e.target.value})} className="w-full px-4 py-3 rounded-lg bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-700 text-gray-900 dark:text-white focus:outline-none focus:border-[#2E8B57]" />
-                            <input required type="email" placeholder="Your Email" value={form.email} onChange={e=>setForm({...form, email:e.target.value})} className="w-full px-4 py-3 rounded-lg bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-700 text-gray-900 dark:text-white focus:outline-none focus:border-[#2E8B57]" />
-                            <textarea required rows="5" placeholder="Your Message" value={form.message} onChange={e=>setForm({...form, message:e.target.value})} className="w-full px-4 py-3 rounded-lg bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-700 text-gray-900 dark:text-white focus:outline-none focus:border-[#2E8B57] resize-none"></textarea>
-                            <button type="submit" className="w-full bg-[#2E8B57] hover:bg-[#257348] text-white font-bold py-4 rounded-lg flex items-center justify-center gap-2 transition-colors">
-                                <Icon name="send" size={18} /> Send Message
-                            </button>
-                            {status && <p className="text-center font-bold text-[#2E8B57] mt-2">{status}</p>}
-                        </form>
-                    </div>
-                );
-            };
-
-            const AIView = () => (
-                <div className="max-w-2xl mx-auto px-4 pt-32 pb-24 min-h-screen relative z-10 text-center animate-fade-in">
-                    <button onClick={() => navigateTo('home')} className="flex items-center text-[#2E8B57] hover:underline mb-8 font-medium mx-auto">
-                        <Icon name="arrowLeft" size={16} className="mr-2" /> Back to Home
-                    </button>
-                    <div className="w-20 h-20 bg-emerald-100 dark:bg-emerald-900/30 text-[#2E8B57] rounded-full flex items-center justify-center mx-auto mb-6"><Icon name="sparkles" size={40} /></div>
-                    <h1 className="text-3xl font-bold font-serif text-navy dark:text-white mb-4">AI Knowledge Assistant</h1>
-                    <p className="text-gray-600 dark:text-gray-400 bg-white dark:bg-[#1E1E1E] p-8 rounded-2xl shadow-sm border border-gray-200 dark:border-gray-800">
-                        The AI assistant is preparing to index the knowledge base.
-                    </p>
-                </div>
-            );
-
-            // Floating AI Button for Mobile only
-            const FloatingAI = () => (
-                <button onClick={() => navigateTo('ai')} className="sm:hidden fixed bottom-6 right-6 z-40 w-14 h-14 bg-[#2E8B57] text-white rounded-full shadow-lg flex items-center justify-center hover:scale-105 transition-transform border-2 border-white dark:border-gray-800">
-                    <Icon name="sparkles" size={24} />
-                </button>
-            );
-
             return (
-                <div className="relative min-h-screen flex flex-col">
-                    <ParticleBackground isDarkMode={darkMode} />
-                    <Navbar />
-                    <SearchOverlay />
+                <div className="min-h-screen flex flex-col selection:bg-emerald selection:text-white">
+                    <Navbar darkMode={darkMode} setDarkMode={setDarkMode} navigateTo={navigateTo} currentView={view} setShowSearch={setShowSearch} />
                     
+                    {showSearch && <SearchOverlay publications={publications} onClose={() => setShowSearch(false)} navigateTo={navigateTo} setSelectedItem={setSelectedItem} />}
+
                     <main className="flex-grow">
-                        {view === 'home' && <HomeContent />}
-                        {view === 'library' && <ListView title="Digital Library" type="library" />}
-                        {view === 'research' && <ListView title="Research Archive" type="research" />}
-                        {view === 'teaching' && <ListView title="Teaching Hub" type="teaching" />}
-                        {view === 'projects' && <ListView title="Current Projects" type="project" />}
-                        {view === 'journal' && <ListView title="Personal Journal" type="journal" />}
-                        {view === 'blog' && <ListView title="Professional Blog" type="blog" />}
-                        {view === 'detail' && selectedItem && <DetailView item={selectedItem} />}
-                        {view === 'reading' && selectedItem && <ReadingView item={selectedItem} />}
-                        {view === 'about' && <AboutView />}
-                        {view === 'contact' && <ContactView />}
-                        {view === 'ai' && <AIView />}
+                        {view === 'home' && (
+                            <div className="bg-gray-50 dark:bg-[#121212]">
+                                <HeroSection settings={settings} navigateTo={navigateTo} />
+                                <div className="max-w-[1600px] mx-auto px-4 sm:px-6 lg:px-8 -mt-6 relative z-20 mb-12">
+                                    <div className="bg-[#0f1b29] rounded-xl shadow-xl flex flex-wrap lg:flex-nowrap divide-y lg:divide-y-0 lg:divide-x divide-white/10 p-2">
+                                        {statBoxes.map((stat, idx) => (
+                                            <div key={idx} className="flex-1 min-w-[140px] p-4 flex items-center justify-center lg:justify-start gap-4">
+                                                <div className="text-[#D4AF37]"><Icon name={stat.icon} size={28} /></div>
+                                                <div>
+                                                    <div className="text-white font-bold text-xl leading-none mb-1">{stat.count}</div>
+                                                    <div className="text-gray-400 text-xs">{stat.label}</div>
+                                                </div>
+                                            </div>
+                                        ))}
+                                    </div>
+                                </div>
+                                <ContentCards publications={publications} navigateTo={navigateTo} setSelectedItem={setSelectedItem} />
+                                <div className="py-12"><BottomInfo settings={settings} /></div>
+                            </div>
+                        )}
+                        
+                        {['library', 'research', 'teaching', 'projects', 'journal', 'blog'].includes(view) && <GenericListView title={view} type={view} publications={publications} navigateTo={navigateTo} setSelectedItem={setSelectedItem} />}
+                        {view === 'detail' && selectedItem && <DetailView item={selectedItem} navigateTo={navigateTo} />}
+                        {view === 'reading' && selectedItem && <ReadingView item={selectedItem} navigateTo={navigateTo} />}
+                        {view === 'about' && <AboutView settings={settings} navigateTo={navigateTo} />}
+                        {view === 'contact' && <ContactView navigateTo={navigateTo} />}
+                        {view === 'ai' && <div className="min-h-screen pt-32 px-6 text-center"><h1 className="text-4xl font-serif font-bold dark:text-white">AI Assistant</h1><p className="text-gray-500 mt-4">Connecting to AI Knowledge Graph...</p></div>}
                     </main>
 
-                    <FloatingAI />
+                    {/* Floating Mobile Ask AI Button */}
+                    <button onClick={() => navigateTo('ai')} className="md:hidden fixed bottom-6 right-6 w-14 h-14 bg-[#2E8B57] text-white rounded-full shadow-2xl flex items-center justify-center z-50 hover:bg-[#257348] transition-colors">
+                        <Icon name="sparkles" size={24} />
+                    </button>
 
-                    {/* Footer exactly as requested */}
-                    <footer className="bg-[#0B1423] py-12 text-gray-400 text-sm border-t border-white/10 relative z-10 transition-colors duration-300">
-                        <div className="max-w-[1600px] mx-auto px-4 sm:px-6 lg:px-8 flex flex-col md:flex-row justify-between items-center gap-6 text-center md:text-left">
+                    <footer className="bg-[#0B1423] py-8 text-gray-400 text-sm border-t border-white/10">
+                        <div className="max-w-[1600px] mx-auto px-4 sm:px-6 lg:px-8 flex flex-col md:flex-row justify-between items-center gap-4">
                             <div className="flex items-center gap-3">
-                                 <div className="text-[#D4AF37]">
-                                    <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><path d="M4 19.5v-15A2.5 2.5 0 0 1 6.5 2H20v20H6.5a2.5 2.5 0 0 1 0-5H20"/><path d="M8 7h6"/><path d="M8 11h8"/></svg>
-                                </div>
+                                 <div className="text-[#D4AF37]"><Icon name="book" size={32} /></div>
                                 <div>
                                     <h2 className="text-white font-serif font-bold text-lg leading-none">Ajayi Knowledge Hub</h2>
-                                    <span className="text-[#D4AF37] text-[10px] tracking-wider uppercase font-medium mt-1 inline-block">Explore. Learn. Discover. Grow.</span>
+                                    <span className="text-[#D4AF37] text-[10px] tracking-wider uppercase font-medium">Explore. Learn. Discover. Grow.</span>
                                 </div>
                             </div>
-                            
-                            <div className="text-center md:text-left">
-                                <p>&copy; {new Date().getFullYear()} {settings?.display_name || 'Paul Olakiitan Ajayi'}. All rights reserved.</p>
-                                <div className="flex gap-4 justify-center md:justify-start mt-2 text-xs">
-                                    <a href="#" className="hover:text-white transition-colors">Privacy Policy</a>
-                                    <a href="#" className="hover:text-white transition-colors">Terms of Use</a>
-                                </div>
+                            <div className="text-center">
+                                <p>&copy; {new Date().getFullYear()} Paul Olakiitan Ajayi. All rights reserved.</p>
                             </div>
-                            
-                            <div>
-                                {settings?.footer_text || "Built with ♥ for knowledge, science, and humanity."}
-                            </div>
+                            <div>{settings?.footer_text || 'Built with ♥ for knowledge, science, and humanity.'}</div>
                         </div>
                     </footer>
                 </div>
